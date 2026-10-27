@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-bs-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contato | Wiki do Universo</title>
+  <meta name="description" content="Fale com o autor da Wiki do Universo — formulário de contato, fontes e créditos.">
+  <meta name="theme-color" content="#040713">
+
+  <!-- Ícone da aba -->
+  <link rel="icon" href="img/icones/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="img/icones/apple-touch-icon.png">
+  <link rel="manifest" href="pwa/manifest.webmanifest">
+
+  <!-- Prévia ao compartilhar o link (WhatsApp, Instagram, Discord...) -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Wiki do Universo">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:title" content="Contato | Wiki do Universo">
+  <meta property="og:description" content="Fale com o autor da Wiki do Universo — formulário de contato, fontes e créditos.">
+  <meta property="og:url" content="https://davi-mares.github.io/aula-de-desenvolvimento-web/pagina-de-contato.html">
+  <meta property="og:image" content="https://davi-mares.github.io/aula-de-desenvolvimento-web/img/site/preview.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/componentes.css">
+  <link rel="stylesheet" href="css/extras.css">
+</head>
+<body>
+  <div id="app-navbar"></div>
+
+  <header class="page-header">
+    <h1>Contato &amp; Créditos</h1>
+  </header>
+
+  <main id="conteudo" class="container my-5">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <h2 class="mb-3">📚 Fontes de Informação</h2>
+        <p class="text-muted small">Os dados de cada planeta, do Sol, da Via Láctea e das curiosidades foram revisados com base nas fontes abaixo. Os links específicos usados em cada página também aparecem no rodapé de "Fontes" daquela página.</p>
+        <ul class="list-group list-group-flush mb-4">
+          <li class="list-group-item"><a href="https://science.nasa.gov/solar-system/" target="_blank" rel="noopener noreferrer">NASA Science — Solar System Exploration</a></li>
+          <li class="list-group-item"><a href="https://www.esa.int/Science_Exploration/Space_Science" target="_blank" rel="noopener noreferrer">ESA — Space Science</a></li>
+          <li class="list-group-item"><a href="https://science.nasa.gov/universe/stars/" target="_blank" rel="noopener noreferrer">NASA Science — Stars</a></li>
+          <li class="list-group-item"><a href="https://imagine.gsfc.nasa.gov/science/objects/milkyway1.html" target="_blank" rel="noopener noreferrer">NASA — The Milky Way Galaxy</a></li>
+        </ul>
+
+        <h2 class="mb-3">🖼️ Fontes das Imagens</h2>
+        <ul class="list-group list-group-flush mb-5">
+          <li class="list-group-item">Fotos do Sol, dos planetas, da Via Láctea e de Andrômeda: <a href="https://images.nasa.gov" target="_blank" rel="noopener noreferrer">NASA Image and Video Library</a> e <a href="https://science.nasa.gov" target="_blank" rel="noopener noreferrer">NASA Science</a></li>
+          <li class="list-group-item">Foto do dia: <a href="https://science.nasa.gov/apod/" target="_blank" rel="noopener noreferrer">NASA APOD</a> (os créditos de cada imagem aparecem junto dela)</li>
+          <li class="list-group-item">Gargantua, na página "O Universo": filme <em>Interestelar</em> (2014), usado apenas como ilustração</li>
+        </ul>
+
+        <h2 class="mb-4" id="contato">📞 Fale comigo</h2>
+        <div id="aviso-enviado" class="alert alert-success" role="status" hidden>
+          ✅ Mensagem enviada! Obrigado pelo contato — vou responder assim que possível.
+        </div>
+
+        <!-- Envio por e-mail via FormSubmit (https://formsubmit.co), sem servidor próprio -->
+        <form id="formulario-contato" action="https://formsubmit.co/davi.mares@unemat.br" method="post" class="needs-validation" novalidate>
+          <input type="hidden" name="_subject" value="Nova mensagem pela Wiki do Universo">
+          <input type="hidden" name="_template" value="table">
+          <input type="hidden" name="_next" value="">
+          <!-- Armadilha contra robôs de spam: pessoas não veem este campo -->
+          <input type="text" name="_honey" class="d-none" tabindex="-1" autocomplete="off" aria-hidden="true">
+
+          <div class="mb-3">
+            <label for="nome" class="form-label">Nome completo</label>
+            <input id="nome" name="nome" type="text" class="form-control" required pattern="[A-Za-zÀ-ÿ ]{3,}" title="Informe pelo menos 3 letras." aria-describedby="nome-help">
+            <div id="nome-help" class="invalid-feedback">Informe pelo menos 3 letras.</div>
+          </div>
+
+          <div class="mb-3">
+            <label for="email" class="form-label">E-mail</label>
+            <input id="email" name="email" type="email" class="form-control" required>
+            <div class="invalid-feedback">Informe um e-mail válido.</div>
+          </div>
+
+          <div class="mb-3">
+            <label for="telefone" class="form-label">Telefone</label>
+            <input id="telefone" name="telefone" type="tel" class="form-control" required pattern="\(?[0-9]{2}\)?[ ]?[0-9]{4,5}-?[0-9]{4}" title="Informe um telefone válido.">
+            <div class="invalid-feedback">Informe um telefone válido.</div>
+          </div>
+
+          <div class="mb-3">
+            <label for="data" class="form-label">Data do contato</label>
+            <input id="data" name="data" type="date" class="form-control" required>
+            <div class="invalid-feedback">Selecione uma data.</div>
+          </div>
+
+          <div class="mb-3">
+            <label for="assunto" class="form-label">Assunto</label>
+            <select id="assunto" name="assunto" class="form-select" required>
+              <option value="" selected disabled>Selecione uma opção</option>
+              <option value="duvida">Dúvida sobre astronomia</option>
+              <option value="sugestao">Sugestão para o site</option>
+              <option value="feedback">Feedback</option>
+            </select>
+            <div class="invalid-feedback">Selecione um assunto.</div>
+          </div>
+
+          <fieldset class="mb-3">
+            <legend class="form-label">Como prefere receber a resposta?</legend>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="preferencia" id="preferencia_email" value="email" required>
+              <label class="form-check-label" for="preferencia_email">E-mail</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="preferencia" id="preferencia_telefone" value="telefone">
+              <label class="form-check-label" for="preferencia_telefone">Telefone</label>
+            </div>
+            <div class="invalid-feedback">Selecione uma preferência.</div>
+          </fieldset>
+
+          <div class="mb-3">
+            <label for="mensagem" class="form-label">Mensagem</label>
+            <textarea id="mensagem" name="mensagem" class="form-control" rows="5" required></textarea>
+            <div class="invalid-feedback">Informe uma mensagem.</div>
+          </div>
+
+          <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="aceite" name="aceite" required>
+            <label class="form-check-label" for="aceite">Aceito o envio desta mensagem.</label>
+            <div class="invalid-feedback">Você deve aceitar antes de enviar.</div>
+          </div>
+
+          <div class="d-grid gap-2 d-sm-flex">
+            <button type="submit" class="btn botao-coral mt-0">Enviar mensagem</button>
+            <a href="index.html" class="btn btn-outline-secondary">⬅️ Voltar para a Página Inicial</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <div id="app-footer"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
+  <script src="js/dados.js" defer></script>
+  <script src="js/estrelas.js" defer></script>
+  <script src="js/app.js" defer></script>
+  <script src="js/extras.js" defer></script>
+</body>
+</html>

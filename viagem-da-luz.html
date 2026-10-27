@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-bs-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Viagem da Luz | Wiki do Universo</title>
+  <meta name="description" content="Simulação: viaje com um raio de luz do Sol até Netuno e veja quanto tempo ele leva até cada planeta.">
+  <meta name="theme-color" content="#040713">
+
+  <!-- Ícone da aba -->
+  <link rel="icon" href="img/icones/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="img/icones/apple-touch-icon.png">
+  <link rel="manifest" href="pwa/manifest.webmanifest">
+
+  <!-- Prévia ao compartilhar o link (WhatsApp, Instagram, Discord...) -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Wiki do Universo">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:title" content="Viagem da Luz | Wiki do Universo">
+  <meta property="og:description" content="Simulação: viaje com um raio de luz do Sol até Netuno e veja quanto tempo ele leva até cada planeta.">
+  <meta property="og:url" content="https://davi-mares.github.io/aula-de-desenvolvimento-web/viagem-da-luz.html">
+  <meta property="og:image" content="https://davi-mares.github.io/aula-de-desenvolvimento-web/img/site/preview.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/componentes.css">
+  <link rel="stylesheet" href="css/paginas.css">
+  <link rel="stylesheet" href="css/extras.css">
+</head>
+<body>
+  <div id="app-navbar"></div>
+
+  <header class="page-header">
+    <h1>Viagem da Luz</h1>
+  </header>
+
+  <main id="conteudo" class="pagina-interativa">
+    <p class="texto-abertura">
+      A luz é a coisa mais rápida do universo: <strong>299.792 km por segundo</strong> — daria mais de 7 voltas na Terra
+      em um único segundo. Mesmo assim, o Sistema Solar é tão grande que ela leva horas para atravessá-lo.
+      Embarque num fóton saindo do Sol e veja quanto tempo ele leva até cada planeta.
+    </p>
+
+    <section class="viagem-painel" aria-labelledby="titulo-simulacao">
+      <h2 id="titulo-simulacao" class="visually-hidden">Simulação da viagem</h2>
+
+      <dl class="viagem-placar">
+        <div><dt>Tempo de viagem</dt><dd id="viagem-tempo">0 s</dd></div>
+        <div><dt>Distância percorrida</dt><dd id="viagem-distancia">0 km</dd></div>
+        <div><dt>Voltas na Terra</dt><dd id="viagem-voltas">0 voltas</dd></div>
+        <div><dt>Próxima parada</dt><dd id="viagem-proxima">—</dd></div>
+      </dl>
+
+      <div id="viagem-trilhas" class="viagem-trilhas"></div>
+
+      <div class="viagem-controles">
+        <div class="viagem-botoes">
+          <button type="button" id="viagem-iniciar" class="btn botao-coral mt-0" aria-pressed="false">▶️ Partir do Sol</button>
+          <button type="button" id="viagem-reiniciar" class="btn btn-outline-light">↺ Recomeçar</button>
+        </div>
+
+        <fieldset class="viagem-velocidade">
+          <legend>Velocidade da simulação</legend>
+          <input type="radio" class="btn-check" name="velocidade" id="vel-1" value="1">
+          <label class="btn btn-outline-info btn-sm" for="vel-1">Tempo real</label>
+          <input type="radio" class="btn-check" name="velocidade" id="vel-60" value="60" checked>
+          <label class="btn btn-outline-info btn-sm" for="vel-60">1 min/s</label>
+          <input type="radio" class="btn-check" name="velocidade" id="vel-600" value="600">
+          <label class="btn btn-outline-info btn-sm" for="vel-600">10 min/s</label>
+          <input type="radio" class="btn-check" name="velocidade" id="vel-3600" value="3600">
+          <label class="btn btn-outline-info btn-sm" for="vel-3600">1 h/s</label>
+        </fieldset>
+      </div>
+
+      <p id="viagem-curiosidade" class="viagem-curiosidade" aria-live="polite"></p>
+    </section>
+
+    <section class="mt-5" aria-labelledby="titulo-paradas">
+      <h2 id="titulo-paradas">🛑 Paradas da viagem</h2>
+      <p class="nota-secao mt-2">Tempo que a luz do Sol leva até cada planeta (distância média).</p>
+      <ol id="viagem-paradas" class="viagem-paradas"></ol>
+    </section>
+
+    <section class="categoria mt-5">
+      <h2>🌠 E depois de Netuno?</h2>
+      <p>As distâncias fora do Sistema Solar são tão grandes que os astrônomos as medem pelo tempo que a luz leva para percorrê-las: o <strong>ano-luz</strong>, cerca de 9,46 trilhões de km.</p>
+      <ul>
+        <li><strong>Proxima Centauri</strong>, a estrela mais próxima do Sol: 4,2 anos-luz.</li>
+        <li><strong>Centro da Via Láctea</strong>: cerca de 26 mil anos-luz.</li>
+        <li><strong>Galáxia de Andrômeda</strong>: cerca de 2,5 milhões de anos-luz.</li>
+      </ul>
+      <p>Por isso, olhar para o céu é olhar para o passado: a luz de Andrômeda que chega hoje aos nossos olhos saiu de lá antes de existirem seres humanos.</p>
+    </section>
+
+    <section class="fontes-pagina">
+      <h2>Fontes</h2>
+      <ul>
+        <li><a href="https://science.nasa.gov/ems/" target="_blank" rel="noopener noreferrer">NASA Science — Electromagnetic Spectrum</a></li>
+        <li><a href="https://science.nasa.gov/solar-system/" target="_blank" rel="noopener noreferrer">NASA Science — Solar System (distâncias dos planetas)</a></li>
+        <li><a href="https://science.nasa.gov/universe/galaxies/" target="_blank" rel="noopener noreferrer">NASA Science — Galaxies</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <div id="app-footer"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
+  <script src="js/dados.js" defer></script>
+  <script src="js/estrelas.js" defer></script>
+  <script src="js/app.js" defer></script>
+  <script src="js/extras.js" defer></script>
+  <script src="js/viagem-da-luz.js" defer></script>
+</body>
+</html>

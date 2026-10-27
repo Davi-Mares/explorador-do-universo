@@ -1,0 +1,23 @@
+{
+  "name": "Wiki do Universo",
+  "short_name": "Universo",
+  "description": "Planetas, Via Láctea, constelações, a viagem da luz e a foto do dia da NASA.",
+  "lang": "pt-BR",
+  "start_url": "../index.html",
+  "scope": "../",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#040713",
+  "theme_color": "#040713",
+  "categories": ["education", "books"],
+  "icons": [
+    { "src": "../img/icones/icone-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "../img/icones/icone-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "../img/icones/icone-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Viagem da luz", "url": "../viagem-da-luz.html", "icons": [{ "src": "../img/icones/icone-192.png", "sizes": "192x192" }] },
+    { "name": "Constelações", "url": "../constelacoes.html", "icons": [{ "src": "../img/icones/icone-192.png", "sizes": "192x192" }] },
+    { "name": "Linha do tempo", "url": "../linha-do-tempo.html", "icons": [{ "src": "../img/icones/icone-192.png", "sizes": "192x192" }] }
+  ]
+}

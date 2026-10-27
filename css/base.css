@@ -1,0 +1,170 @@
+/* ==========================================================================
+   Wiki do Universo — base
+   Variáveis de cor, reset, tipografia e fundo do site. Carregado depois do
+   Bootstrap, então as regras daqui prevalecem sem precisar de !important.
+   ========================================================================== */
+
+/* ---------- Variáveis ---------- */
+:root {
+  /* Fundo */
+  --cor-fundo: #040713;
+  --cor-fundo-2: #050b18;
+  --cor-fundo-3: #02040b;
+
+  /* Superfícies (painéis, cards) */
+  --cor-painel: rgba(7, 14, 29, 0.82);
+  --cor-painel-forte: rgba(7, 14, 29, 0.94);
+  --cor-painel-suave: rgba(7, 20, 33, 0.72);
+
+  /* Texto */
+  --cor-texto: #eef9ff;
+  --cor-texto-suave: rgba(231, 246, 255, 0.78);
+  --cor-texto-apagado: #b9d1dc;
+
+  /* Destaques */
+  --cor-destaque: #49d6ff;
+  --cor-destaque-claro: #c3f4ff;
+  --cor-roxo: #8a5dff;
+  --cor-ciano: #63e6d4;
+  --cor-coral: #ff9b71;
+
+  /* Bordas e sombras */
+  --cor-borda: rgba(73, 214, 255, 0.2);
+  --cor-linha: rgba(99, 230, 212, 0.24);
+  --brilho-destaque: 0 0 24px rgba(73, 214, 255, 0.35);
+  --sombra-painel: 0 20px 55px rgba(0, 0, 0, 0.25);
+
+  --raio: 16px;
+  --raio-pequeno: 8px;
+  --transicao: 0.3s ease;
+
+  /* Ajusta as variáveis do próprio Bootstrap para o tema escuro do site */
+  --bs-body-bg: var(--cor-fundo);
+  --bs-body-color: var(--cor-texto);
+  --bs-link-color-rgb: 73, 214, 255;
+  --bs-link-hover-color-rgb: 195, 244, 255;
+}
+
+/* ---------- Reset ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* O fundo fica no <html> e o <body> é transparente: assim o canvas das
+   estrelas (z-index: -1) aparece entre o fundo e o conteúdo. Se o <body>
+   tivesse fundo próprio, ele cobriria as estrelas. */
+html {
+  min-height: 100%;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(73, 214, 255, 0.10), transparent 30%),
+    radial-gradient(circle at 80% 15%, rgba(138, 93, 255, 0.12), transparent 25%),
+    radial-gradient(circle at 10% 80%, rgba(99, 230, 212, 0.06), transparent 30%),
+    linear-gradient(180deg, var(--cor-fundo) 0%, var(--cor-fundo-2) 45%, var(--cor-fundo-3) 100%);
+  background-color: var(--cor-fundo-3);
+  background-attachment: fixed;
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--cor-texto);
+  background: transparent;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* ---------- Céu estrelado (canvas criado por js/estrelas.js) ---------- */
+.ceu-estrelado {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* ---------- Tipografia ---------- */
+h1,
+h2,
+h3 {
+  line-height: 1.3;
+}
+
+h2 {
+  margin-top: 2.25rem;
+  color: #c4f4ff;
+}
+
+h3 {
+  color: var(--cor-ciano);
+  font-size: 1.2rem;
+}
+
+p,
+li {
+  color: var(--cor-texto-suave);
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+li {
+  margin-bottom: 0.6rem;
+}
+
+a {
+  color: var(--cor-destaque);
+  text-decoration: none;
+  transition: color var(--transicao), text-shadow var(--transicao);
+}
+
+a:hover {
+  color: var(--cor-destaque-claro);
+}
+
+strong {
+  color: var(--cor-texto);
+}
+
+/* ---------- Acessibilidade ---------- */
+.skip-link {
+  position: absolute;
+  top: -60px;
+  left: 0;
+  z-index: 9999;
+  padding: 8px 16px;
+  border-radius: 0 0 var(--raio-pequeno) 0;
+  background: var(--cor-destaque);
+  color: var(--cor-fundo);
+  font-weight: 600;
+}
+
+.skip-link:focus {
+  top: 0;
+  color: var(--cor-fundo);
+  outline: 3px solid var(--cor-destaque-claro);
+  outline-offset: 2px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--cor-destaque);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

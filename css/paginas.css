@@ -1,0 +1,557 @@
+/* ==========================================================================
+   Wiki do Universo — páginas interativas
+   Estilos usados só por viagem-da-luz.html, linha-do-tempo.html e
+   constelacoes.html (carregado apenas nelas).
+   ========================================================================== */
+
+.pagina-interativa {
+  max-width: 1000px;
+  margin: 32px auto;
+  padding: 0 24px;
+}
+
+.texto-abertura {
+  max-width: 760px;
+  margin: 0 auto 2rem;
+  font-size: 1.15rem;
+  text-align: center;
+}
+
+/* ==========================================================================
+   Viagem da luz
+   ========================================================================== */
+
+.viagem-painel {
+  padding: 24px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 18px;
+  background: var(--cor-painel-forte);
+  box-shadow: var(--sombra-painel);
+}
+
+.viagem-placar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+  margin: 0 0 28px;
+}
+
+.viagem-placar > div {
+  padding: 12px 16px;
+  border: 1px solid rgba(255, 210, 120, 0.2);
+  border-radius: 12px;
+  background: rgba(255, 210, 120, 0.05);
+}
+
+.viagem-placar dt {
+  color: var(--cor-texto-apagado);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.viagem-placar dd {
+  margin: 4px 0 0;
+  color: #ffe6a8;
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Trilhas: linha do Sol até o último planeta, com o fóton correndo */
+.trilha-titulo {
+  margin: 0 0 6px;
+  color: var(--cor-texto-apagado);
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.trilha-linha {
+  position: relative;
+  height: 76px;
+  margin: 0 22px 18px;
+}
+
+.trilha-linha::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(73, 214, 255, 0.18);
+}
+
+.trilha-sol {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 40%, #fff7c2, #ffb347 55%, #ff7b22);
+  box-shadow: 0 0 22px 6px rgba(255, 170, 60, 0.55);
+  translate: -50% -50%;
+}
+
+.trilha-percorrida {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 0;
+  height: 3px;
+  background: linear-gradient(90deg, rgba(255, 200, 90, 0.9), rgba(255, 255, 255, 0.95));
+  box-shadow: 0 0 10px rgba(255, 220, 140, 0.7);
+  translate: 0 -50%;
+}
+
+.marcador {
+  position: absolute;
+  top: 50%;
+  left: var(--posicao);
+  translate: -50% -50%;
+}
+
+.marcador img {
+  width: 20px;
+  max-width: none; /* perto da borda o navegador encolheria a imagem */
+  height: 20px;
+  border: 2px solid rgba(73, 214, 255, 0.35);
+  border-radius: 50%;
+  object-fit: cover;
+  transition: box-shadow var(--transicao), border-color var(--transicao), scale var(--transicao);
+}
+
+.marcador span {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 50%;
+  color: var(--cor-texto-apagado);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  translate: -50% 0;
+}
+
+.marcador span.rotulo-acima {
+  top: auto;
+  bottom: calc(100% + 4px);
+}
+
+.marcador.chegou img {
+  border-color: #ffe6a8;
+  box-shadow: 0 0 14px 3px rgba(255, 220, 140, 0.7);
+  scale: 1.2;
+}
+
+.marcador.chegou span {
+  color: #ffe6a8;
+}
+
+.foton {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: var(--progresso, 0%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 10px 4px rgba(255, 236, 170, 0.9), 0 0 28px 10px rgba(255, 200, 90, 0.45);
+  translate: -50% -50%;
+}
+
+.em-viagem .foton {
+  animation: pulsar-foton 0.7s ease-in-out infinite alternate;
+}
+
+@keyframes pulsar-foton {
+  to { box-shadow: 0 0 14px 6px rgba(255, 236, 170, 1), 0 0 40px 16px rgba(255, 200, 90, 0.55); }
+}
+
+/* Controles */
+.viagem-controles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.viagem-botoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.viagem-velocidade {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.viagem-velocidade legend {
+  float: none;
+  width: 100%;
+  margin-bottom: 4px;
+  color: var(--cor-texto-apagado);
+  font-size: 0.8rem;
+}
+
+.viagem-curiosidade {
+  min-height: 3.6em;
+  margin: 20px 0 0;
+  padding: 14px 18px;
+  border-left: 4px solid var(--cor-coral);
+  border-radius: 10px;
+  background: rgba(255, 155, 113, 0.08);
+}
+
+/* Lista de paradas */
+.viagem-paradas {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.parada {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0;
+  padding: 10px 16px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+  background: var(--cor-painel);
+  transition: border-color var(--transicao), background var(--transicao);
+}
+
+.parada img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.parada div {
+  display: flex;
+  flex-direction: column;
+}
+
+.parada div span {
+  color: var(--cor-texto-apagado);
+  font-size: 0.85rem;
+}
+
+.parada-tempo {
+  margin-left: auto;
+  color: var(--cor-destaque);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.parada.chegou {
+  border-color: rgba(255, 220, 140, 0.6);
+  background: rgba(255, 220, 140, 0.08);
+}
+
+/* ==========================================================================
+   Linha do tempo
+   ========================================================================== */
+
+.legenda-marcos {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 0 2rem;
+  padding: 0;
+  list-style: none;
+}
+
+.legenda-marcos li {
+  margin: 0;
+}
+
+.tag {
+  display: inline-block;
+  padding: 3px 10px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.tag-humano { color: var(--cor-coral); }
+.tag-sonda { color: var(--cor-ciano); }
+.tag-telescopio { color: #b79bff; }
+.tag-descoberta { color: #ffd166; }
+
+.linha-do-tempo {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Linha vertical no meio */
+.linha-do-tempo::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  background: linear-gradient(180deg, transparent, rgba(73, 214, 255, 0.5) 4%, rgba(138, 93, 255, 0.5) 96%, transparent);
+  translate: -50% 0;
+}
+
+.marco {
+  position: relative;
+  width: 50%;
+  margin: 0;
+  padding: 0 36px 28px 0;
+}
+
+.marco:nth-child(even) {
+  margin-left: 50%;
+  padding: 0 0 28px 36px;
+}
+
+/* Bolinha na linha */
+.marco::before {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  top: 22px;
+  right: -8px;
+  width: 16px;
+  height: 16px;
+  border: 3px solid var(--cor-fundo);
+  border-radius: 50%;
+  background: var(--cor-destaque);
+  box-shadow: 0 0 12px rgba(73, 214, 255, 0.7);
+}
+
+.marco:nth-child(even)::before {
+  right: auto;
+  left: -8px;
+}
+
+.marco article {
+  padding: 18px 20px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 14px;
+  background: var(--cor-painel-forte);
+  box-shadow: var(--sombra-painel);
+}
+
+.marco time {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--cor-coral);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.marco h2 {
+  margin: 10px 0 6px;
+  color: var(--cor-texto);
+  font-size: 1.2rem;
+}
+
+.marco p {
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+.marco a {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.marco-destaque article {
+  border-color: rgba(255, 155, 113, 0.55);
+  box-shadow: var(--sombra-painel), 0 0 26px rgba(255, 155, 113, 0.18);
+}
+
+.marco-destaque::before {
+  background: var(--cor-coral);
+  box-shadow: 0 0 14px rgba(255, 155, 113, 0.8);
+}
+
+@media (max-width: 767px) {
+  .linha-do-tempo::before {
+    left: 8px;
+  }
+
+  .marco,
+  .marco:nth-child(even) {
+    width: 100%;
+    margin-left: 0;
+    padding: 0 0 22px 34px;
+  }
+
+  .marco::before,
+  .marco:nth-child(even)::before {
+    right: auto;
+    left: 0;
+  }
+}
+
+/* ==========================================================================
+   Constelações
+   ========================================================================== */
+
+.constelacoes-opcoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 24px;
+  margin-bottom: 1.5rem;
+}
+
+.grade-constelacoes {
+  display: grid;
+  gap: 24px;
+}
+
+.constelacao {
+  display: grid;
+  grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
+  gap: 28px;
+  align-items: center;
+  padding: 22px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 18px;
+  background: var(--cor-painel-forte);
+  box-shadow: var(--sombra-painel);
+}
+
+.constelacao-ceu {
+  border-radius: 14px;
+  background: radial-gradient(circle at 50% 40%, rgba(40, 60, 120, 0.55), rgba(2, 4, 11, 0.95) 75%);
+}
+
+.constelacao-ceu svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.estrela-escolhida {
+  margin: 0;
+  padding: 0 12px 12px;
+  color: var(--cor-texto-apagado);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.estrela-escolhida strong {
+  color: var(--cor-texto);
+}
+
+.constelacao-texto h2 {
+  margin: 0 0 6px;
+  color: var(--cor-ciano);
+}
+
+.constelacao-texto h2 span {
+  color: var(--cor-texto-apagado);
+  font-size: 1rem;
+  font-style: italic;
+  font-weight: 400;
+}
+
+.constelacao-quando {
+  margin-bottom: 10px;
+  color: var(--cor-coral);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.constelacao-estrelas {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* Linhas se "desenham" quando o card aparece (classe .desenhada via JS) */
+.linhas-constelacao line {
+  stroke: rgba(99, 230, 212, 0.6);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-dasharray: var(--comprimento);
+  stroke-dashoffset: var(--comprimento);
+  transition: stroke-dashoffset 1.8s ease;
+}
+
+.desenhada .linhas-constelacao line {
+  stroke-dashoffset: 0;
+}
+
+.linhas-constelacao {
+  transition: opacity var(--transicao);
+}
+
+.sem-linhas .linhas-constelacao {
+  opacity: 0;
+}
+
+/* Estrelas */
+.estrela {
+  cursor: pointer;
+  outline: none;
+}
+
+.estrela-ponto {
+  fill: #fff;
+  transition: fill var(--transicao);
+}
+
+.estrela-halo {
+  fill: rgba(200, 225, 255, 0.16);
+  animation: cintilar 2.6s ease-in-out infinite alternate;
+  animation-delay: var(--brilho-atraso);
+}
+
+.estrela:hover .estrela-ponto,
+.estrela:focus-visible .estrela-ponto {
+  fill: var(--cor-coral);
+}
+
+.estrela:hover .estrela-halo,
+.estrela:focus-visible .estrela-halo {
+  fill: rgba(255, 155, 113, 0.35);
+}
+
+@keyframes cintilar {
+  from { opacity: 0.35; }
+  to { opacity: 1; }
+}
+
+@media (max-width: 767px) {
+  .constelacao {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .pagina-interativa {
+    padding: 0 16px;
+  }
+
+  .viagem-painel {
+    padding: 16px;
+  }
+}
