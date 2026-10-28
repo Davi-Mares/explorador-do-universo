@@ -4,6 +4,8 @@
 // Confere o modelo astronômico contra eventos de referência publicados
 // (equinócio, solstício, periélio, oposições), contra leis físicas (3ª lei
 // de Kepler, tempo-luz) e a integridade da base de conhecimento.
+// Técnicas de Sargent (2013): validação por dados históricos, validade de
+// eventos, comparação com outro modelo e testes de condição extrema.
 //
 // Uso:  node testes/validar-dados.mjs        (ou: npm run validar)
 // Sai com código 1 se algum teste falhar — dá para rodar no GitHub Actions.
@@ -12,7 +14,6 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import vm from "node:vm";
 
 import * as astro from "../js/explorador/astronomia.js";
 import * as cat from "../js/explorador/catalogo.js";
@@ -83,23 +84,19 @@ for (const [id, nome, iso] of oposicoes) {
   teste("Oposições", nome, diferenca, 0, 1.0, "°");
 }
 
-// ---------- 3. Leis físicas e coerência com a Wiki ----------
+// ---------- 3. Leis físicas e coerência da ficha técnica ----------
 for (const p of cat.PLANETAS) {
   const periodo = astro.periodoKeplerAnos(p.orbita.elementos.a);
   teste("Kepler", `${p.nome}: período pela 3ª lei (${p.periodoAnos} anos)`, periodo / p.periodoAnos, 1, 0.005);
 }
 
-// distanciaUA declarada nas páginas da Wiki (js/dados.js, script clássico).
-{
-  const contexto = {};
-  vm.createContext(contexto);
-  vm.runInContext(`${readFileSync(join(raiz, "js/dados.js"), "utf8")}; this.CORPOS = CORPOS_CELESTES;`, contexto);
-  const normalizar = (t) => t.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-  for (const corpo of contexto.CORPOS.filter((c) => c.distanciaUA)) {
-    const p = cat.PLANETAS.find((x) => normalizar(x.nome) === normalizar(corpo.nome));
-    verdadeiro("Wiki", `${corpo.nome} existe no catálogo do explorador`, p);
-    if (p) teste("Wiki", `${corpo.nome}: distância da Wiki × semieixo da órbita`, corpo.distanciaUA / p.orbita.elementos.a, 1, 0.01);
-  }
+// A ficha técnica (em texto) precisa bater com a órbita usada
+// na simulação: a distância em UA escrita na ficha × semieixo maior.
+for (const p of cat.PLANETAS) {
+  const linha = p.ficha.find(([campo]) => campo.startsWith("Distância"));
+  const ua = linha && Number(linha[1].match(/\(([\d,]+) UA\)/)?.[1].replace(",", "."));
+  verdadeiro("Ficha", `${p.nome}: ficha técnica, texto e fonte presentes`, p.ficha?.length >= 6 && p.saibaMais && p.fonte?.startsWith("https://"));
+  if (ua) teste("Ficha", `${p.nome}: distância da ficha (${ua} UA) × órbita`, ua / p.orbita.elementos.a, 1, 0.02);
 }
 
 teste("Luz", "Luz do Sol até a Terra (1 UA) ≈ 499 s", astro.KM_POR_UA / astro.VELOCIDADE_LUZ_KM_S, 499.0, 0.5, " s");
@@ -185,13 +182,12 @@ teste("Luz", "1 ano-luz ≈ 63.241 UA", astro.UA_POR_ANO_LUZ, 63_241, 1, " UA");
   for (const o of cat.TODOS_OS_OBJETOS) {
     verdadeiro("Base", `${o.nome}: tem resumo e curiosidade`, o.resumo && o.curiosidade);
   }
-  for (const o of cat.TODOS_OS_OBJETOS.filter((x) => x.pagina)) {
+  for (const o of cat.TODOS_OS_OBJETOS.filter((x) => x.imagem)) {
     let existe = true;
-    try { readFileSync(join(raiz, o.pagina)); } catch { existe = false; }
-    verdadeiro("Base", `${o.nome}: página da Wiki ${o.pagina} existe`, existe);
+    try { readFileSync(join(raiz, o.imagem)); } catch { existe = false; }
+    verdadeiro("Base", `${o.nome}: imagem ${o.imagem} existe`, existe);
   }
 }
-
 // ---------- Relatório ----------
 const formatar = (v) => (typeof v === "number" ? (Math.abs(v) >= 1000 ? v.toFixed(0) : v.toPrecision(5)) : v);
 let grupoAtual = "";

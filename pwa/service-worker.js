@@ -6,46 +6,22 @@
 // visitantes recebam os arquivos novos (o cache antigo é apagado).
 // ---------------------------------------------------------------------------
 
-const VERSAO = "v3";
+const VERSAO = "v4";
 const CACHE = `explorador-do-universo-${VERSAO}`;
 
-// Arquivos baixados já na instalação (o som ambiente fica de fora: é grande
-// e só é baixado se a pessoa ligar o som).
+// Arquivos baixados já na instalação.
 const ARQUIVOS_ESSENCIAIS = [
   "./",
-  "./biblioteca.html",
-  "./diario.html",
-  "./explorador.html",
-  "./constelacoes.html",
-  "./curiosidades.html",
   "./index.html",
-  "./jupiter.html",
-  "./linha-do-tempo.html",
-  "./marte.html",
-  "./mercurio.html",
-  "./netuno.html",
-  "./pagina-de-contato.html",
-  "./saturno.html",
+  "./explorador.html",
+  "./diario.html",
   "./sobre.html",
-  "./sol.html",
-  "./terra.html",
-  "./universo.html",
-  "./urano.html",
-  "./venus.html",
-  "./via-lactea.html",
-  "./viagem-da-luz.html",
   "./pwa/manifest.webmanifest",
   "./css/base.css",
-  "./css/componentes.css",
-  "./css/diario.css",
+  "./css/site.css",
   "./css/explorador.css",
-  "./css/inicio.css",
-  "./css/extras.css",
-  "./css/layout.css",
-  "./css/paginas.css",
-  "./js/app.js",
-  "./js/constelacoes.js",
-  "./js/dados.js",
+  "./css/diario.css",
+  "./js/site.js",
   "./js/diario.js",
   "./js/explorador/astronomia.js",
   "./js/explorador/catalogo.js",
@@ -53,46 +29,21 @@ const ARQUIVOS_ESSENCIAIS = [
   "./js/explorador/main.js",
   "./js/explorador/progresso.js",
   "./js/explorador/texturas.js",
-  "./js/extras.js",
-  "./js/estrelas.js",
-  "./js/viagem-da-luz.js",
-  "./img/extras/brilho.png",
-  "./img/extras/eu.jpg",
   "./img/icones/apple-touch-icon.png",
   "./img/icones/favicon.svg",
   "./img/icones/icone-192.png",
   "./img/icones/icone-512.png",
   "./img/icones/icone-maskable-512.png",
-  "./img/planetas/jupiter-mancha-vermelha.webp",
-  "./img/planetas/jupiter.webp",
-  "./img/planetas/marte-monte-olimpo.webp",
-  "./img/planetas/marte.webp",
-  "./img/planetas/mercurio-e-lua.webp",
-  "./img/planetas/mercurio.webp",
-  "./img/planetas/netuno-aneis.webp",
-  "./img/planetas/netuno.webp",
-  "./img/planetas/saturno-sem-aneis.webp",
-  "./img/planetas/saturno-tita.webp",
-  "./img/planetas/saturno.webp",
-  "./img/planetas/sol-e-terra.webp",
   "./img/planetas/sol.webp",
-  "./img/planetas/terra-paisagem.webp",
-  "./img/planetas/terra.webp",
-  "./img/planetas/urano-aneis.webp",
-  "./img/planetas/urano.webp",
-  "./img/planetas/venus-e-terra.webp",
+  "./img/planetas/mercurio.webp",
   "./img/planetas/venus.webp",
-  "./img/site/faixa-brilho.webp",
-  "./img/site/fundo-cabecalho.webp",
-  "./img/site/terra-vista-do-espaco.webp",
+  "./img/planetas/terra.webp",
+  "./img/planetas/marte.webp",
+  "./img/planetas/jupiter.webp",
+  "./img/planetas/saturno.webp",
+  "./img/planetas/urano.webp",
+  "./img/planetas/netuno.webp",
   "./img/universo/andromeda.webp",
-  "./img/universo/buraco-negro-gargantua.webp",
-  "./img/universo/ceu-estrelado.webp",
-  "./img/universo/planetas-do-sistema-solar.webp",
-  "./img/universo/velocidade-da-luz.webp",
-  "./img/universo/via-lactea.webp",
-  "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css",
-  "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js",
   "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
 ];
 
@@ -119,10 +70,10 @@ self.addEventListener("fetch", (evento) => {
 
   const url = new URL(request.url);
   const doProprioSite = url.origin === self.location.origin;
-  const daCdn = url.hostname === "cdn.jsdelivr.net"; // Bootstrap e Three.js (versões fixas)
+  const daCdn = url.hostname === "cdn.jsdelivr.net"; // Three.js (versão fixa)
 
-  // API da NASA, FormSubmit, áudio etc.: vão direto para a rede.
-  if ((!doProprioSite && !daCdn) || request.destination === "audio") return;
+  // Outros sites vão direto para a rede.
+  if (!doProprioSite && !daCdn) return;
 
   // Imagens e bibliotecas da CDN quase nunca mudam: saem direto do cache (rápido).
   if (request.destination === "image" || daCdn) {

@@ -14,7 +14,7 @@
 import * as THREE from "three";
 import * as astro from "./astronomia.js";
 import {
-  SOL, PLANETAS, LUA, VOYAGER, REFERENCIAS_SOLAR, ESTRELAS, SOL_MAGNITUDE_ABSOLUTA,
+  SOL, PLANETAS, LUA, VOYAGER, ESTRELAS, SOL_MAGNITUDE_ABSOLUTA,
   DIRECAO_CENTRO_GALAXIA, GALAXIA, OBJETOS_GALAXIA, corDaEstrela
 } from "./catalogo.js";
 import { texturaDoAstro, texturaDosAneis, texturaDeBrilho } from "./texturas.js";
@@ -164,21 +164,6 @@ function criarCeuDeFundo(raio, quantidade, semente) {
   return { objeto: pontos(posicoes, rgb, tamanhos, brilhos, material), material };
 }
 
-function circulo(raio, cor, opacidade, { tracejado = false, segmentos = 256 } = {}) {
-  const pontosDoCirculo = [];
-  for (let i = 0; i <= segmentos; i++) {
-    const a = (i / segmentos) * Math.PI * 2;
-    pontosDoCirculo.push(new THREE.Vector3(Math.cos(a) * raio, 0, Math.sin(a) * raio));
-  }
-  const geometria = new THREE.BufferGeometry().setFromPoints(pontosDoCirculo);
-  const material = tracejado
-    ? new THREE.LineDashedMaterial({ color: cor, transparent: true, opacity: opacidade, dashSize: raio * 0.02, gapSize: raio * 0.015, depthWrite: false })
-    : new THREE.LineBasicMaterial({ color: cor, transparent: true, opacity: opacidade, depthWrite: false });
-  const linha = new THREE.Line(geometria, material);
-  if (tracejado) linha.computeLineDistances();
-  return linha;
-}
-
 function brilhoSprite(cor, escala, { atenuar = true, opacidade = 1 } = {}) {
   const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
     map: texturaDeBrilho(), color: cor, transparent: true, opacity: opacidade,
@@ -287,15 +272,6 @@ export function criarNivelSolar(dataInicial) {
   const voyager = criarCorpo(VOYAGER, { raioReal: 0, raioExibido: 1e-9, raioDescoberta: 2, distanciaChegada: 0.01 });
   const marcaVoyager = brilhoSprite("#f4f1e8", 0.008, { atenuar: false, opacidade: 0.9 });
   cena.add(marcaVoyager);
-  const trajeto = new THREE.Line(
-    new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(1, 0, 0)]),
-    new THREE.LineDashedMaterial({ color: "#f4f1e8", transparent: true, opacity: 0.25, dashSize: 2, gapSize: 2, depthWrite: false })
-  );
-  cena.add(trajeto);
-
-  const heliopausa = circulo(REFERENCIAS_SOLAR.heliopausaUA, "#7fd6ff", 0.28, { tracejado: true, segmentos: 512 });
-  cena.add(heliopausa);
-
   // --- Estrelas (posições reais em UA, bem longe) e céu de fundo ---
   {
     const posicoes = [], rgb = [], tamanhos = [], brilhos = [];
@@ -316,9 +292,6 @@ export function criarNivelSolar(dataInicial) {
   }
 
   const corpos = [sol, ...planetas, lua, voyager];
-  const referencias = [
-    { id: "heliopausa", nome: "Heliopausa · fim do vento solar (~120 UA)", posicao: new THREE.Vector3() }
-  ];
 
   let modoTamanho = "real";
   function aplicarTamanho(modo) {
@@ -359,12 +332,6 @@ export function criarNivelSolar(dataInicial) {
     // A Lua mostra sempre a mesma face para a Terra.
     lua.malha.lookAt(terra.posicao);
     marcaVoyager.position.copy(voyager.posicao);
-    trajeto.geometry.attributes.position.setXYZ(1, voyager.posicao.x, voyager.posicao.y, voyager.posicao.z);
-    trajeto.geometry.attributes.position.needsUpdate = true;
-    trajeto.computeLineDistances();
-
-    const direcaoVoyager = new THREE.Vector3(voyager.posicao.x, 0, voyager.posicao.z).normalize();
-    referencias[0].posicao.copy(direcaoVoyager).multiplyScalar(REFERENCIAS_SOLAR.heliopausaUA);
   }
   atualizar(dataInicial);
 
@@ -381,7 +348,6 @@ export function criarNivelSolar(dataInicial) {
     id: "solar",
     cena,
     corpos,
-    referencias,
     materiaisDePontos,
     near: 1e-9,
     far: 1e9,
@@ -438,58 +404,6 @@ export function criarNivelEstrelas() {
   );
   cena.add(nuvem);
 
-  // Linhas até o plano da eclíptica: ajudam a perceber a profundidade.
-  {
-    const vertices = [];
-    for (const e of estrelas) {
-      if (e.id === "sol" || e.objeto.anosLuz > 120) continue;
-      vertices.push(e.posicao.x, e.posicao.y, e.posicao.z, e.posicao.x, 0, e.posicao.z);
-    }
-    const geometria = new THREE.BufferGeometry();
-    geometria.setAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
-    cena.add(new THREE.LineSegments(geometria, new THREE.LineBasicMaterial({ color: "#7fb8ff", transparent: true, opacity: 0.16, depthWrite: false })));
-  }
-
-  // Anéis de distância no plano da eclíptica.
-  const referencias = [];
-  for (const raio of [5, 10, 20, 50]) {
-    cena.add(circulo(raio, "#63e6d4", raio <= 10 ? 0.22 : 0.14));
-    const angulo = Math.PI * 0.25;
-    referencias.push({ id: `anel-${raio}`, nome: `${raio} anos-luz`, posicao: new THREE.Vector3(Math.cos(angulo) * raio, 0, Math.sin(angulo) * raio), classe: "regua" });
-  }
-
-  // Nuvem de Oort: casca de cometas que envolve o Sistema Solar (estimada).
-  {
-    const aleatorio = aleatorioComSemente(31);
-    const posicoes = [], rgb = [], tamanhos = [], brilhos = [];
-    for (let i = 0; i < 2600; i++) {
-      const z = aleatorio() * 2 - 1, fi = aleatorio() * Math.PI * 2, r = Math.sqrt(1 - z * z);
-      const raio = 0.05 + Math.pow(aleatorio(), 0.6) * 1.5;
-      posicoes.push(r * Math.cos(fi) * raio, z * raio, r * Math.sin(fi) * raio);
-      rgb.push(0.6, 0.75, 1);
-      tamanhos.push(1.3);
-      brilhos.push(0.09);
-    }
-    const materialOort = materialDePontos();
-    materiaisDePontos.push(materialOort);
-    cena.add(pontos(posicoes, rgb, tamanhos, brilhos, materialOort));
-    referencias.push({ id: "oort", nome: "Nuvem de Oort (estimada, até ~1,5 ano-luz)", posicao: new THREE.Vector3(0, 1.2, 0), classe: "regua" });
-  }
-
-  // Direção do centro da Via Láctea.
-  {
-    const direcao = vetor(astro.equatorialParaEcliptica(
-      astro.arParaGraus(DIRECAO_CENTRO_GALAXIA.ar), astro.decParaGraus(DIRECAO_CENTRO_GALAXIA.dec), 1
-    )).normalize();
-    const linha = new THREE.Line(
-      new THREE.BufferGeometry().setFromPoints([direcao.clone().multiplyScalar(2), direcao.clone().multiplyScalar(90)]),
-      new THREE.LineDashedMaterial({ color: "#ffb36b", transparent: true, opacity: 0.4, dashSize: 1.5, gapSize: 1.2, depthWrite: false })
-    );
-    linha.computeLineDistances();
-    cena.add(linha);
-    referencias.push({ id: "rumo-centro", nome: "Rumo ao centro da Via Láctea · 26.670 anos-luz", posicao: direcao.clone().multiplyScalar(90), classe: "rumo" });
-  }
-
   const ceu = criarCeuDeFundo(9000, 9000, 9);
   materiaisDePontos.push(ceu.material);
   cena.add(ceu.objeto);
@@ -522,7 +436,6 @@ export function criarNivelEstrelas() {
     id: "estrelas",
     cena,
     corpos: estrelas,
-    referencias,
     materiaisDePontos,
     near: 1e-6,
     far: 1e5,
@@ -687,21 +600,6 @@ export function criarNivelGalaxia() {
     cena.add(nuvemDeGalaxia(andromeda, 110, 14000, "#e6dcff", 43, materiaisDePontos, { disco: true, normal }));
   }
 
-  // Réguas: anéis em volta do centro e a "bolha" das estrelas vizinhas.
-  const referencias = [];
-  for (const raio of [10, 20, 30, 40, 50]) {
-    cena.add(circulo(raio, "#63e6d4", 0.09));
-  }
-  referencias.push({ id: "regua-50", nome: "50 mil anos-luz do centro", posicao: new THREE.Vector3(0, 0, 50), classe: "regua" });
-  const sol = porId("sol-galaxia");
-  const bolha = circulo(1, "#ffd27a", 0.7);
-  bolha.position.copy(sol.posicao);
-  cena.add(bolha);
-  referencias.push({ id: "bolha", nome: "Estrelas vizinhas (~1.000 anos-luz)", posicao: sol.posicao.clone().add(new THREE.Vector3(0, 0, 1.3)), classe: "regua" });
-  for (const { nome, raioNoSol } of GALAXIA.bracos.slice(1, 3)) {
-    referencias.push({ id: `braco-${raioNoSol}`, nome, posicao: new THREE.Vector3(-raioNoSol, 0.3, 0), classe: "braco" });
-  }
-
   function inicio() {
     return { posicao: new THREE.Vector3(-44, 46, 52), olharPara: new THREE.Vector3(-10, -2, 0) };
   }
@@ -710,14 +608,13 @@ export function criarNivelGalaxia() {
     id: "galaxia",
     cena,
     corpos,
-    referencias,
     materiaisDePontos,
     near: 1e-5,
     far: 2e5,
     temTempo: false,
     temTamanho: false,
     unidadeKm: astro.KM_POR_ANO_LUZ * 1000,
-    sol,
+    sol: porId("sol-galaxia"),
     descobrirAoEntrar: ["sol-galaxia"],
     atualizar() {},
     inicio,

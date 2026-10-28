@@ -1,7 +1,7 @@
 {
   "name": "Explorador do Universo",
   "short_name": "Explorador",
-  "description": "Astronomia em escala real: pilote uma nave do Sistema Solar até a Via Láctea, com missões, desafios e um Diário de bordo.",
+  "description": "Astronomia em escala real: pilote uma nave do Sistema Solar até a Via Láctea e guarde suas descobertas no Diário de bordo.",
   "lang": "pt-BR",
   "start_url": "../index.html",
   "scope": "../",
@@ -33,7 +33,7 @@
   ],
   "shortcuts": [
     {
-      "name": "Explorador 3D",
+      "name": "Explorar",
       "url": "../explorador.html",
       "icons": [
         {
@@ -45,16 +45,6 @@
     {
       "name": "Diário de bordo",
       "url": "../diario.html",
-      "icons": [
-        {
-          "src": "../img/icones/icone-192.png",
-          "sizes": "192x192"
-        }
-      ]
-    },
-    {
-      "name": "Biblioteca",
-      "url": "../biblioteca.html",
       "icons": [
         {
           "src": "../img/icones/icone-192.png",

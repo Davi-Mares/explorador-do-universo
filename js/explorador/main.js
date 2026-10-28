@@ -6,14 +6,13 @@
 
 import * as THREE from "three";
 import * as astro from "./astronomia.js";
-import { NIVEIS, VELOCIDADES, MISSOES, perguntaDoObjeto, nivelPorId } from "./catalogo.js";
+import { NIVEIS, VELOCIDADES, MISSOES, perguntaDoObjeto } from "./catalogo.js";
 import { criarNivelSolar, criarNivelEstrelas, criarNivelGalaxia } from "./cenas.js";
 import * as progresso from "./progresso.js";
 
 const $ = (id) => document.getElementById(id);
 const EIXO_Y = new THREE.Vector3(0, 1, 0);
-const VOYAGER_KM_S = 17;
-const CHAVE_AJUDA = "wikiUniverso:explorador:ajudaVista";
+const CHAVE_AJUDA = "exploradorDoUniverso:ajudaVista";
 
 const canvas = $("tela");
 const movimentoReduzido = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -141,15 +140,14 @@ function entrarNoNivel(id, { alvo = null } = {}) {
     botao.classList.toggle("ativo", ativo);
     botao.setAttribute("aria-pressed", String(ativo));
   });
-  $("painel-sistema").hidden = !nivel.temTempo;
+  $("botao-opcoes").hidden = !nivel.temTempo;
+  if (!nivel.temTempo) fecharOpcoes();
   document.body.dataset.nivel = id;
-
-  const info = nivelPorId(id);
-  $("nota-nivel").textContent = `${info.descricao} Unidade da cena: 1 ${info.unidade}.`;
 
   montarMarcadores();
   montarDestinos();
   atualizarHud();
+  atualizarMissaoAtual();
   progresso.registrarNivel(id);
   for (const idDescoberta of nivel.descobrirAoEntrar || []) {
     const corpo = nivel.corpos.find((c) => c.id === idDescoberta);
@@ -406,7 +404,7 @@ function chegar(corpo, { salto }) {
   olharPara(corpo.posicao);
   verificarDescobertas();
   if (!salto) {
-    avisar(`📍 Chegou: ${corpo.nome}. Viagem de ${astro.formatarDuracao(viagem.segundos)} por ${astro.formatarDistancia(viagem.km)}.`);
+    avisar(`📍 ${corpo.nome}: viagem de ${astro.formatarDuracao(viagem.segundos)} (${astro.formatarDistancia(viagem.km)})`);
   }
   progresso.registrarChegada(viagem);
   atualizarPainelAlvo();
@@ -429,7 +427,6 @@ function descobrir(corpo) {
   if (filaDeDescobertas.length && !$("dialogo-quiz").open) filaDeDescobertas.length = 0;
   filaDeDescobertas.push(corpo);
   if (filaDeDescobertas.length === 1) mostrarDescoberta();
-  avisar(`✨ Descoberto: ${corpo.nome} — já está no seu Diário de bordo.`);
   atualizarMarcadoresDescobertos();
   atualizarContadores();
 }
@@ -527,20 +524,14 @@ function montarMarcadores() {
   for (const corpo of nivel.corpos) {
     const botao = document.createElement("button");
     botao.type = "button";
-    botao.className = "marcador";
+    // O Sol (ou o "você está aqui") sempre mostra o nome: é a referência do nível.
+    botao.className = corpo === nivel.sol ? "marcador sempre" : "marcador";
     botao.style.setProperty("--cor", corpo.cor);
     botao.innerHTML = `<span class="ponto" aria-hidden="true"></span><span class="nome">${escapar(corpo.nome)}</span>`;
     botao.setAttribute("aria-label", `Selecionar ${corpo.nome}`);
     botao.addEventListener("click", () => selecionar(corpo));
     container.append(botao);
     marcadores.push({ el: botao, corpo, largura: 22 + corpo.nome.length * 7.2 });
-  }
-  for (const referencia of nivel.referencias) {
-    const rotulo = document.createElement("span");
-    rotulo.className = `marcador referencia ${referencia.classe || ""}`;
-    rotulo.innerHTML = `<span class="nome">${escapar(referencia.nome)}</span>`;
-    container.append(rotulo);
-    marcadores.push({ el: rotulo, referencia, largura: 10 + referencia.nome.length * 6.4 });
   }
   atualizarMarcadoresDescobertos();
 }
@@ -560,10 +551,9 @@ function posicionarMarcadores() {
   const largura = canvas.clientWidth, altura = canvas.clientHeight;
   const visiveis = [];
   for (const m of marcadores) {
-    const posicao = m.corpo ? m.corpo.posicao : m.referencia.posicao;
-    projecao.copy(posicao).applyMatrix4(camera.matrixWorldInverse);
+    projecao.copy(m.corpo.posicao).applyMatrix4(camera.matrixWorldInverse);
     const distancia = -projecao.z;
-    if (distancia <= 0 || m.corpo?.oculto) {
+    if (distancia <= 0 || m.corpo.oculto) {
       m.el.style.display = "none";
       continue;
     }
@@ -577,31 +567,23 @@ function posicionarMarcadores() {
     m.distancia = distancia;
     // Astro grande na tela (planeta de perto, estrela brilhante): o rótulo vai
     // para o lado do disco, para não cobrir o próprio astro.
-    let raioPx = 0;
-    if (m.corpo) {
-      if (m.corpo.tamanhoPx) raioPx = m.corpo.tamanhoPx / 2;
-      else if (m.corpo.raioExibido) raioPx = (m.corpo.raioExibido / distancia) * escalaProjecao;
-    }
-    m.raioPx = raioPx;
+    m.raioPx = m.corpo.tamanhoPx ? m.corpo.tamanhoPx / 2 : (m.corpo.raioExibido / distancia) * escalaProjecao;
     visiveis.push(m);
   }
 
-  // Prioridade: selecionado, depois corpos (descobertos primeiro), depois referências.
-  const peso = (m) => (m.corpo === selecionado && m.corpo ? 0 : m.corpo ? (progresso.foiDescoberto(m.corpo.id) ? 1 : 2) : 3);
+  // Prioridade: selecionado, depois descobertos, depois o resto (só o ponto).
+  const peso = (m) => (m.corpo === selecionado ? 0 : progresso.foiDescoberto(m.corpo.id) ? 1 : 2);
   visiveis.sort((a, b) => peso(a) - peso(b) || a.distancia - b.distancia);
 
   const ocupados = [];
   for (const m of visiveis) {
     const caixa = { x0: m.x - 8, y0: m.y - 11, x1: m.x + m.largura, y1: m.y + 11 };
-    const sobreposto = ocupados.some((o) => caixa.x0 < o.x1 && caixa.x1 > o.x0 && caixa.y0 < o.y1 && caixa.y1 > o.y0);
-    if (sobreposto && m.referencia) {
-      m.el.style.display = "none";
-      continue;
-    }
+    const comNome = m.corpo === selecionado || m.corpo === nivel.sol || progresso.foiDescoberto(m.corpo.id);
+    const sobreposto = comNome && ocupados.some((o) => caixa.x0 < o.x1 && caixa.x1 > o.x0 && caixa.y0 < o.y1 && caixa.y1 > o.y0);
     const grande = m.raioPx > 4;
     m.el.classList.toggle("so-ponto", sobreposto);
     m.el.classList.toggle("grande", grande);
-    if (!sobreposto) ocupados.push(caixa);
+    if (comNome && !sobreposto) ocupados.push(caixa);
     const deslocamento = grande ? Math.min(m.raioPx, largura * 0.3) + 4 : 0;
     m.el.style.display = "";
     m.el.style.transform = `translate(${(m.x + deslocamento).toFixed(1)}px, ${m.y.toFixed(1)}px)`;
@@ -626,7 +608,7 @@ function montarDestinos() {
       <span class="destino-marca" aria-hidden="true"></span>`;
     botao.addEventListener("click", () => {
       selecionar(corpo);
-      $("painel-destinos").classList.remove("aberto");
+      fecharDestinos();
     });
     item.append(botao);
     lista.append(item);
@@ -649,7 +631,25 @@ function atualizarDestinos() {
   });
 }
 
-$("botao-destinos").addEventListener("click", () => $("painel-destinos").classList.toggle("aberto"));
+function alternarPainel(idPainel, idBotao, abrir) {
+  const painel = $(idPainel);
+  const aberto = abrir ?? painel.hidden;
+  painel.hidden = !aberto;
+  $(idBotao).setAttribute("aria-expanded", String(aberto));
+  return aberto;
+}
+const fecharDestinos = () => alternarPainel("painel-destinos", "botao-destinos", false);
+const fecharOpcoes = () => alternarPainel("painel-opcoes", "botao-opcoes", false);
+
+$("botao-destinos").addEventListener("click", () => {
+  if (alternarPainel("painel-destinos", "botao-destinos")) {
+    fecharOpcoes();
+    atualizarDestinos();
+  }
+});
+$("botao-opcoes").addEventListener("click", () => {
+  if (alternarPainel("painel-opcoes", "botao-opcoes")) fecharDestinos();
+});
 
 // ---------- Alvo selecionado ----------
 
@@ -659,7 +659,6 @@ function selecionar(corpo) {
   painel.hidden = false;
   $("alvo-nome").textContent = corpo.nome;
   $("alvo-tipo").textContent = corpo.objeto.tipo || "";
-  $("alvo-diario").href = `diario.html#${corpo.id}`;
   atualizarMarcadoresDescobertos();
   atualizarPainelAlvo();
   atualizarDestinos();
@@ -677,17 +676,17 @@ function atualizarPainelAlvo() {
   const distanciaKm = km(Math.max(0, camera.position.distanceTo(corpo.posicao) - corpo.raioExibido));
   const restanteKm = km(Math.max(0, camera.position.distanceTo(corpo.posicao) - corpo.distanciaChegada));
   const velocidade = velocidadeAtual();
-  $("alvo-distancia").textContent = astro.formatarDistancia(distanciaKm);
-  $("alvo-luz").textContent = astro.formatarDuracao(distanciaKm / astro.VELOCIDADE_LUZ_KM_S);
-  $("alvo-voyager").textContent = astro.formatarDuracao(distanciaKm / VOYAGER_KM_S);
   const jaChegou = camera.position.distanceTo(corpo.posicao) <= corpo.distanciaChegada * 1.6;
-  $("alvo-eta").textContent = jaChegou ? "você já está aqui" : `${astro.formatarDuracao(restanteKm / velocidade.kmS)} (${velocidade.nome.replace(" (ficção)", "")})`;
-
-  const descoberto = progresso.foiDescoberto(corpo.id);
-  $("alvo-resumo").textContent = descoberto
-    ? corpo.objeto.resumo
-    : "🔒 Chegue perto para descobrir este astro e liberar o verbete no Diário de bordo.";
-  $("alvo-diario").hidden = !descoberto;
+  const luz = (quilometros) => astro.formatarDuracao(quilometros / astro.VELOCIDADE_LUZ_KM_S);
+  if (!jaChegou) {
+    $("alvo-linha").textContent = `A ${astro.formatarDistancia(distanciaKm)} · a luz leva ${luz(distanciaKm)}`;
+  } else if (corpo === nivel.sol) {
+    $("alvo-linha").textContent = "Você está aqui";
+  } else {
+    // Já chegou: mostra quanto a luz do Sol leva para chegar até este astro.
+    $("alvo-linha").textContent = `Você está aqui · a luz do Sol leva ${luz(km(corpo.posicao.distanceTo(nivel.sol.posicao)))} até aqui`;
+  }
+  $("alvo-eta").textContent = jaChegou ? "" : `Nesta velocidade: ${astro.formatarDuracao(restanteKm / velocidade.kmS)}`;
 
   const viajandoParaEle = piloto && piloto.corpo === corpo;
   $("botao-ir").hidden = viajandoParaEle;
@@ -710,14 +709,21 @@ function atualizarHud() {
   $("velocidade-mais").disabled = indiceVelocidade === velocidades().length - 1;
 }
 
-function atualizarHudPosicao() {
-  const sol = nivel.sol;
-  const doSol = km(camera.position.distanceTo(sol.posicao));
-  let texto = `📍 A ${astro.formatarDistancia(doSol)} do Sol`;
-  if (nivel.id === "galaxia") texto += ` · ${astro.formatarDistancia(km(camera.position.length()))} do centro da galáxia`;
-  $("hud-posicao").textContent = texto;
-  $("hud-percorrido").textContent = `🛰️ Já percorrido: ${astro.formatarDistancia(progresso.obterEstado().estatisticas.kmPercorridos)}`;
+// Missão atual: uma de cada vez, de preferência do nível em que a nave está.
+function missaoAtual() {
+  const pendentes = MISSOES.filter((m) => !progresso.missaoConcluida(m.id));
+  return pendentes.find((m) => m.nivel === nivel.id) || pendentes.find((m) => !m.nivel) || pendentes[0] || null;
 }
+
+function atualizarMissaoAtual() {
+  const missao = missaoAtual();
+  $("missao-atual").textContent = missao ? `🎯 ${missao.objetivo}` : "🏅 Todas as missões cumpridas!";
+}
+
+$("missao-atual").addEventListener("click", () => {
+  const missao = missaoAtual();
+  if (missao) avisar(`💡 ${missao.dica}`);
+});
 
 // ---------- Tempo e tamanhos (Sistema Solar) ----------
 
@@ -767,65 +773,26 @@ document.querySelectorAll("#controle-tamanho [data-tamanho]").forEach((botao) =>
   botao.addEventListener("click", () => mudarTamanho(botao.dataset.tamanho));
 });
 
-// ---------- Missões e contadores ----------
-
-function montarMissoes() {
-  const lista = $("lista-missoes");
-  lista.innerHTML = MISSOES.map((missao) => {
-    const feita = progresso.missaoConcluida(missao.id);
-    const nivelDaMissao = missao.nivel ? nivelPorId(missao.nivel) : null;
-    return `
-      <li class="missao${feita ? " feita" : ""}">
-        <span class="missao-marca" aria-hidden="true">${feita ? "🏅" : "○"}</span>
-        <div>
-          <strong>${escapar(missao.nome)}</strong>${nivelDaMissao ? ` <span class="etiqueta">${nivelDaMissao.icone} ${escapar(nivelDaMissao.nome)}</span>` : ""}
-          <p>${escapar(missao.objetivo)}${feita ? " <em>Concluída!</em>" : ""}</p>
-          ${feita ? "" : `<p class="missao-dica">💡 ${escapar(missao.dica)}</p>`}
-        </div>
-      </li>`;
-  }).join("");
-}
+// ---------- Contadores e painéis ----------
 
 function atualizarContadores() {
   const r = progresso.resumo();
-  $("contador-missoes").textContent = `${r.missoes}/${r.totalMissoes}`;
   $("contador-diario").textContent = `${r.descobertos}/${r.totalObjetos}`;
 }
 
-$("botao-missoes").addEventListener("click", () => {
-  const painel = $("painel-missoes");
-  painel.hidden = !painel.hidden;
-  $("botao-missoes").setAttribute("aria-expanded", String(!painel.hidden));
-  if (!painel.hidden) montarMissoes();
-});
-
-document.querySelectorAll("[data-fechar]").forEach((botao) => {
-  botao.addEventListener("click", () => {
-    const painel = $(botao.dataset.fechar);
-    if (painel.classList.contains("painel-destinos")) painel.classList.remove("aberto");
-    else painel.hidden = true;
-    if (botao.dataset.fechar === "painel-missoes") $("botao-missoes").setAttribute("aria-expanded", "false");
-  });
-});
-
 function fecharPaineis() {
-  $("painel-missoes").hidden = true;
-  $("botao-missoes").setAttribute("aria-expanded", "false");
-  $("painel-destinos").classList.remove("aberto");
+  fecharDestinos();
+  fecharOpcoes();
   fecharAlvo();
 }
 
 progresso.aoMudar((evento) => {
-  if (evento.tipo === "missao") {
-    avisar(`🏅 Missão concluída: ${evento.missao.nome}!`, "missao");
-  }
-  if (["missao", "sincronizado", "zerado", "descoberta", "resposta"].includes(evento.tipo)) {
-    atualizarContadores();
-    if (!$("painel-missoes").hidden) montarMissoes();
-    if (evento.tipo !== "missao") {
-      atualizarMarcadoresDescobertos();
-      atualizarDestinos();
-    }
+  if (evento.tipo === "missao") avisar(`🏅 Missão cumprida: ${evento.missao.nome}!`, "missao");
+  atualizarContadores();
+  atualizarMissaoAtual();
+  if (evento.tipo !== "missao") {
+    atualizarMarcadoresDescobertos();
+    atualizarDestinos();
   }
 });
 
@@ -906,8 +873,7 @@ function quadro(agora) {
   if (acumuladoInterface > 0.25) {
     acumuladoInterface = 0;
     atualizarPainelAlvo();
-    atualizarDestinos();
-    atualizarHudPosicao();
+    if (!$("painel-destinos").hidden) atualizarDestinos();
     if (nivel.temTempo) $("data-simulada").textContent = formatoData.format(dataSimulada);
   }
 
@@ -933,6 +899,9 @@ function iniciar() {
   if (!ajudaVista) abrirAjuda();
 
   document.body.classList.add("pronto");
+  if ("serviceWorker" in navigator && window.location.protocol.startsWith("http")) {
+    navigator.serviceWorker.register("sw.js").catch(() => { /* sem modo offline */ });
+  }
   // Para testes automatizados (testes/): expõe o estado só com ?depurar na URL.
   if (parametros.has("depurar")) window.__explorador = { camera, niveis, get nivel() { return nivel; }, progresso };
   requestAnimationFrame((agora) => {

@@ -1,92 +1,70 @@
 <!DOCTYPE html>
-<html lang="pt-BR" data-bs-theme="dark">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Diário de bordo | Explorador do Universo</title>
-  <meta name="description" content="Seu Diário de bordo: os astros que você descobriu, as missões cumpridas e os desafios respondidos no Explorador do Universo.">
-  <meta name="theme-color" content="#040713">
+  <meta name="description" content="Os astros que você descobriu no Explorador do Universo, com distâncias reais, ficha técnica, missões e desafios.">
+  <meta name="theme-color" content="#02040b">
 
   <link rel="icon" href="img/icones/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="img/icones/apple-touch-icon.png">
   <link rel="manifest" href="pwa/manifest.webmanifest">
 
-  <meta property="og:type" content="website">
-  <meta property="og:site_name" content="Explorador do Universo">
-  <meta property="og:locale" content="pt_BR">
-  <meta property="og:title" content="Diário de bordo | Explorador do Universo">
-  <meta property="og:description" content="Os astros descobertos, as missões e os desafios do Explorador do Universo.">
-  <meta property="og:url" content="https://davi-mares.github.io/explorador-do-universo/diario.html">
-  <meta property="og:image" content="https://davi-mares.github.io/explorador-do-universo/img/site/preview.jpg">
-  <meta name="twitter:card" content="summary_large_image">
-
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="css/base.css">
-  <link rel="stylesheet" href="css/layout.css">
-  <link rel="stylesheet" href="css/componentes.css">
-  <link rel="stylesheet" href="css/extras.css">
+  <link rel="stylesheet" href="css/site.css">
   <link rel="stylesheet" href="css/diario.css">
 </head>
-<body>
-  <div id="app-navbar"></div>
-
-  <header class="page-header">
-    <h1>📔 Diário de bordo</h1>
+<body class="site">
+  <a class="pular-para-conteudo" href="#conteudo">Pular para o conteúdo</a>
+  <header class="topo">
+    <a class="marca" href="index.html">🔭 Explorador do Universo</a>
+    <nav aria-label="Navegação principal">
+      <a href="index.html">Início</a>
+      <a href="explorador.html">Explorar</a>
+      <a href="diario.html" aria-current="page">Diário de bordo</a>
+      <a href="sobre.html">Sobre</a>
+    </nav>
   </header>
 
-  <main id="conteudo" class="container my-5 diario">
-
-    <section class="diario-intro" aria-labelledby="titulo-progresso">
+  <main id="conteudo" class="pagina diario">
+    <div class="diario-cabeca">
       <div>
-        <h2 id="titulo-progresso">Seu progresso</h2>
-        <p>Cada astro que você descobre no <a href="explorador.html">Explorador 3D</a> ganha um verbete aqui, com as distâncias reais e um desafio. Tudo fica salvo só neste navegador: não precisa de cadastro.</p>
+        <h1>📔 Diário de bordo</h1>
+        <p class="subtitulo" id="resumo" aria-live="polite"></p>
       </div>
-      <a class="btn botao-coral" href="explorador.html">🚀 Continuar explorando</a>
-    </section>
-
-    <ul class="estatisticas-diario" id="estatisticas" aria-live="polite"></ul>
-
-    <section aria-labelledby="titulo-missoes">
-      <h2 id="titulo-missoes">🏅 Missões</h2>
-      <ol class="missoes-diario" id="missoes"></ol>
-    </section>
-
-    <div class="filtros" role="group" aria-label="Filtrar verbetes">
-      <button type="button" class="filtro" data-filtro="todos" aria-pressed="true">Todos</button>
-      <button type="button" class="filtro" data-filtro="descobertos" aria-pressed="false">Só descobertos</button>
-      <button type="button" class="filtro" data-filtro="pendentes" aria-pressed="false">Ainda não descobertos</button>
+      <a class="botao botao-principal" href="explorador.html">🚀 Continuar explorando</a>
     </div>
 
     <div id="verbetes"></div>
 
-    <section class="diario-dados" aria-labelledby="titulo-dados">
-      <h2 id="titulo-dados">💾 Seus dados</h2>
-      <p>O progresso fica guardado no armazenamento local deste navegador. Você pode baixar uma cópia (útil para professores acompanharem a turma) ou recomeçar do zero.</p>
-      <div class="acoes-dados">
-        <button type="button" class="btn btn-outline-info" id="botao-exportar">⬇️ Baixar meu diário (JSON)</button>
-        <button type="button" class="btn btn-outline-danger" id="botao-zerar">🗑️ Recomeçar do zero</button>
-      </div>
-    </section>
+    <details class="missoes">
+      <summary>🏅 Missões <span id="contagem-missoes"></span></summary>
+      <ol id="missoes"></ol>
+    </details>
 
+    <div class="acoes-dados">
+      <button type="button" class="botao botao-pequeno" id="botao-exportar">⬇️ Baixar meu diário</button>
+      <button type="button" class="botao botao-pequeno botao-perigo" id="botao-zerar">Recomeçar do zero</button>
+      <p>O progresso fica só neste navegador.</p>
+    </div>
   </main>
 
-  <dialog class="dialogo-diario" id="dialogo-quiz" aria-labelledby="quiz-pergunta">
+  <dialog class="dialogo-quiz" id="dialogo-quiz" aria-labelledby="quiz-pergunta">
     <form method="dialog">
       <p class="quiz-selo" id="quiz-selo">🧠 Desafio</p>
       <h2 id="quiz-pergunta">—</h2>
       <div class="quiz-opcoes" id="quiz-opcoes"></div>
       <p class="quiz-explicacao" id="quiz-explicacao" hidden></p>
-      <button type="submit" class="btn btn-outline-info">Fechar</button>
+      <button type="submit" class="botao botao-pequeno">Fechar</button>
     </form>
   </dialog>
 
-  <div id="app-footer"></div>
+  <footer class="rodape">
+    <p>MVP do TCC de Sistemas de Informação · UNEMAT, campus Sinop · Davi Alves Mares</p>
+  </footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
-  <script src="js/dados.js" defer></script>
-  <script src="js/estrelas.js" defer></script>
-  <script src="js/app.js" defer></script>
-  <script src="js/extras.js" defer></script>
+  <script src="js/site.js" defer></script>
   <script type="module" src="js/diario.js"></script>
 </body>
 </html>

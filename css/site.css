@@ -1,0 +1,240 @@
+/* ==========================================================================
+   Explorador do Universo — páginas de texto (Início, Diário e Sobre).
+   ========================================================================== */
+
+body.site {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 80% 0%, rgba(138, 93, 255, 0.16), transparent 40%),
+    radial-gradient(circle at 0% 30%, rgba(73, 214, 255, 0.1), transparent 35%),
+    var(--cor-fundo);
+  background-attachment: fixed;
+}
+
+/* ---------- Topo ---------- */
+.topo {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 20px;
+  padding: 12px 24px;
+  border-bottom: 1px solid rgba(73, 214, 255, 0.12);
+  background: rgba(2, 4, 11, 0.85);
+  backdrop-filter: blur(10px);
+}
+
+.topo .marca {
+  color: var(--cor-texto);
+  font-family: var(--fonte-titulo);
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.topo nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.topo nav a {
+  padding: 6px 12px;
+  border-radius: 999px;
+  color: var(--cor-texto-suave);
+}
+
+.topo nav a:hover {
+  background: rgba(73, 214, 255, 0.1);
+  color: var(--cor-texto);
+}
+
+.topo nav a[aria-current="page"] {
+  background: rgba(73, 214, 255, 0.16);
+  color: var(--cor-texto);
+}
+
+/* ---------- Conteúdo ---------- */
+.pagina {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 40px 20px 72px;
+}
+
+.pagina h1 {
+  margin: 0 0 8px;
+  font-family: var(--fonte-titulo);
+  font-size: clamp(2rem, 4.5vw, 3rem);
+}
+
+.pagina h2 {
+  margin: 2.6rem 0 0.9rem;
+  color: var(--cor-destaque-claro);
+  font-size: 1.35rem;
+}
+
+.pagina p,
+.pagina li {
+  color: var(--cor-texto-suave);
+}
+
+.subtitulo {
+  margin: 0 0 1.5rem;
+  color: var(--cor-texto-apagado);
+  font-size: 1.05rem;
+}
+
+.rodape {
+  padding: 24px 20px;
+  border-top: 1px solid rgba(73, 214, 255, 0.1);
+  color: var(--cor-texto-apagado);
+  font-size: 0.88rem;
+  text-align: center;
+}
+
+.rodape p {
+  margin: 0;
+}
+
+/* ---------- Botões ---------- */
+.botao {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--cor-texto);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transicao), border-color var(--transicao), transform var(--transicao);
+}
+
+.botao:hover {
+  border-color: var(--cor-destaque);
+  background: rgba(73, 214, 255, 0.1);
+  color: var(--cor-texto);
+}
+
+.botao-principal {
+  border-color: transparent;
+  background: linear-gradient(135deg, #2bb8e6, #7a52f0);
+  color: #fff;
+}
+
+.botao-principal:hover {
+  background: linear-gradient(135deg, #49d6ff, #8a5dff);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.botao-perigo:hover {
+  border-color: var(--cor-erro);
+  background: rgba(255, 138, 138, 0.1);
+}
+
+.botao-pequeno {
+  padding: 6px 14px;
+  font-size: 0.88rem;
+}
+
+/* ---------- Início ---------- */
+.heroi {
+  padding: 48px 0 8px;
+  text-align: center;
+}
+
+.heroi h1 {
+  max-width: 760px;
+  margin: 0 auto 16px;
+  font-size: clamp(2.3rem, 6vw, 4rem);
+  line-height: 1.08;
+}
+
+.heroi h1 span {
+  background: linear-gradient(90deg, #63e6d4, #49d6ff, #b49bff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.heroi p {
+  max-width: 620px;
+  margin: 0 auto;
+  font-size: 1.12rem;
+}
+
+.heroi-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.heroi-progresso {
+  margin-top: 16px !important;
+  color: var(--cor-texto-apagado) !important;
+  font-size: 0.92rem !important;
+}
+
+.escalas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 16px;
+  margin-top: 48px;
+}
+
+.escala {
+  display: block;
+  padding: 22px;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  background: var(--cor-painel);
+  color: inherit;
+  transition: transform var(--transicao), border-color var(--transicao);
+}
+
+.escala:hover,
+.escala:focus-visible {
+  border-color: var(--cor-destaque);
+  color: inherit;
+  transform: translateY(-3px);
+}
+
+.escala-icone {
+  font-size: 1.8rem;
+}
+
+.escala h2 {
+  margin: 8px 0 4px;
+  font-size: 1.15rem;
+}
+
+.escala p {
+  margin: 0;
+}
+
+/* ---------- Sobre ---------- */
+.bloco {
+  padding: 22px 26px;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  background: var(--cor-painel);
+}
+
+.bloco + .bloco {
+  margin-top: 16px;
+}
+
+.bloco h2 {
+  margin-top: 0;
+}
+
+.bloco ul {
+  margin: 0;
+  padding-left: 20px;
+}

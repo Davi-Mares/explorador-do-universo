@@ -7,7 +7,7 @@
 
 import { MISSOES, TODOS_OS_OBJETOS } from "./catalogo.js";
 
-const CHAVE = "wikiUniverso:explorador:v1";
+const CHAVE = "exploradorDoUniverso:progresso:v1";
 const ouvintes = new Set();
 
 function estadoInicial() {

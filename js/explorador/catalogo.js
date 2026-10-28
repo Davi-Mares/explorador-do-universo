@@ -140,7 +140,6 @@ export const SOL = {
   tipo: "Estrela anã amarela (G2V)",
   raioKm: 696_000,
   cor: "#ffd27a",
-  pagina: "sol.html",
   imagem: "img/planetas/sol.webp",
   resumo: "A estrela no centro do Sistema Solar. Sozinho, o Sol tem 99,86% de toda a massa do sistema.",
   curiosidade: "A luz que sai do Sol leva 8 minutos e 20 segundos para chegar à Terra: você sempre vê o Sol como ele era há 8 minutos."
@@ -149,37 +148,37 @@ export const SOL = {
 export const PLANETAS = [
   {
     id: "mercurio", nome: "Mercúrio", tipo: "Planeta rochoso", raioKm: 2_439.7, cor: "#a9a39b",
-    periodoAnos: 0.2408467, pagina: "mercurio.html", imagem: "img/planetas/mercurio.webp",
+    periodoAnos: 0.2408467, imagem: "img/planetas/mercurio.webp",
     resumo: "O menor planeta e o mais próximo do Sol. Não tem atmosfera para segurar o calor.",
     curiosidade: "Um ano em Mercúrio dura só 88 dias terrestres."
   },
   {
     id: "venus", nome: "Vênus", tipo: "Planeta rochoso", raioKm: 6_051.8, cor: "#e8cf9a",
-    periodoAnos: 0.61519726, pagina: "venus.html", imagem: "img/planetas/venus.webp",
+    periodoAnos: 0.61519726, imagem: "img/planetas/venus.webp",
     resumo: "Quase do tamanho da Terra, mas coberto por nuvens de ácido e um efeito estufa fortíssimo.",
     curiosidade: "É o planeta mais quente (≈ 465 °C), mesmo sendo o segundo mais distante do Sol."
   },
   {
     id: "terra", nome: "Terra", tipo: "Planeta rochoso", raioKm: 6_371, cor: "#3f7fd6",
-    periodoAnos: 1.0000174, pagina: "terra.html", imagem: "img/planetas/terra.webp",
+    periodoAnos: 1.0000174, imagem: "img/planetas/terra.webp",
     resumo: "Nosso planeta: o único lugar onde sabemos que existe vida.",
     curiosidade: "A Terra viaja em volta do Sol a cerca de 30 km/s — mais de 100 mil km/h."
   },
   {
     id: "marte", nome: "Marte", tipo: "Planeta rochoso", raioKm: 3_389.5, cor: "#c1440e",
-    periodoAnos: 1.8808476, pagina: "marte.html", imagem: "img/planetas/marte.webp",
+    periodoAnos: 1.8808476, imagem: "img/planetas/marte.webp",
     resumo: "O planeta vermelho, com o maior vulcão do Sistema Solar (Monte Olimpo).",
     curiosidade: "A cor vem do óxido de ferro — a ferrugem — espalhado na poeira."
   },
   {
     id: "jupiter", nome: "Júpiter", tipo: "Gigante gasoso", raioKm: 69_911, cor: "#d8b48a",
-    periodoAnos: 11.862615, pagina: "jupiter.html", imagem: "img/planetas/jupiter.webp",
+    periodoAnos: 11.862615, imagem: "img/planetas/jupiter.webp",
     resumo: "O maior planeta. Sua Grande Mancha Vermelha é uma tempestade maior que a Terra.",
     curiosidade: "Caberiam mais de 1.300 Terras dentro de Júpiter."
   },
   {
     id: "saturno", nome: "Saturno", tipo: "Gigante gasoso", raioKm: 58_232, cor: "#e3cf9c",
-    periodoAnos: 29.447498, pagina: "saturno.html", imagem: "img/planetas/saturno.webp",
+    periodoAnos: 29.447498, imagem: "img/planetas/saturno.webp",
     // Anéis principais (do anel C ao A), em raios de Saturno.
     aneis: { interno: 1.24, externo: 2.27 },
     resumo: "O planeta dos anéis, feitos de pedaços de gelo e rocha.",
@@ -187,17 +186,153 @@ export const PLANETAS = [
   },
   {
     id: "urano", nome: "Urano", tipo: "Gigante gelado", raioKm: 25_362, cor: "#9fe3e6",
-    periodoAnos: 84.016846, pagina: "urano.html", imagem: "img/planetas/urano.webp",
+    periodoAnos: 84.016846, imagem: "img/planetas/urano.webp",
     resumo: "Um gigante de gelo que gira 'deitado', com o eixo inclinado 98°.",
     curiosidade: "Cada polo de Urano passa cerca de 42 anos seguidos de dia e depois 42 anos de noite."
   },
   {
     id: "netuno", nome: "Netuno", tipo: "Gigante gelado", raioKm: 24_622, cor: "#4b6fe0",
-    periodoAnos: 164.79132, pagina: "netuno.html", imagem: "img/planetas/netuno.webp",
+    periodoAnos: 164.79132, imagem: "img/planetas/netuno.webp",
     resumo: "O planeta mais distante, com os ventos mais rápidos do Sistema Solar.",
     curiosidade: "A luz do Sol leva cerca de 4 horas para chegar a Netuno."
   }
 ].map((planeta) => ({ ...planeta, nivel: "solar", orbita: ORBITAS[planeta.id], rotacao: ROTACOES[planeta.id] }));
+
+// ---------------------------------------------------------------------------
+// Ficha técnica e "saiba mais" do Sol e dos planetas (dados: NASA).
+// Aparecem no verbete do Diário de bordo.
+// ---------------------------------------------------------------------------
+
+const FICHAS = {
+  sol: {
+    fonte: "https://science.nasa.gov/sun/facts/",
+    saibaMais: "Com cerca de 4,6 bilhões de anos, o Sol é formado principalmente por hidrogênio e hélio. No núcleo, a fusão nuclear transforma hidrogênio em hélio e libera a energia que chega até nós. O vento solar forma a heliosfera, uma bolha que envolve todo o Sistema Solar.",
+    ficha: [
+      ["Tipo", "Estrela anã amarela (G2V)"],
+      ["Diâmetro", "1.392.700 km (109 Terras)"],
+      ["Distância da Terra", "149,6 milhões de km (1 UA)"],
+      ["Rotação", "≈ 25 dias no equador"],
+      ["Idade", "≈ 4,6 bilhões de anos"],
+      ["Temperatura", "≈ 5.500 °C na superfície"],
+      ["Núcleo", "≈ 15 milhões de °C"],
+      ["Gravidade", "274 m/s² (28× a da Terra)"]
+    ]
+  },
+  mercurio: {
+    fonte: "https://science.nasa.gov/mercury/facts/",
+    saibaMais: "Mercúrio é só um pouco maior que a Lua e não tem luas. A superfície cheia de crateras lembra a lunar, e o núcleo rico em ferro gera um campo magnético fraco. Quase sem atmosfera, a temperatura varia muito entre o dia e a noite.",
+    ficha: [
+      ["Tipo", "Planeta rochoso"],
+      ["Diâmetro", "4.879 km"],
+      ["Distância do Sol", "57,9 milhões de km (0,39 UA)"],
+      ["Rotação", "59 dias terrestres"],
+      ["Ano", "88 dias terrestres"],
+      ["Luas", "Nenhuma"],
+      ["Temperatura", "−180 °C a 430 °C"],
+      ["Gravidade", "3,7 m/s² (38% da Terra)"]
+    ]
+  },
+  venus: {
+    fonte: "https://science.nasa.gov/venus/venus-facts/",
+    saibaMais: "Chamado de “irmão da Terra” pelo tamanho parecido, Vênus tem uma atmosfera espessa de dióxido de carbono, com nuvens de ácido sulfúrico. O efeito estufa mantém a superfície perto de 465 °C, com pressão cerca de 92 vezes maior que a da Terra. No céu, é a “Estrela da Manhã” ou “da Tarde”.",
+    ficha: [
+      ["Tipo", "Planeta rochoso"],
+      ["Diâmetro", "12.104 km"],
+      ["Distância do Sol", "108,2 milhões de km (0,72 UA)"],
+      ["Rotação", "243 dias terrestres (gira ao contrário)"],
+      ["Ano", "225 dias terrestres"],
+      ["Luas", "Nenhuma"],
+      ["Temperatura", "≈ 465 °C (média)"],
+      ["Gravidade", "8,9 m/s² (91% da Terra)"]
+    ]
+  },
+  terra: {
+    fonte: "https://spaceplace.nasa.gov/all-about-earth/en/",
+    saibaMais: "Com cerca de 4,54 bilhões de anos, a Terra é o maior planeta rochoso. Oceanos cobrem 71% da superfície, a inclinação do eixo provoca as estações do ano, a Lua influencia as marés e as placas tectônicas renovam a superfície bem devagar.",
+    ficha: [
+      ["Tipo", "Planeta rochoso"],
+      ["Diâmetro", "12.742 km"],
+      ["Distância do Sol", "149,6 milhões de km (1 UA)"],
+      ["Rotação", "23 h 56 min"],
+      ["Ano", "365,25 dias"],
+      ["Luas", "1 (a Lua)"],
+      ["Temperatura", "≈ 15 °C (média)"],
+      ["Gravidade", "9,8 m/s²"]
+    ]
+  },
+  marte: {
+    fonte: "https://science.nasa.gov/mars/facts/",
+    saibaMais: "Marte tem atmosfera fina, calotas polares, vulcões e o Valles Marineris, um sistema de cânions enorme. A gravidade é cerca de 38% da terrestre e as duas luas são Fobos e Deimos. Robôs investigam se o planeta já teve vida microbiana.",
+    ficha: [
+      ["Tipo", "Planeta rochoso"],
+      ["Diâmetro", "6.779 km"],
+      ["Distância do Sol", "227,9 milhões de km (1,5 UA)"],
+      ["Rotação", "24 h 37 min"],
+      ["Ano", "687 dias terrestres"],
+      ["Luas", "2 (Fobos e Deimos)"],
+      ["Temperatura", "≈ −60 °C (média)"],
+      ["Gravidade", "3,7 m/s² (38% da Terra)"]
+    ]
+  },
+  jupiter: {
+    fonte: "https://science.nasa.gov/jupiter/jupiter-facts/",
+    saibaMais: "Gigante gasoso de hidrogênio e hélio, Júpiter tem um dia de cerca de 10 horas, faixas de nuvens, tempestades intensas e a magnetosfera mais forte entre os planetas. Entre suas dezenas de luas estão Ganimedes, a maior do Sistema Solar, e Europa, que pode ter um oceano sob o gelo.",
+    ficha: [
+      ["Tipo", "Gigante gasoso"],
+      ["Diâmetro", "139.820 km (11 Terras)"],
+      ["Distância do Sol", "778 milhões de km (5,2 UA)"],
+      ["Rotação", "9 h 56 min"],
+      ["Ano", "11,9 anos terrestres"],
+      ["Luas", "Mais de 90"],
+      ["Temperatura", "≈ −110 °C (topo das nuvens)"],
+      ["Gravidade", "24,8 m/s² (2,5× a da Terra)"]
+    ]
+  },
+  saturno: {
+    fonte: "https://science.nasa.gov/saturn/facts/",
+    saibaMais: "Gigante gasoso com núcleo rochoso, Saturno gira tão rápido que é o planeta mais achatado. Titã, sua maior lua, é a única com atmosfera densa e tem lagos de metano e etano. O planeta foi estudado pela sonda Cassini, e a Huygens pousou em Titã.",
+    ficha: [
+      ["Tipo", "Gigante gasoso"],
+      ["Diâmetro", "116.460 km (9 Terras)"],
+      ["Distância do Sol", "1,4 bilhão de km (9,5 UA)"],
+      ["Rotação", "10 h 33 min"],
+      ["Ano", "29,4 anos terrestres"],
+      ["Luas", "Mais de 270"],
+      ["Temperatura", "≈ −140 °C"],
+      ["Gravidade", "10,4 m/s² (1,07× a da Terra)"]
+    ]
+  },
+  urano: {
+    fonte: "https://science.nasa.gov/uranus/facts/",
+    saibaMais: "Descoberto com telescópio em 1781, Urano tem atmosfera de hidrogênio, hélio e metano. O eixo inclinado cerca de 98° faz o planeta girar quase de lado e produz estações extremas. Tem anéis, luas e ventos fortes.",
+    ficha: [
+      ["Tipo", "Gigante gelado"],
+      ["Diâmetro", "50.724 km (4 Terras)"],
+      ["Distância do Sol", "2,9 bilhões de km (19,2 UA)"],
+      ["Rotação", "17 h 14 min (gira de lado, eixo a 98°)"],
+      ["Ano", "84 anos terrestres"],
+      ["Luas", "29 conhecidas"],
+      ["Temperatura", "≈ −195 °C"],
+      ["Gravidade", "8,7 m/s² (89% da Terra)"]
+    ]
+  },
+  netuno: {
+    fonte: "https://science.nasa.gov/neptune/neptune-facts/",
+    saibaMais: "Com massa 17 vezes a da Terra, Netuno tem os ventos mais rápidos do Sistema Solar (até cerca de 2.000 km/h) e é azul por causa do metano. Foi descoberto em 1846 por cálculos matemáticos, tem 16 luas conhecidas (Tritão é a maior) e só foi visitado pela Voyager 2, em 1989.",
+    ficha: [
+      ["Tipo", "Gigante gelado"],
+      ["Diâmetro", "49.244 km (4 Terras)"],
+      ["Distância do Sol", "4,5 bilhões de km (30 UA)"],
+      ["Rotação", "16 h 6 min"],
+      ["Ano", "165 anos terrestres"],
+      ["Luas", "16 conhecidas"],
+      ["Temperatura", "≈ −200 °C"],
+      ["Gravidade", "11,2 m/s² (1,14× a da Terra)"]
+    ]
+  }
+};
+
+for (const objeto of [SOL, ...PLANETAS]) Object.assign(objeto, FICHAS[objeto.id]);
 
 export const LUA = {
   id: "lua",
@@ -227,12 +362,6 @@ export const VOYAGER = {
   referencia: { data: "2012-08-25", distanciaUA: 121.6, uaPorAno: 3.58 },
   resumo: "O objeto feito por humanos mais distante da Terra. Já saiu da bolha do vento solar e está no espaço interestelar.",
   curiosidade: "Por volta de novembro de 2026 ela fica a 1 dia-luz da Terra: um comando enviado daqui leva quase 24 horas para chegar."
-};
-
-/** Referências desenhadas na cena (não são "descobertas"). */
-export const REFERENCIAS_SOLAR = {
-  heliopausaUA: 120,
-  choqueTerminalUA: 94
 };
 
 // ---------------------------------------------------------------------------
@@ -457,13 +586,13 @@ export const GALAXIA = {
 export const OBJETOS_GALAXIA = [
   {
     id: "sol-galaxia", nome: "Sol (você está aqui)", tipo: "Nossa estrela", centro: false, l: 0, b: 0, d: 0,
-    cor: "#ffd27a", pagina: "via-lactea.html",
+    cor: "#ffd27a",
     resumo: "O Sol fica num braço pequeno, o Braço de Órion, a cerca de 26.670 anos-luz do centro da galáxia.",
     curiosidade: "O Sol leva cerca de 230 milhões de anos para dar uma volta na galáxia — a última vez que esteve neste ponto, os primeiros dinossauros estavam surgindo."
   },
   {
     id: "sgr-a", nome: "Sagitário A*", tipo: "Buraco negro supermassivo", centro: true,
-    cor: "#ffb36b", pagina: "universo.html",
+    cor: "#ffb36b",
     resumo: "O buraco negro no centro da Via Láctea, com cerca de 4 milhões de vezes a massa do Sol.",
     curiosidade: "Em 2022 o Event Horizon Telescope mostrou a primeira imagem da 'sombra' dele."
   },
@@ -517,7 +646,7 @@ export const OBJETOS_GALAXIA = [
   },
   {
     id: "andromeda", nome: "Galáxia de Andrômeda", tipo: "Galáxia espiral vizinha", l: 121.17, b: -21.57, d: 2537,
-    cor: "#e6dcff", pagina: "curiosidades.html", imagem: "img/universo/andromeda.webp",
+    cor: "#e6dcff", imagem: "img/universo/andromeda.webp",
     resumo: "A grande galáxia mais próxima, com cerca de 1 trilhão de estrelas. É um dos objetos mais distantes que dá para ver a olho nu.",
     curiosidade: "Andrômeda e a Via Láctea se aproximam a ≈ 110 km/s e podem se fundir daqui a bilhões de anos (estudos de 2025 estimam uma chance de cerca de 50% nos próximos 10 bilhões de anos)."
   }
