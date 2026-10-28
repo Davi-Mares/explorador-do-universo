@@ -1,0 +1,16 @@
+{
+  "name": "wiki-do-universo",
+  "version": "5.0.0",
+  "description": "Wiki do Universo + Explorador do Universo (MVP do TCC): ambiente para ensinar astronomia navegando em escala real.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "validar": "node testes/validar-dados.mjs",
+    "servir": "python3 -m http.server 8080"
+  },
+  "author": "Davi Alves Mares",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Davi-Mares/explorador-do-universo"
+  }
+}

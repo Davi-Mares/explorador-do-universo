@@ -1,4 +1,42 @@
-# Changelog - Wiki do Universo
+# Changelog — Explorador do Universo
+
+## [v5.0.0] - MVP do TCC: Explorador do Universo
+
+O projeto deixa de ser só uma wiki e vira um ambiente de ensino de astronomia em escala real. A Wiki do Universo continua inteira, agora como **Biblioteca**.
+
+### ✨ Principais mudanças
+
+#### 1. 🚀 Explorador 3D (`explorador.html`)
+- Nave pilotável (teclado, mouse e toque) em três níveis de escala: Sistema Solar (UA), estrelas vizinhas (anos-luz) e Via Láctea (mil anos-luz).
+- Planetas nas posições reais de hoje (elementos keplerianos do JPL), Lua, Voyager 1 e heliopausa; controle de tempo (pausar, 1 dia/s, 1 mês/s, 1 ano/s).
+- 30 estrelas reais com brilho calculado pela distância da nave; direção do centro da galáxia; Nuvem de Oort.
+- Via Láctea com Sol, Sagitário A*, nebulosas, aglomerados, Nuvens de Magalhães e Andrômeda nas distâncias medidas.
+- Velocidades reais (carro → luz) e "dobras" de ficção sempre identificadas; piloto automático, salto, tempo-luz e tempo de viagem por destino.
+- Tamanhos reais ou ampliados (500×), com aviso de que as distâncias continuam reais.
+- **Arquivos**: `explorador.html`, `css/explorador.css`, `js/explorador/*.js`
+
+#### 2. 📔 Diário de bordo (`diario.html`)
+- Base de conhecimento com 52 verbetes que se desbloqueiam ao descobrir cada objeto, com distâncias reais, tempo-luz e tempo de viagem da Voyager.
+- 10 missões e 24 desafios de quiz com explicação; estatísticas de voo; exportação do progresso em JSON.
+- **Arquivos**: `diario.html`, `css/diario.css`, `js/diario.js`, `js/explorador/progresso.js`
+
+#### 3. 🏠 Nova página inicial e Biblioteca
+- `index.html` apresenta o MVP; a antiga página inicial virou `biblioteca.html`.
+- Menu reorganizado: Explorador 3D, Diário de bordo, Biblioteca e Atividades.
+
+#### 4. ✅ Validação automática
+- `testes/validar-dados.mjs` (179 verificações): equinócios, solstícios, periélio, oposições, 3ª lei de Kepler, Lua, Voyager e integridade da base de conhecimento. Roda com `npm run validar` e no GitHub Actions.
+
+#### 5. 📲 PWA
+- Service worker v3 com as páginas novas e o Three.js em cache para uso offline; manifesto renomeado com atalhos para o Explorador, o Diário e a Biblioteca.
+
+#### 6. 📄 Documentação
+- `README.md` reescrito e `docs/MVP-TCC.md` com requisitos, arquitetura, modelo astronômico, estratégia de validação, mapeamento com a BNCC e próximos passos.
+
+---
+
+## Histórico da Wiki do Universo
+
 
 ## [v4.2.0] - Viagem da luz, linha do tempo, constelações, animações e PWA
 
