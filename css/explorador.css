@@ -995,8 +995,10 @@ kbd {
     bottom: 110px;
   }
 
+  /* No celular os botões de voo ficam na lateral, acima do painel do alvo. */
   .controles-toque {
-    bottom: 130px;
+    top: 28%;
+    bottom: auto;
   }
 }
 
