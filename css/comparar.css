@@ -1,0 +1,287 @@
+/* ==========================================================================
+   Explorador do Universo — Comparador.
+   ========================================================================== */
+
+.comparar {
+  max-width: 1100px;
+}
+
+.visualmente-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- Escolha dos dois astros ---------- */
+.escolhas {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: end;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.escolha {
+  display: grid;
+  gap: 6px;
+  color: var(--cor-texto-apagado);
+  font-size: 0.9rem;
+}
+
+.escolha select {
+  width: 100%;
+  min-height: 46px;
+  padding: 8px 40px 8px 14px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%2349d6ff' stroke-width='2'/%3E%3C/svg%3E") no-repeat right 14px center,
+    var(--cor-painel-forte);
+  color: var(--cor-texto);
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 600;
+  appearance: none;
+  cursor: pointer;
+}
+
+.escolha select:hover {
+  border-color: var(--cor-destaque);
+}
+
+.trocar {
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  font-size: 1.2rem;
+}
+
+/* ---------- Palco 3D ---------- */
+.palco {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  background:
+    radial-gradient(ellipse at 50% 40%, rgba(73, 214, 255, 0.07), transparent 65%),
+    #02040b;
+}
+
+.palco canvas {
+  display: block;
+  width: 100%;
+  height: clamp(280px, 52vh, 520px);
+}
+
+.rotulos {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.rotulo {
+  position: absolute;
+  display: grid;
+  justify-items: center;
+  transform: translate(-50%, 2px);
+  padding: 4px 10px;
+  border-radius: 10px;
+  background: rgba(2, 4, 11, 0.6);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.rotulo strong {
+  font-size: 1rem;
+}
+
+.rotulo small {
+  color: var(--cor-texto-apagado);
+  font-size: 0.82rem;
+}
+
+.marca-pequeno {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  transform: translate(-50%, -50%);
+  border: 2px dashed var(--cor-ouro);
+  border-radius: 50%;
+}
+
+.sem-3d {
+  margin: 0;
+  padding: 40px 24px;
+  text-align: center;
+}
+
+.nota-escala {
+  min-height: 1.4em;
+  margin: 10px 2px 0;
+  color: var(--cor-texto-apagado) !important;
+  font-size: 0.92rem;
+}
+
+/* ---------- Destaques ---------- */
+.destaques {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  margin: 18px 0 22px;
+}
+
+.destaque {
+  display: flex;
+  gap: 10px;
+  margin: 0;
+  padding: 16px 18px;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  background: var(--cor-painel);
+  color: var(--cor-texto) !important;
+  font-size: 1.05rem;
+  line-height: 1.45;
+}
+
+.destaque span {
+  font-size: 1.4rem;
+  line-height: 1.1;
+}
+
+/* ---------- Tabela ---------- */
+.tabela-rolagem {
+  overflow-x: auto;
+}
+
+.tabela-comparar {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.tabela-comparar th,
+.tabela-comparar td {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(73, 214, 255, 0.1);
+  text-align: left;
+  vertical-align: top;
+}
+
+.tabela-comparar thead th {
+  color: var(--cor-destaque-claro);
+  font-size: 1.02rem;
+}
+
+.tabela-comparar tbody th {
+  width: 26%;
+  color: var(--cor-texto-apagado);
+  font-weight: 600;
+}
+
+.tabela-comparar td {
+  width: 37%;
+  color: var(--cor-texto-suave);
+}
+
+.fontes {
+  margin: 14px 0 0;
+  color: var(--cor-texto-apagado) !important;
+  font-size: 0.84rem;
+}
+
+/* ---------- Balança ---------- */
+#bloco-peso {
+  margin-top: 16px;
+}
+
+.peso {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: var(--cor-texto-suave);
+}
+
+.peso input {
+  width: 88px;
+  padding: 8px 10px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 10px;
+  background: var(--cor-painel-forte);
+  color: var(--cor-texto);
+  font: inherit;
+  font-weight: 700;
+  text-align: center;
+}
+
+.pesos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.peso-astro {
+  display: grid;
+  gap: 2px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(73, 214, 255, 0.07);
+}
+
+.peso-nome {
+  color: var(--cor-texto-apagado);
+  font-size: 0.9rem;
+}
+
+.peso-astro strong {
+  font-size: 1.6rem;
+}
+
+.peso-astro small {
+  color: var(--cor-texto-apagado);
+  font-size: 0.82rem;
+}
+
+.nota-peso {
+  margin: 14px 0 0;
+  font-size: 0.9rem;
+}
+
+/* ---------- Celular ---------- */
+@media (max-width: 560px) {
+  .escolhas {
+    grid-template-columns: 1fr auto;
+  }
+
+  .escolhas .escolha:last-child {
+    grid-column: 1;
+  }
+
+  .trocar {
+    grid-row: 1 / span 2;
+    grid-column: 2;
+    align-self: center;
+  }
+
+  .palco canvas {
+    height: 300px;
+  }
+
+  .rotulo strong {
+    font-size: 0.9rem;
+  }
+
+  .tabela-comparar {
+    font-size: 0.88rem;
+  }
+
+  .tabela-comparar th,
+  .tabela-comparar td {
+    padding: 8px 6px;
+  }
+}

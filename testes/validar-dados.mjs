@@ -99,6 +99,16 @@ for (const p of cat.PLANETAS) {
   if (ua) teste("Ficha", `${p.nome}: distância da ficha (${ua} UA) × órbita`, ua / p.orbita.elementos.a, 1, 0.02);
 }
 
+// Diâmetro e gravidade da ficha (texto) × números usados no 3D e no comparador.
+const numeroDaFicha = (objeto, campo) => {
+  const linha = objeto.ficha?.find(([c]) => c === campo);
+  return linha ? Number(linha[1].match(/^≈?\s*([\d.,]+)/)[1].replace(/\./g, "").replace(",", ".")) : null;
+};
+for (const o of [cat.SOL, ...cat.PLANETAS, cat.LUA]) {
+  teste("Ficha", `${o.nome}: diâmetro da ficha × raio do modelo`, numeroDaFicha(o, "Diâmetro") / (2 * o.raioKm), 1, 0.01);
+  teste("Ficha", `${o.nome}: gravidade da ficha × comparador`, numeroDaFicha(o, "Gravidade") / o.gravidade, 1, 0.01);
+}
+
 teste("Luz", "Luz do Sol até a Terra (1 UA) ≈ 499 s", astro.KM_POR_UA / astro.VELOCIDADE_LUZ_KM_S, 499.0, 0.5, " s");
 teste("Luz", "1 ano-luz ≈ 63.241 UA", astro.UA_POR_ANO_LUZ, 63_241, 1, " UA");
 
@@ -111,6 +121,55 @@ teste("Luz", "1 ano-luz ≈ 63.241 UA", astro.UA_POR_ANO_LUZ, 63_241, 1, " UA");
   teste("Quiz", "Luz do Sol até Netuno ≈ 4,2 h", horasNetuno, 4.17, 0.1, " h");
   const volumeJupiter = (planeta("jupiter").raioKm / planeta("terra").raioKm) ** 3;
   verdadeiro("Quiz", `Mais de 1.300 Terras cabem em Júpiter (${Math.round(volumeJupiter)})`, volumeJupiter > 1300);
+}
+
+// ---------- 3b. Rotação e eixos (modelo da IAU) ----------
+// Ponto subsolar: onde o Sol está a pino. Ao meio-dia UTC ele fica perto do
+// meridiano de Greenwich (a diferença é a equação do tempo); a latitude é a
+// declinação do Sol. Confere juntos a órbita, o polo e o meridiano da Terra.
+{
+  const terra = planeta("terra");
+  const subsolar = (iso) => {
+    const data = new Date(iso);
+    const o = astro.orientacaoIau(terra.rotacao, data);
+    const p = astro.posicaoHeliocentrica(terra, data);
+    const r = Math.hypot(p.x, p.y, p.z);
+    const sol = { x: -p.x / r, y: -p.y / r, z: -p.z / r };
+    const escalar = (a, b) => a.x * b.x + a.y * b.y + a.z * b.z;
+    return {
+      longitude: Math.atan2(escalar(sol, o.leste), escalar(sol, o.meridiano)) * 180 / Math.PI,
+      latitude: Math.asin(escalar(sol, o.polo)) * 180 / Math.PI
+    };
+  };
+  const junho = subsolar("2026-06-21T12:00:00Z");
+  teste("Rotação", "Solstício de jun/2026, 12h UTC: Sol a pino perto de Greenwich (longitude ≈ +0,4°)", junho.longitude, 0.4, 1, "°");
+  teste("Rotação", "Solstício de jun/2026: Sol a pino no Trópico de Câncer (+23,44°)", junho.latitude, 23.44, 0.1, "°");
+  const marco = subsolar("2026-03-20T18:00:00Z");
+  teste("Rotação", "Equinócio de mar/2026, 18h UTC: Sol a pino na longitude ≈ −88,2°", marco.longitude, -88.2, 1, "°");
+  teste("Rotação", "Equinócio de mar/2026: Sol a pino no equador", marco.latitude, 0, 0.1, "°");
+}
+for (const p of cat.PLANETAS) {
+  teste("Rotação", `${p.nome}: inclinação do eixo pelo polo da IAU × NASA (${p.rotacao.inclinacao}°)`, astro.inclinacaoDoEixo(p), p.rotacao.inclinacao, 0.5, "°");
+}
+
+// ---------- 3c. Comparador e texturas ----------
+{
+  const estrelas = cat.ESTRELAS.filter((e) => e.raioSolar);
+  verdadeiro("Comparador", `${estrelas.length} estrelas com raio e temperatura`, estrelas.length >= 10
+    && estrelas.every((e) => e.raioSolar > 0 && e.temperaturaK > 2000 && e.temperaturaK < 50_000));
+  const betelgeuse = cat.ESTRELAS.find((e) => e.id === "betelgeuse");
+  const volume = betelgeuse.raioSolar ** 3;
+  verdadeiro("Comparador", `Cabem centenas de milhões de Sóis em Betelgeuse (${Math.round(volume / 1e6)} milhões)`, volume > 1e8);
+  const proxima = cat.ESTRELAS.find((e) => e.id === "proxima");
+  verdadeiro("Comparador", "Proxima Centauri é menor que o Sol e maior que Júpiter",
+    proxima.raioSolar < 1 && proxima.raioSolar * cat.SOL.raioKm > planeta("jupiter").raioKm);
+  const astros3d = readFileSync(join(raiz, "js/explorador/astros3d.js"), "utf8");
+  const arquivos = [...astros3d.matchAll(/"([a-z-]+\.(?:webp|png))"/g)].map((m) => m[1]);
+  for (const arquivo of arquivos) {
+    let existe = true;
+    try { readFileSync(join(raiz, "img/texturas", arquivo)); } catch { existe = false; }
+    verdadeiro("Comparador", `Textura img/texturas/${arquivo} existe`, existe);
+  }
 }
 
 // ---------- 4. Lua ----------

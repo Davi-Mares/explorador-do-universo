@@ -8,6 +8,7 @@ import * as THREE from "three";
 import * as astro from "./astronomia.js";
 import { NIVEIS, VELOCIDADES, MISSOES, perguntaDoObjeto } from "./catalogo.js";
 import { criarNivelSolar, criarNivelEstrelas, criarNivelGalaxia } from "./cenas.js";
+import { definirAnisotropia } from "./astros3d.js";
 import * as progresso from "./progresso.js";
 
 const $ = (id) => document.getElementById(id);
@@ -29,6 +30,7 @@ try {
 }
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 renderer.setClearColor(0x02040b, 1);
+definirAnisotropia(renderer.capabilities.getMaxAnisotropy());
 
 const camera = new THREE.PerspectiveCamera(60, 1, 1e-9, 1e9);
 camera.rotation.order = "YXZ";
@@ -50,7 +52,11 @@ let marcadores = [];
 const BUILDERS = {
   solar: () => criarNivelSolar(dataSimulada),
   estrelas: () => criarNivelEstrelas(),
-  galaxia: () => criarNivelGalaxia()
+  galaxia: () => {
+    const galaxia = criarNivelGalaxia();
+    galaxia.definirGiro(!movimentoReduzido);
+    return galaxia;
+  }
 };
 
 function obterNivel(id) {
@@ -140,8 +146,15 @@ function entrarNoNivel(id, { alvo = null } = {}) {
     botao.classList.toggle("ativo", ativo);
     botao.setAttribute("aria-pressed", String(ativo));
   });
-  $("botao-opcoes").hidden = !nivel.temTempo;
-  if (!nivel.temTempo) fecharOpcoes();
+  const temOpcoes = Boolean(nivel.temTempo || nivel.temGiro);
+  $("botao-opcoes").hidden = !temOpcoes;
+  if (!temOpcoes) fecharOpcoes();
+  $("opcoes-solar").hidden = !nivel.temTempo;
+  $("opcoes-galaxia").hidden = !nivel.temGiro;
+  const rotulo = nivel.temGiro ? "Rotação da galáxia" : "Tempo e tamanhos";
+  $("botao-opcoes").setAttribute("aria-label", rotulo);
+  $("botao-opcoes").title = rotulo;
+  if (nivel.temGiro) atualizarControleGiro();
   document.body.dataset.nivel = id;
 
   montarMarcadores();
@@ -773,6 +786,27 @@ document.querySelectorAll("#controle-tamanho [data-tamanho]").forEach((botao) =>
   botao.addEventListener("click", () => mudarTamanho(botao.dataset.tamanho));
 });
 
+// ---------- Rotação da galáxia ----------
+
+function atualizarControleGiro() {
+  const galaxia = niveis.galaxia;
+  if (!galaxia) return;
+  document.querySelectorAll("#controle-giro [data-giro]").forEach((botao) => {
+    botao.setAttribute("aria-pressed", String((botao.dataset.giro === "sim") === galaxia.girando));
+  });
+  const anos = galaxia.anosDeGiro;
+  $("giro-tempo").textContent = anos < 1e6
+    ? "Cada segundo aqui equivale a ≈ 1,3 milhão de anos."
+    : `Desde que você chegou, passaram ≈ ${astro.formatarGrande(anos)} de anos.`;
+}
+
+document.querySelectorAll("#controle-giro [data-giro]").forEach((botao) => {
+  botao.addEventListener("click", () => {
+    obterNivel("galaxia").definirGiro(botao.dataset.giro === "sim");
+    atualizarControleGiro();
+  });
+});
+
 // ---------- Contadores e painéis ----------
 
 function atualizarContadores() {
@@ -862,7 +896,7 @@ function quadro(agora) {
   if (nivel.temTempo && escalaTempo) {
     dataSimulada = new Date(dataSimulada.getTime() + dt * 1000 * escalaTempo);
   }
-  nivel.atualizar(dataSimulada, camera);
+  nivel.atualizar(dataSimulada, camera, dt);
   mover(dt);
   verificarDescobertas();
 
@@ -875,6 +909,7 @@ function quadro(agora) {
     atualizarPainelAlvo();
     if (!$("painel-destinos").hidden) atualizarDestinos();
     if (nivel.temTempo) $("data-simulada").textContent = formatoData.format(dataSimulada);
+    if (nivel.temGiro && !$("painel-opcoes").hidden) atualizarControleGiro();
   }
 
   renderer.render(nivel.cena, camera);

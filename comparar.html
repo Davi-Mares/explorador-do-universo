@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Comparar | Explorador do Universo</title>
+  <meta name="description" content="Compare planetas, a Lua, o Sol e estrelas lado a lado, na mesma escala: tamanho, gravidade, dia, ano, distância e temperatura.">
+  <meta name="theme-color" content="#02040b">
+
+  <link rel="icon" href="img/icones/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="img/icones/apple-touch-icon.png">
+  <link rel="manifest" href="pwa/manifest.webmanifest">
+
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/site.css">
+  <link rel="stylesheet" href="css/comparar.css">
+
+  <script type="importmap">
+    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+  </script>
+</head>
+<body class="site">
+  <a class="pular-para-conteudo" href="#conteudo">Pular para o conteúdo</a>
+  <header class="topo">
+    <a class="marca" href="index.html">🔭 Explorador do Universo</a>
+    <nav aria-label="Navegação principal">
+      <a href="index.html">Início</a>
+      <a href="explorador.html">Explorar</a>
+      <a href="comparar.html" aria-current="page">Comparar</a>
+      <a href="diario.html">Diário de bordo</a>
+      <a href="sobre.html">Sobre</a>
+    </nav>
+  </header>
+
+  <main id="conteudo" class="pagina comparar">
+    <h1>⚖️ Comparar</h1>
+    <p class="subtitulo">Escolha dois astros e veja os dois lado a lado, na mesma escala.</p>
+
+    <form class="escolhas" id="escolhas" onsubmit="return false">
+      <label class="escolha">
+        <span>Astro 1</span>
+        <select id="astro-a"></select>
+      </label>
+      <button type="button" class="botao trocar" id="trocar" aria-label="Trocar os dois astros de lugar" title="Trocar">⇄</button>
+      <label class="escolha">
+        <span>Astro 2</span>
+        <select id="astro-b"></select>
+      </label>
+    </form>
+
+    <section class="palco" aria-label="Os dois astros na mesma escala">
+      <canvas id="tela-comparar" aria-hidden="true"></canvas>
+      <div class="rotulos" id="rotulos" aria-hidden="true"></div>
+      <p class="sem-3d" id="sem-3d" hidden>Não deu para abrir a visão 3D neste aparelho, mas a comparação abaixo funciona normalmente.</p>
+    </section>
+    <p class="nota-escala" id="nota-escala" aria-live="polite"></p>
+
+    <section class="destaques" id="destaques" aria-live="polite"></section>
+
+    <section class="bloco">
+      <h2>Lado a lado</h2>
+      <div class="tabela-rolagem">
+        <table class="tabela-comparar" id="tabela"></table>
+      </div>
+      <p class="fontes">Dados: NASA (planetas, Lua e Sol) e medidas publicadas das estrelas. Mapas das superfícies: Solar System Scope (CC BY 4.0) e NASA.</p>
+    </section>
+
+    <section class="bloco" id="bloco-peso">
+      <h2>Quanto a balança marcaria?</h2>
+      <label class="peso">
+        Na Terra, a balança marca
+        <input type="number" id="peso" value="40" min="1" max="500" step="1" inputmode="numeric">
+        kg
+      </label>
+      <div class="pesos" id="pesos"></div>
+      <p class="nota-peso">A sua massa é a mesma em qualquer lugar. O que muda é a força com que a gravidade puxa você, e é essa força que a balança mede.</p>
+    </section>
+  </main>
+
+  <footer class="rodape">
+    <p>MVP do TCC de Sistemas de Informação · UNEMAT, campus Sinop · Davi Alves Mares</p>
+  </footer>
+
+  <script type="module" src="js/comparar.js"></script>
+  <script src="js/site.js" defer></script>
+</body>
+</html>

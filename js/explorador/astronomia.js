@@ -201,6 +201,56 @@ export function equatorialParaEcliptica(arGraus, decGraus, distancia) {
   };
 }
 
+// ---------- Orientação dos astros (modelo da IAU) ----------
+
+const TT_MENOS_UTC_DIAS = 69.184 / 86_400; // 32,184 s + 37 segundos intercalares
+
+function vetorial(a, b) {
+  return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+}
+
+function equatorialParaEclipticoVetor([x, y, z]) {
+  const eps = OBLIQUIDADE_GRAUS * RAD;
+  return { x, y: Math.cos(eps) * y + Math.sin(eps) * z, z: -Math.sin(eps) * y + Math.cos(eps) * z };
+}
+
+/**
+ * Orientação de um astro pelo modelo da IAU (Archinal et al., 2018): polo
+ * norte em (α0, δ0) e meridiano principal no ângulo W = W0 + Ẇ·d, medido a
+ * partir do nó do equador do astro no equador celeste (d = dias desde J2000).
+ * rotacao = { poloAr, poloDec, meridiano (W0), horas (período; negativo =
+ * gira ao contrário) }. Devolve vetores unitários eclípticos: o polo, a
+ * direção da longitude 0° e a da longitude 90° leste.
+ */
+export function orientacaoIau(rotacao, data) {
+  const dias = dataJuliana(data) - 2_451_545.0 + TT_MENOS_UTC_DIAS;
+  const w = normalizarGraus(rotacao.meridiano + (360 / (rotacao.horas / 24)) * dias) * RAD;
+  const a = rotacao.poloAr * RAD, d = rotacao.poloDec * RAD;
+  const polo = [Math.cos(d) * Math.cos(a), Math.cos(d) * Math.sin(a), Math.sin(d)];
+  const no = [-Math.sin(a), Math.cos(a), 0];
+  const depoisDoNo = vetorial(polo, no);
+  const meridiano = no.map((v, i) => v * Math.cos(w) + depoisDoNo[i] * Math.sin(w));
+  return {
+    polo: equatorialParaEclipticoVetor(polo),
+    meridiano: equatorialParaEclipticoVetor(meridiano),
+    leste: equatorialParaEclipticoVetor(vetorial(polo, meridiano))
+  };
+}
+
+/**
+ * Inclinação do eixo em relação à órbita (graus), pelo polo da IAU e pelos
+ * elementos orbitais. Para quem gira ao contrário, usa o polo "da mão
+ * direita" (oposto ao da IAU), como nas tabelas da NASA.
+ */
+export function inclinacaoDoEixo(planeta, data = new Date(Date.UTC(2000, 0, 1, 12))) {
+  const { I, O } = elementosNaData(planeta, data);
+  const normal = [Math.sin(I * RAD) * Math.sin(O * RAD), -Math.sin(I * RAD) * Math.cos(O * RAD), Math.cos(I * RAD)];
+  const p = equatorialParaEcliptica(planeta.rotacao.poloAr, planeta.rotacao.poloDec, 1);
+  const cosseno = Math.max(-1, Math.min(1, p.x * normal[0] + p.y * normal[1] + p.z * normal[2]));
+  const angulo = Math.acos(cosseno) / RAD;
+  return planeta.rotacao.horas < 0 ? 180 - angulo : angulo;
+}
+
 /**
  * Posição galactocêntrica (mesma unidade de d) de um objeto com longitude e
  * latitude galácticas l, b (graus), visto do Sol. O centro da galáxia fica na

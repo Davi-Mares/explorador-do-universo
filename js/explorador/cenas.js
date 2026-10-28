@@ -17,7 +17,7 @@ import {
   SOL, PLANETAS, LUA, VOYAGER, ESTRELAS, SOL_MAGNITUDE_ABSOLUTA,
   DIRECAO_CENTRO_GALAXIA, GALAXIA, OBJETOS_GALAXIA, corDaEstrela
 } from "./catalogo.js";
-import { texturaDoAstro, texturaDosAneis, texturaDeBrilho } from "./texturas.js";
+import { criarAstro, orientarPelaIau, texturaDeBrilho } from "./astros3d.js";
 
 const EIXO_Y = new THREE.Vector3(0, 1, 0);
 
@@ -193,65 +193,38 @@ function criarCorpo(objeto, extras = {}) {
 // ===========================================================================
 
 const AMPLIACAO = { planetas: 500, sol: 10 };
+/** Deriva das nuvens em relação ao chão (ventos de oeste): ≈ 8° por dia. */
+const DERIVA_NUVENS_RAD_POR_DIA = (8 * Math.PI) / 180;
+/** Tamanho aparente (raio/distância) a partir do qual as texturas são carregadas. */
+const TAMANHO_PARA_TEXTURA = 0.0015;
 
 export function criarNivelSolar(dataInicial) {
   const cena = new THREE.Scene();
   const materiaisDePontos = [];
   const ua = astro.KM_POR_UA;
 
-  cena.add(new THREE.AmbientLight(0xffffff, 0.05));
-  const luz = new THREE.PointLight(0xffffff, 2.6, 0, 0);
+  cena.add(new THREE.AmbientLight(0xffffff, 0.04));
+  const luz = new THREE.PointLight(0xffffff, 3, 0, 0);
   cena.add(luz);
 
-  const geometriaEsfera = new THREE.SphereGeometry(1, 64, 32);
-
-  /** Grupo orientado pelo eixo do astro; a malha gira dentro dele. */
-  function montarAstro(objeto, { basico = false } = {}) {
-    const grupo = new THREE.Group();
-    const material = basico
-      ? new THREE.MeshBasicMaterial({ map: texturaDoAstro(objeto.id) })
-      : new THREE.MeshStandardMaterial({ map: texturaDoAstro(objeto.id), roughness: 1, metalness: 0 });
-    const malha = new THREE.Mesh(geometriaEsfera, material);
-    grupo.add(malha);
-    if (objeto.rotacao) {
-      const polo = vetor(astro.equatorialParaEcliptica(objeto.rotacao.poloAr, objeto.rotacao.poloDec, 1)).normalize();
-      grupo.quaternion.setFromUnitVectors(EIXO_Y, polo);
-    }
-    cena.add(grupo);
-    return { grupo, malha };
+  /** Astro 3D (superfície, atmosfera, anéis) de um corpo. */
+  function montar(corpo, segmentos = 96) {
+    corpo.astro = criarAstro(corpo.objeto, { segmentos });
+    corpo.malha = corpo.astro.grupo;
+    cena.add(corpo.malha);
+    return corpo;
   }
 
   // --- Sol ---
-  const sol = criarCorpo(SOL, { raioReal: SOL.raioKm / ua });
-  const astroSol = montarAstro({ ...SOL, rotacao: { poloAr: 286.13, poloDec: 63.87, horas: 609.12 } }, { basico: true });
-  sol.malha = astroSol.grupo;
-  sol.girar = astroSol.malha;
-  sol.rotacaoHoras = 609.12;
-  const brilhoPerto = brilhoSprite("#ffd9a0", 1);
+  const sol = montar(criarCorpo(SOL, { raioReal: SOL.raioKm / ua }));
+  sol.astro.carregar();
+  const brilhoPerto = brilhoSprite("#ffe2b0", 1, { opacidade: 0.75 });
   const brilhoLonge = brilhoSprite("#fff1d6", 0.045, { atenuar: false });
   cena.add(brilhoPerto, brilhoLonge);
 
   // --- Planetas ---
   const planetas = PLANETAS.map((planeta) => {
-    const corpo = criarCorpo(planeta, { raioReal: planeta.raioKm / ua, rotacaoHoras: planeta.rotacao.horas });
-    const { grupo, malha } = montarAstro(planeta);
-    corpo.malha = grupo;
-    corpo.girar = malha;
-
-    if (planeta.aneis) {
-      const geometria = new THREE.RingGeometry(planeta.aneis.interno, planeta.aneis.externo, 160, 1);
-      const posicao = geometria.attributes.position, uv = geometria.attributes.uv;
-      for (let i = 0; i < posicao.count; i++) {
-        const r = Math.hypot(posicao.getX(i), posicao.getY(i));
-        uv.setXY(i, (r - planeta.aneis.interno) / (planeta.aneis.externo - planeta.aneis.interno), 0.5);
-      }
-      geometria.rotateX(-Math.PI / 2); // do plano XY para o plano do equador (normal = eixo do planeta)
-      const aneis = new THREE.Mesh(geometria, new THREE.MeshStandardMaterial({
-        map: texturaDosAneis(), transparent: true, side: THREE.DoubleSide, roughness: 1, depthWrite: false
-      }));
-      grupo.add(aneis);
-    }
-
+    const corpo = montar(criarCorpo(planeta, { raioReal: planeta.raioKm / ua }));
     // Órbita (elipse real calculada pelos elementos keplerianos).
     const pontosDaOrbita = astro.pontosDaOrbita(planeta, dataInicial, 360).map(vetor);
     const orbita = new THREE.LineLoop(
@@ -264,9 +237,9 @@ export function criarNivelSolar(dataInicial) {
   const terra = planetas.find((p) => p.id === "terra");
 
   // --- Lua ---
-  const lua = criarCorpo(LUA, { raioReal: LUA.raioKm / ua, pai: "terra" });
-  const astroLua = montarAstro(LUA);
-  lua.malha = astroLua.grupo;
+  const lua = montar(criarCorpo(LUA, { raioReal: LUA.raioKm / ua, pai: "terra" }), 64);
+  // A face visível (longitude 0°) fica em +Z, que o lookAt aponta para a Terra.
+  lua.astro.superficie.rotation.y = -Math.PI / 2;
 
   // --- Voyager 1 e a fronteira do vento solar ---
   const voyager = criarCorpo(VOYAGER, { raioReal: 0, raioExibido: 1e-9, raioDescoberta: 2, distanciaChegada: 0.01 });
@@ -309,28 +282,38 @@ export function criarNivelSolar(dataInicial) {
     // No modo ampliado a Lua ficaria dentro da Terra ampliada: ela some.
     lua.malha.visible = modo !== "ampliado";
     lua.oculto = modo === "ampliado";
-    brilhoPerto.scale.setScalar(sol.raioExibido * 9);
+    brilhoPerto.scale.setScalar(sol.raioExibido * 6);
   }
   aplicarTamanho("real");
 
   const J2000 = Date.UTC(2000, 0, 1, 12);
 
-  function atualizar(data) {
+  function atualizar(data, camera) {
     for (const corpo of planetas) corpo.posicao.copy(vetor(astro.posicaoHeliocentrica(corpo.objeto, data)));
     const geo = astro.posicaoLuaGeocentrica(data);
     lua.posicao.copy(terra.posicao).add(vetor({ x: geo.x / ua, y: geo.y / ua, z: geo.z / ua }));
     voyager.posicao.copy(vetor(astro.posicaoSondaHeliocentrica(VOYAGER, data)));
 
-    const horas = (data.getTime() - J2000) / 3_600_000;
+    // Eixos e rotação pelo modelo da IAU: o lado da Terra virado para o Sol
+    // é o que está de dia agora (na data simulada).
     for (const corpo of [sol, ...planetas]) {
       corpo.malha.position.copy(corpo.posicao);
-      if (corpo.girar && corpo.rotacaoHoras) {
-        corpo.girar.rotation.y = ((horas / corpo.rotacaoHoras) % 1) * Math.PI * 2;
-      }
+      orientarPelaIau(corpo.malha, corpo.objeto.rotacao, data);
     }
     lua.malha.position.copy(lua.posicao);
     // A Lua mostra sempre a mesma face para a Terra.
     lua.malha.lookAt(terra.posicao);
+    const dias = (data.getTime() - J2000) / 86_400_000;
+    if (terra.astro.nuvens) terra.astro.nuvens.rotation.y = (dias * DERIVA_NUVENS_RAD_POR_DIA) % (Math.PI * 2);
+
+    for (const corpo of [...planetas, lua]) {
+      corpo.astro.dirSol.copy(corpo.posicao).negate().normalize();
+      // Texturas só quando o astro aparece maior que um pontinho (economiza memória).
+      if (camera && !corpo.astro.pedido && !corpo.oculto
+        && corpo.raioExibido / Math.max(camera.position.distanceTo(corpo.posicao), 1e-12) > TAMANHO_PARA_TEXTURA) {
+        corpo.astro.carregar();
+      }
+    }
     marcaVoyager.position.copy(voyager.posicao);
   }
   atualizar(dataInicial);
@@ -359,10 +342,17 @@ export function criarNivelSolar(dataInicial) {
     get modoTamanho() { return modoTamanho; },
     atualizar,
     inicio,
-    /** De onde ver um astro ao saltar até ele: do lado iluminado. */
+    /**
+     * De onde ver um astro ao saltar até ele: do lado iluminado, um pouco
+     * acima do equador no hemisfério virado para o Sol (em Saturno, assim
+     * se vê a face dos anéis que está recebendo luz).
+     */
     pontoDeVista(corpo) {
       if (corpo === sol || corpo === voyager) return null;
-      return sol.posicao.clone().sub(corpo.posicao).normalize().applyAxisAngle(EIXO_Y, 0.35).add(new THREE.Vector3(0, 0.25, 0)).normalize();
+      const paraOSol = sol.posicao.clone().sub(corpo.posicao).normalize();
+      const polo = EIXO_Y.clone().applyQuaternion(corpo.malha.quaternion);
+      const lado = Math.sign(paraOSol.dot(polo)) || 1;
+      return paraOSol.applyAxisAngle(EIXO_Y, 0.35).addScaledVector(polo, 0.3 * lado).normalize();
     }
   };
 }
@@ -563,12 +553,24 @@ const RAIOS_GALAXIA = {
   andromeda: { descoberta: 420, chegada: 230 }
 };
 
+/**
+ * Rotação da galáxia, muito acelerada: uma volta em 3 minutos (de verdade, o
+ * Sol leva ≈ 230 milhões de anos). Tudo gira junto, como um disco rígido —
+ * uma simplificação: na galáxia real cada estrela gira no próprio ritmo.
+ */
+export const GIRO_GALAXIA = { segundosPorVolta: 180, anosPorVolta: 230e6 };
+const GIRO_RAD_POR_SEGUNDO = (2 * Math.PI) / GIRO_GALAXIA.segundosPorVolta;
+/** Fora do disco (não giram com ele): as Nuvens de Magalhães e Andrômeda. */
+const FORA_DO_DISCO = new Set(["lmc", "smc", "andromeda"]);
+
 export function criarNivelGalaxia() {
   const cena = new THREE.Scene();
   const materiaisDePontos = [];
   const r0 = GALAXIA.distanciaSolCentroKly;
+  const disco = new THREE.Group();
+  cena.add(disco);
 
-  cena.add(gerarGalaxia(materiaisDePontos));
+  disco.add(gerarGalaxia(materiaisDePontos));
 
   const corpos = OBJETOS_GALAXIA.map((objeto) => {
     const posicao = objeto.centro
@@ -577,18 +579,20 @@ export function criarNivelGalaxia() {
     const raios = RAIOS_GALAXIA[objeto.id];
     const corpo = criarCorpo(objeto, { raioExibido: 0.01, raioDescoberta: raios.descoberta, distanciaChegada: raios.chegada });
     corpo.posicao.copy(posicao);
+    corpo.posicaoNoDisco = posicao.clone();
+    corpo.gira = !FORA_DO_DISCO.has(objeto.id);
     return corpo;
   });
   const porId = (id) => corpos.find((c) => c.id === id);
 
-  // Marcas visuais de cada objeto.
+  // Marcas visuais de cada objeto (as do disco giram com ele).
   for (const corpo of corpos) {
     const tamanho = { "sgr-a": 1.6, lmc: 9, smc: 6, andromeda: 60, "sol-galaxia": 0.25 }[corpo.id] || 0.35;
     const sprite = brilhoSprite(corpo.cor, tamanho, { opacidade: corpo.id === "sol-galaxia" ? 1 : 0.85 });
     sprite.position.copy(corpo.posicao);
-    cena.add(sprite);
+    (corpo.gira ? disco : cena).add(sprite);
   }
-  cena.add(brilhoSprite("#ffd27a", 0.012, { atenuar: false }).translateX(porId("sol-galaxia").posicao.x));
+  disco.add(brilhoSprite("#ffd27a", 0.012, { atenuar: false }).translateX(porId("sol-galaxia").posicao.x));
 
   cena.add(nuvemDeGalaxia(porId("lmc").posicao, 16, 3500, "#cfd8ff", 41, materiaisDePontos));
   cena.add(nuvemDeGalaxia(porId("smc").posicao, 9.5, 1800, "#c4ccff", 42, materiaisDePontos));
@@ -598,6 +602,21 @@ export function criarNivelGalaxia() {
     const linhaDeVisada = andromeda.clone().sub(porId("sol-galaxia").posicao).normalize();
     const normal = linhaDeVisada.clone().applyAxisAngle(new THREE.Vector3(1, 0, 0), (77 * Math.PI) / 180);
     cena.add(nuvemDeGalaxia(andromeda, 110, 14000, "#e6dcff", 43, materiaisDePontos, { disco: true, normal }));
+  }
+
+  // Giro no sentido horário visto do polo norte galáctico (+Y da cena).
+  let angulo = 0;
+  let girando = true;
+  let anosDeGiro = 0;
+  function atualizar(_data, _camera, dt = 0) {
+    if (girando && dt > 0) {
+      angulo = (angulo - GIRO_RAD_POR_SEGUNDO * dt) % (Math.PI * 2);
+      anosDeGiro += (dt / GIRO_GALAXIA.segundosPorVolta) * GIRO_GALAXIA.anosPorVolta;
+    }
+    disco.rotation.y = angulo;
+    for (const corpo of corpos) {
+      if (corpo.gira) corpo.posicao.copy(corpo.posicaoNoDisco).applyAxisAngle(EIXO_Y, angulo);
+    }
   }
 
   function inicio() {
@@ -613,10 +632,14 @@ export function criarNivelGalaxia() {
     far: 2e5,
     temTempo: false,
     temTamanho: false,
+    temGiro: true,
+    get girando() { return girando; },
+    definirGiro(valor) { girando = Boolean(valor); },
+    get anosDeGiro() { return anosDeGiro; },
     unidadeKm: astro.KM_POR_ANO_LUZ * 1000,
     sol: porId("sol-galaxia"),
     descobrirAoEntrar: ["sol-galaxia"],
-    atualizar() {},
+    atualizar,
     inicio,
     pontoDeVista: () => null
   };

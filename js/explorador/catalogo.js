@@ -6,9 +6,10 @@
 //
 // Módulo puro: também é lido pelo script de validação (testes/).
 //
-// Fontes dos dados (resumo; detalhes em docs/MVP-TCC.md):
+// Fontes dos dados:
 // - Órbitas: Standish/JPL, elementos keplerianos aproximados (1800–2050).
-// - Raios e períodos: NASA Planetary Fact Sheet.
+// - Raios, períodos, gravidade e inclinação dos eixos: NASA Planetary Fact Sheet.
+// - Polos e meridianos: IAU WGCCRE (Archinal et al., 2018).
 // - Estrelas: coordenadas J2000 (SIMBAD) e distâncias por paralaxe
 //   (Hipparcos/Gaia); distâncias de supergigantes têm incerteza grande.
 // - Galáxia: R0 = 8,178 kpc (GRAVITY, 2019); coordenadas galácticas SIMBAD.
@@ -119,19 +120,24 @@ const ORBITAS = {
 };
 
 /**
- * Eixo de rotação: direção do polo norte (AR/Dec J2000, IAU WGCCRE) e
- * período de rotação em horas (negativo = gira "ao contrário").
+ * Rotação (IAU WGCCRE, Archinal et al., 2018): polo norte (AR/Dec J2000),
+ * meridiano principal em J2000 (W0, graus) e período em horas (negativo =
+ * gira "ao contrário"). "inclinacao" é a inclinação do eixo em relação à
+ * órbita (NASA Planetary Fact Sheet), usada no comparador.
  */
 const ROTACOES = {
-  mercurio: { poloAr: 281.01, poloDec: 61.41, horas: 1407.6 },
-  venus: { poloAr: 272.76, poloDec: 67.16, horas: -5832.5 },
-  terra: { poloAr: 0, poloDec: 90, horas: 23.934 },
-  marte: { poloAr: 317.68, poloDec: 52.89, horas: 24.623 },
-  jupiter: { poloAr: 268.06, poloDec: 64.50, horas: 9.925 },
-  saturno: { poloAr: 40.59, poloDec: 83.54, horas: 10.656 },
-  urano: { poloAr: 257.31, poloDec: -15.18, horas: -17.24 },
-  netuno: { poloAr: 299.36, poloDec: 43.46, horas: 16.11 }
+  mercurio: { poloAr: 281.01, poloDec: 61.41, meridiano: 329.5988, horas: 1407.6, inclinacao: 0.03 },
+  venus: { poloAr: 272.76, poloDec: 67.16, meridiano: 160.20, horas: -5832.5, inclinacao: 177.4 },
+  terra: { poloAr: 0, poloDec: 90, meridiano: 190.147, horas: 23.9344696, inclinacao: 23.44 },
+  marte: { poloAr: 317.68, poloDec: 52.89, meridiano: 176.630, horas: 24.6229, inclinacao: 25.19 },
+  jupiter: { poloAr: 268.06, poloDec: 64.50, meridiano: 284.95, horas: 9.925, inclinacao: 3.13 },
+  saturno: { poloAr: 40.59, poloDec: 83.54, meridiano: 38.90, horas: 10.656, inclinacao: 26.73 },
+  urano: { poloAr: 257.31, poloDec: -15.18, meridiano: 203.81, horas: -17.24, inclinacao: 97.77 },
+  netuno: { poloAr: 299.33, poloDec: 42.95, meridiano: 253.18, horas: 16.11, inclinacao: 28.32 }
 };
+
+/** Gravidade na superfície (no topo das nuvens, nos gigantes), m/s² — NASA. */
+const GRAVIDADES = { mercurio: 3.7, venus: 8.9, terra: 9.8, marte: 3.7, jupiter: 24.8, saturno: 10.4, urano: 8.7, netuno: 11.2 };
 
 export const SOL = {
   id: "sol",
@@ -139,6 +145,9 @@ export const SOL = {
   nivel: "solar",
   tipo: "Estrela anã amarela (G2V)",
   raioKm: 696_000,
+  gravidade: 274,
+  temperaturaK: 5772,
+  rotacao: { poloAr: 286.13, poloDec: 63.87, meridiano: 84.176, horas: 609.12, inclinacao: 7.25 },
   cor: "#ffd27a",
   imagem: "img/planetas/sol.webp",
   resumo: "A estrela no centro do Sistema Solar. Sozinho, o Sol tem 99,86% de toda a massa do sistema.",
@@ -196,7 +205,9 @@ export const PLANETAS = [
     resumo: "O planeta mais distante, com os ventos mais rápidos do Sistema Solar.",
     curiosidade: "A luz do Sol leva cerca de 4 horas para chegar a Netuno."
   }
-].map((planeta) => ({ ...planeta, nivel: "solar", orbita: ORBITAS[planeta.id], rotacao: ROTACOES[planeta.id] }));
+].map((planeta) => ({
+  ...planeta, nivel: "solar", orbita: ORBITAS[planeta.id], rotacao: ROTACOES[planeta.id], gravidade: GRAVIDADES[planeta.id]
+}));
 
 // ---------------------------------------------------------------------------
 // Ficha técnica e "saiba mais" do Sol e dos planetas (dados: NASA).
@@ -340,10 +351,26 @@ export const LUA = {
   nivel: "solar",
   tipo: "Satélite natural da Terra",
   raioKm: 1_737.4,
+  gravidade: 1.62,
+  // Gira uma vez a cada volta em torno da Terra (27,3 dias): mostra sempre a mesma face.
+  rotacao: { horas: 655.72, inclinacao: 6.68 },
+  periodoDias: 27.32,
   cor: "#bdbab4",
+  imagem: "img/planetas/lua.webp",
   distanciaMediaKm: 384_400,
   resumo: "O único lugar fora da Terra onde seres humanos já pisaram (missões Apollo, 1969–1972).",
-  curiosidade: "Todos os planetas do Sistema Solar, enfileirados, caberiam entre a Terra e a Lua."
+  curiosidade: "Todos os planetas do Sistema Solar, enfileirados, caberiam entre a Terra e a Lua.",
+  fonte: "https://science.nasa.gov/moon/facts/",
+  saibaMais: "A Lua provavelmente se formou há cerca de 4,5 bilhões de anos, com os destroços de uma colisão entre a Terra jovem e um corpo do tamanho de Marte. Ela gira em torno de si no mesmo tempo em que dá uma volta na Terra, por isso mostra sempre a mesma face. Sua gravidade é a principal causa das marés.",
+  ficha: [
+    ["Tipo", "Satélite natural"],
+    ["Diâmetro", "3.475 km (27% da Terra)"],
+    ["Distância da Terra", "384.400 km (média)"],
+    ["Rotação", "27,3 dias (sempre a mesma face para a Terra)"],
+    ["Volta na Terra", "27,3 dias"],
+    ["Temperatura", "−173 °C a 127 °C"],
+    ["Gravidade", "1,62 m/s² (17% da Terra)"]
+  ]
 };
 
 /**
@@ -369,6 +396,25 @@ export const VOYAGER = {
 // ar = ascensão reta "h m s"; dec = declinação "±g m s" (J2000);
 // mag = magnitude aparente vista da Terra (quanto menor, mais brilhante).
 // ---------------------------------------------------------------------------
+
+/**
+ * Raio (em raios do Sol) e temperatura da superfície (K) das estrelas do
+ * comparador: medidas publicadas (interferometria e modelos), arredondadas.
+ * Nas supergigantes a incerteza é grande (o raio de Betelgeuse varia).
+ */
+const TAMANHOS_ESTELARES = {
+  proxima: { raioSolar: 0.154, temperaturaK: 3040 },
+  "alfa-centauri": { raioSolar: 1.22, temperaturaK: 5790, nomeComparador: "Alfa Centauri A" },
+  sirius: { raioSolar: 1.71, temperaturaK: 9940, nomeComparador: "Sírius A" },
+  vega: { raioSolar: 2.6, temperaturaK: 9600 },
+  polux: { raioSolar: 9.1, temperaturaK: 4590 },
+  arcturo: { raioSolar: 25.4, temperaturaK: 4290 },
+  aldebara: { raioSolar: 44, temperaturaK: 3910 },
+  canopus: { raioSolar: 71, temperaturaK: 7400 },
+  rigel: { raioSolar: 79, temperaturaK: 12100 },
+  antares: { raioSolar: 680, temperaturaK: 3600 },
+  betelgeuse: { raioSolar: 764, temperaturaK: 3600 }
+};
 
 export const ESTRELAS = [
   {
@@ -551,7 +597,7 @@ export const ESTRELAS = [
     resumo: "O 'pé' de Órion, uma das estrelas mais luminosas que dá para ver a olho nu.",
     curiosidade: "Emite dezenas de milhares de vezes mais luz que o Sol."
   }
-].map((estrela) => ({ ...estrela, nivel: "estrelas" }));
+].map((estrela) => ({ ...estrela, ...TAMANHOS_ESTELARES[estrela.id], nivel: "estrelas" }));
 
 /** O Sol também aparece como estrela no nível 2 (magnitude absoluta 4,83). */
 export const SOL_MAGNITUDE_ABSOLUTA = 4.83;

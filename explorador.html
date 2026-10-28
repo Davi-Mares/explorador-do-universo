@@ -32,7 +32,7 @@
       <button type="button" class="nivel" data-nivel="galaxia"><span aria-hidden="true">🌌</span><span class="nivel-nome">Via Láctea</span></button>
     </nav>
     <div class="acoes-topo">
-      <button type="button" class="botao-topo botao-redondo" id="botao-opcoes" aria-controls="painel-opcoes" aria-expanded="false" aria-label="Tempo e tamanhos" title="Tempo e tamanhos">⚙️</button>
+      <button type="button" class="botao-topo botao-redondo" id="botao-opcoes" aria-controls="painel-opcoes" aria-expanded="false" aria-label="Opções do nível" title="Opções do nível">⚙️</button>
       <a class="botao-topo" id="link-diario" href="diario.html" title="Diário de bordo"><span aria-hidden="true">📔</span> <span id="contador-diario">0/0</span></a>
       <button type="button" class="botao-topo botao-redondo" id="botao-ajuda" aria-label="Como jogar" title="Como jogar">?</button>
     </div>
@@ -45,22 +45,33 @@
     <ul class="lista-destinos" id="lista-destinos"></ul>
   </aside>
 
-  <!-- Tempo e tamanhos (só no Sistema Solar) -->
+  <!-- Opções do nível: tempo e tamanhos (Sistema Solar) ou rotação (Via Láctea) -->
   <div class="painel painel-opcoes" id="painel-opcoes" hidden>
-    <p class="opcao-titulo">🗓️ <time id="data-simulada">—</time></p>
-    <div class="segmentado" id="controle-tempo" role="group" aria-label="Velocidade do tempo">
-      <button type="button" data-tempo="0">Pausar</button>
-      <button type="button" data-tempo="1">Real</button>
-      <button type="button" data-tempo="86400">1 dia/s</button>
-      <button type="button" data-tempo="31557600">1 ano/s</button>
-      <button type="button" data-tempo="hoje">Hoje</button>
+    <div id="opcoes-solar">
+      <p class="opcao-titulo">🗓️ <time id="data-simulada">—</time></p>
+      <div class="segmentado" id="controle-tempo" role="group" aria-label="Velocidade do tempo">
+        <button type="button" data-tempo="0">Pausar</button>
+        <button type="button" data-tempo="1">Real</button>
+        <button type="button" data-tempo="86400">1 dia/s</button>
+        <button type="button" data-tempo="31557600">1 ano/s</button>
+        <button type="button" data-tempo="hoje">Hoje</button>
+      </div>
+      <p class="opcao-titulo">🔍 Tamanhos</p>
+      <div class="segmentado" id="controle-tamanho" role="group" aria-label="Tamanho dos astros">
+        <button type="button" data-tamanho="real" aria-pressed="true">Reais</button>
+        <button type="button" data-tamanho="ampliado" aria-pressed="false">Ampliados</button>
+      </div>
+      <p class="nota-tamanho" id="nota-tamanho"></p>
     </div>
-    <p class="opcao-titulo">🔍 Tamanhos</p>
-    <div class="segmentado" id="controle-tamanho" role="group" aria-label="Tamanho dos astros">
-      <button type="button" data-tamanho="real" aria-pressed="true">Reais</button>
-      <button type="button" data-tamanho="ampliado" aria-pressed="false">Ampliados</button>
+    <div id="opcoes-galaxia" hidden>
+      <p class="opcao-titulo">🌀 Rotação da galáxia</p>
+      <div class="segmentado" id="controle-giro" role="group" aria-label="Rotação da galáxia">
+        <button type="button" data-giro="sim" aria-pressed="true">Girando</button>
+        <button type="button" data-giro="nao" aria-pressed="false">Parada</button>
+      </div>
+      <p class="nota-tamanho">Bem acelerada: de verdade, o Sol leva cerca de 230 milhões de anos para dar uma volta; aqui, uns 3 minutos. E aqui tudo gira junto, uma simplificação: na galáxia real cada estrela gira no próprio ritmo.</p>
+      <p class="nota-tamanho" id="giro-tempo"></p>
     </div>
-    <p class="nota-tamanho" id="nota-tamanho"></p>
   </div>
 
   <!-- Alvo selecionado -->

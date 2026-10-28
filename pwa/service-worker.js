@@ -6,29 +6,33 @@
 // visitantes recebam os arquivos novos (o cache antigo é apagado).
 // ---------------------------------------------------------------------------
 
-const VERSAO = "v4";
+const VERSAO = "v5";
 const CACHE = `explorador-do-universo-${VERSAO}`;
 
-// Arquivos baixados já na instalação.
+// Arquivos baixados já na instalação. As texturas dos outros planetas são
+// guardadas na primeira vez que aparecem (veja o "fetch" abaixo).
 const ARQUIVOS_ESSENCIAIS = [
   "./",
   "./index.html",
   "./explorador.html",
   "./diario.html",
   "./sobre.html",
+  "./comparar.html",
   "./pwa/manifest.webmanifest",
   "./css/base.css",
   "./css/site.css",
   "./css/explorador.css",
   "./css/diario.css",
+  "./css/comparar.css",
   "./js/site.js",
   "./js/diario.js",
+  "./js/comparar.js",
   "./js/explorador/astronomia.js",
   "./js/explorador/catalogo.js",
   "./js/explorador/cenas.js",
   "./js/explorador/main.js",
   "./js/explorador/progresso.js",
-  "./js/explorador/texturas.js",
+  "./js/explorador/astros3d.js",
   "./img/icones/apple-touch-icon.png",
   "./img/icones/favicon.svg",
   "./img/icones/icone-192.png",
@@ -43,6 +47,12 @@ const ARQUIVOS_ESSENCIAIS = [
   "./img/planetas/saturno.webp",
   "./img/planetas/urano.webp",
   "./img/planetas/netuno.webp",
+  "./img/planetas/lua.webp",
+  "./img/texturas/sol.webp",
+  "./img/texturas/terra.webp",
+  "./img/texturas/terra-noite.webp",
+  "./img/texturas/terra-nuvens.webp",
+  "./img/texturas/terra-oceano.webp",
   "./img/universo/andromeda.webp",
   "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
 ];

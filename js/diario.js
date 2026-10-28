@@ -48,6 +48,14 @@ function imagem(objeto) {
   return `<span class="orbe" style="--cor:${cor}" aria-hidden="true"></span>`;
 }
 
+/** Link para o comparador: com a Terra (planetas, Lua, Sol) ou com o Sol (estrelas). */
+function linkComparar(objeto) {
+  if (objeto.raioSolar) return `<a href="comparar.html?a=sol&b=${objeto.id}">⚖️ Comparar com o Sol</a>`;
+  if (objeto.id === "terra") return `<a href="comparar.html?a=terra&b=lua">⚖️ Comparar com a Lua</a>`;
+  if (objeto.raioKm && objeto.id !== "voyager") return `<a href="comparar.html?a=terra&b=${objeto.id}">⚖️ Comparar com a Terra</a>`;
+  return "";
+}
+
 function verbete(objeto, nivel) {
   const distancia = distanciaDoObjeto(objeto);
   const pergunta = perguntaDoObjeto(objeto.id);
@@ -84,6 +92,7 @@ function verbete(objeto, nivel) {
         <div class="verbete-acoes">
           ${desafio}
           <a href="explorador.html?nivel=${nivel.id}&alvo=${objeto.id}">🚀 Ver no Explorador</a>
+          ${linkComparar(objeto)}
         </div>
       </div>
     </article>`;
