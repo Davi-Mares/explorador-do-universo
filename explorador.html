@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Explorador 3D | Explorador do Universo</title>
+  <meta name="description" content="Navegue pelo Sistema Solar, pelas estrelas vizinhas e pela Via Láctea em escala real, como num jogo.">
+  <meta name="theme-color" content="#02040b">
+
+  <link rel="icon" href="img/icones/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="img/icones/apple-touch-icon.png">
+  <link rel="manifest" href="pwa/manifest.webmanifest">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Explorador do Universo">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:title" content="Explorador 3D | Explorador do Universo">
+  <meta property="og:description" content="Navegue pelo universo em escala real: planetas, estrelas vizinhas e a Via Láctea.">
+  <meta property="og:image" content="img/site/preview.jpg">
+
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/explorador.css">
+
+  <!-- Three.js (renderização 3D) vem da CDN; o service worker guarda uma cópia para uso offline. -->
+  <script type="importmap">
+    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+  </script>
+</head>
+<body class="pagina-explorador">
+  <canvas id="tela" class="tela" aria-label="Visão 3D do espaço. Use as teclas W, A, S, D para voar e arraste para olhar em volta."></canvas>
+  <div id="marcadores" class="marcadores"></div>
+
+  <!-- Barra do topo: marca, níveis de escala e atalhos -->
+  <header class="barra-topo">
+    <a class="marca" href="index.html" title="Voltar para o início">
+      <span aria-hidden="true">🔭</span> <span class="marca-texto">Explorador do Universo</span>
+    </a>
+    <nav class="niveis" aria-label="Nível de escala">
+      <button type="button" class="nivel" data-nivel="solar"><span aria-hidden="true">☀️</span> <span class="nivel-nome">Sistema Solar</span></button>
+      <button type="button" class="nivel" data-nivel="estrelas"><span aria-hidden="true">✨</span> <span class="nivel-nome">Estrelas vizinhas</span></button>
+      <button type="button" class="nivel" data-nivel="galaxia"><span aria-hidden="true">🌌</span> <span class="nivel-nome">Via Láctea</span></button>
+    </nav>
+    <div class="acoes-topo">
+      <button type="button" class="botao-topo" id="botao-missoes" aria-controls="painel-missoes" aria-expanded="false">
+        <span aria-hidden="true">🏅</span> <span class="rotulo-curto">Missões</span> <span class="contador" id="contador-missoes">0/0</span>
+      </button>
+      <a class="botao-topo" id="link-diario" href="diario.html">
+        <span aria-hidden="true">📔</span> <span class="rotulo-curto">Diário</span> <span class="contador" id="contador-diario">0/0</span>
+      </a>
+      <button type="button" class="botao-topo botao-redondo" id="botao-ajuda" aria-label="Como jogar">?</button>
+    </div>
+  </header>
+
+  <!-- Destinos do nível atual -->
+  <aside id="painel-destinos" class="painel painel-destinos" aria-labelledby="titulo-destinos">
+    <div class="painel-cabeca">
+      <h2 id="titulo-destinos">🧭 Destinos</h2>
+      <button type="button" class="botao-fechar so-celular" data-fechar="painel-destinos" aria-label="Fechar destinos">✕</button>
+    </div>
+    <p class="painel-nota" id="nota-nivel"></p>
+    <ul class="lista-destinos" id="lista-destinos"></ul>
+  </aside>
+  <button type="button" class="botao-flutuante so-celular" id="botao-destinos" aria-controls="painel-destinos">🧭 Destinos</button>
+
+  <!-- Alvo selecionado -->
+  <section id="painel-alvo" class="painel painel-alvo" aria-live="polite" hidden>
+    <div class="painel-cabeca">
+      <h2 id="alvo-nome">—</h2>
+      <button type="button" class="botao-fechar" id="botao-fechar-alvo" aria-label="Fechar alvo">✕</button>
+    </div>
+    <p class="alvo-tipo" id="alvo-tipo"></p>
+    <dl class="alvo-dados">
+      <div><dt>Distância de você</dt><dd id="alvo-distancia">—</dd></div>
+      <div><dt>A luz levaria</dt><dd id="alvo-luz">—</dd></div>
+      <div><dt>A Voyager 1 levaria</dt><dd id="alvo-voyager">—</dd></div>
+      <div><dt>Na sua velocidade</dt><dd id="alvo-eta">—</dd></div>
+    </dl>
+    <p class="alvo-resumo" id="alvo-resumo"></p>
+    <div class="alvo-acoes">
+      <button type="button" class="botao botao-principal" id="botao-ir">🚀 Ir (piloto automático)</button>
+      <button type="button" class="botao" id="botao-saltar" title="Teletransporte: chega na hora, mas não vale para missões de viagem">⚡ Saltar</button>
+      <button type="button" class="botao" id="botao-parar" hidden>⏹ Parar</button>
+    </div>
+    <a class="alvo-link" id="alvo-diario" href="diario.html">Ver no Diário de bordo →</a>
+  </section>
+
+  <!-- Tempo e tamanhos (só no Sistema Solar) -->
+  <div class="painel painel-sistema" id="painel-sistema">
+    <div class="grupo-controle" role="group" aria-label="Tempo da simulação">
+      <span class="controle-titulo">🗓️ <time id="data-simulada">—</time></span>
+      <div class="segmentado" id="controle-tempo">
+        <button type="button" data-tempo="0" title="Pausar">⏸️ Pausar</button>
+        <button type="button" data-tempo="1" title="Tempo real">1×</button>
+        <button type="button" data-tempo="86400" title="1 dia por segundo">1 dia/s</button>
+        <button type="button" data-tempo="2592000" title="30 dias por segundo">1 mês/s</button>
+        <button type="button" data-tempo="31557600" title="1 ano por segundo">1 ano/s</button>
+        <button type="button" data-tempo="hoje" title="Voltar para agora">Hoje</button>
+      </div>
+    </div>
+    <div class="grupo-controle" role="group" aria-label="Tamanho dos astros">
+      <span class="controle-titulo">🔍 Tamanhos</span>
+      <div class="segmentado" id="controle-tamanho">
+        <button type="button" data-tamanho="real" aria-pressed="true">Reais</button>
+        <button type="button" data-tamanho="ampliado" aria-pressed="false">Ampliados</button>
+      </div>
+    </div>
+    <p class="nota-tamanho" id="nota-tamanho"></p>
+  </div>
+
+  <!-- Painel da nave -->
+  <footer class="hud" aria-label="Painel da nave">
+    <div class="hud-velocidade">
+      <button type="button" class="botao-redondo" id="velocidade-menos" aria-label="Diminuir velocidade (tecla −)">−</button>
+      <div class="velocidade-texto">
+        <strong id="velocidade-nome">—</strong>
+        <span id="velocidade-valor">—</span>
+      </div>
+      <button type="button" class="botao-redondo" id="velocidade-mais" aria-label="Aumentar velocidade (tecla +)">+</button>
+    </div>
+    <div class="hud-info">
+      <span id="hud-posicao">—</span>
+      <span id="hud-percorrido">—</span>
+    </div>
+  </footer>
+
+  <!-- Controles de toque -->
+  <div class="controles-toque" aria-hidden="true">
+    <button type="button" data-tecla="frente" tabindex="-1">▲</button>
+    <button type="button" data-tecla="tras" tabindex="-1">▼</button>
+  </div>
+
+  <!-- Missões -->
+  <aside id="painel-missoes" class="painel painel-missoes" aria-labelledby="titulo-missoes" hidden>
+    <div class="painel-cabeca">
+      <h2 id="titulo-missoes">🏅 Missões</h2>
+      <button type="button" class="botao-fechar" data-fechar="painel-missoes" aria-label="Fechar missões">✕</button>
+    </div>
+    <ol class="lista-missoes" id="lista-missoes"></ol>
+  </aside>
+
+  <!-- Avisos rápidos (descobertas, missões) -->
+  <div class="avisos" id="avisos" aria-live="polite"></div>
+
+  <!-- Cartão de descoberta -->
+  <section class="cartao-descoberta" id="cartao-descoberta" aria-live="assertive" hidden>
+    <p class="descoberta-selo">✨ Nova descoberta</p>
+    <h2 id="descoberta-nome">—</h2>
+    <p id="descoberta-texto"></p>
+    <div class="alvo-acoes">
+      <button type="button" class="botao botao-principal" id="descoberta-desafio">🧠 Responder desafio</button>
+      <button type="button" class="botao" id="descoberta-fechar">Continuar</button>
+    </div>
+  </section>
+
+  <!-- Quiz -->
+  <dialog class="dialogo" id="dialogo-quiz" aria-labelledby="quiz-pergunta">
+    <form method="dialog" class="dialogo-conteudo">
+      <p class="descoberta-selo" id="quiz-selo">🧠 Desafio</p>
+      <h2 id="quiz-pergunta">—</h2>
+      <div class="quiz-opcoes" id="quiz-opcoes"></div>
+      <p class="quiz-explicacao" id="quiz-explicacao" hidden></p>
+      <div class="alvo-acoes">
+        <button type="submit" class="botao" id="quiz-fechar">Fechar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Ajuda -->
+  <dialog class="dialogo" id="dialogo-ajuda" aria-labelledby="ajuda-titulo">
+    <form method="dialog" class="dialogo-conteudo">
+      <h2 id="ajuda-titulo">🚀 Como explorar</h2>
+      <p>Você pilota uma nave por um universo <strong>em escala real</strong>: as distâncias, as posições dos planetas (calculadas para hoje) e as posições das estrelas são as de verdade. Por isso o espaço parece tão vazio — e ele é!</p>
+      <ul class="lista-ajuda">
+        <li><kbd>W</kbd> <kbd>S</kbd> ou <kbd>↑</kbd> <kbd>↓</kbd>: frente e ré · <kbd>A</kbd> <kbd>D</kbd>: para os lados · <kbd>R</kbd> <kbd>F</kbd>: sobe e desce</li>
+        <li><strong>Arraste</strong> a tela para olhar em volta (no celular, arraste e use ▲ ▼).</li>
+        <li><kbd>+</kbd> <kbd>−</kbd> ou a rodinha do mouse: troca a velocidade, de um carro até "dobras" de ficção.</li>
+        <li>Escolha um <strong>destino</strong> e use o <strong>piloto automático</strong>. O <strong>salto</strong> chega na hora, mas não conta nas missões de viagem.</li>
+        <li>Chegue perto de um astro para <strong>descobri-lo</strong>: ele entra no seu Diário de bordo e libera um desafio.</li>
+        <li>Mude de <strong>nível</strong> no topo: Sistema Solar → Estrelas vizinhas → Via Láctea.</li>
+      </ul>
+      <p class="nota-ajuda">Velocidades acima da luz são ficção: nada com massa consegue viajar tão rápido. Elas existem aqui só para dar tempo de visitar tudo.</p>
+      <div class="alvo-acoes">
+        <button type="submit" class="botao botao-principal">Começar a explorar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Sem WebGL -->
+  <div class="sem-webgl" id="sem-webgl" hidden>
+    <h1>😕 Seu navegador não conseguiu abrir a visão 3D</h1>
+    <p>O Explorador precisa de WebGL. Tente atualizar o navegador ou usar outro aparelho. Enquanto isso, a <a href="biblioteca.html">Biblioteca</a> e o <a href="diario.html">Diário de bordo</a> funcionam normalmente.</p>
+  </div>
+
+  <noscript>
+    <div class="sem-webgl">
+      <h1>O Explorador precisa de JavaScript</h1>
+      <p>Ative o JavaScript para navegar em 3D, ou visite a <a href="biblioteca.html">Biblioteca</a>.</p>
+    </div>
+  </noscript>
+
+  <script type="module" src="js/explorador/main.js"></script>
+</body>
+</html>
