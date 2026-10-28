@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-bs-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Explorador do Universo — astronomia em escala real</title>
+  <meta name="description" content="Ambiente para ensinar astronomia a crianças e adolescentes: pilote uma nave do Sistema Solar até a Via Láctea, com distâncias reais, missões e um Diário de bordo.">
+  <meta name="theme-color" content="#040713">
+
+  <link rel="icon" href="img/icones/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="img/icones/apple-touch-icon.png">
+  <link rel="manifest" href="pwa/manifest.webmanifest">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Explorador do Universo">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:title" content="Explorador do Universo — astronomia em escala real">
+  <meta property="og:description" content="Pilote uma nave do Sistema Solar até a Via Láctea, com distâncias reais, missões e um Diário de bordo.">
+  <meta property="og:url" content="https://davi-mares.github.io/explorador-do-universo/">
+  <meta property="og:image" content="https://davi-mares.github.io/explorador-do-universo/img/site/preview.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/componentes.css">
+  <link rel="stylesheet" href="css/extras.css">
+  <link rel="stylesheet" href="css/inicio.css">
+</head>
+<body>
+  <div id="app-navbar"></div>
+
+  <main id="conteudo" class="container my-5 inicio">
+
+    <!-- Apresentação -->
+    <section class="heroi" aria-labelledby="titulo-heroi">
+      <p class="heroi-selo">MVP do TCC · Sistemas de Informação · UNEMAT</p>
+      <h1 id="titulo-heroi">Explore o universo <span>em escala real</span></h1>
+      <p class="heroi-texto">
+        Pilote uma nave do Sistema Solar até a Via Láctea. As distâncias, as posições dos planetas (calculadas
+        para hoje) e as posições das estrelas são as de verdade — e cada astro que você descobre vai para o seu
+        <strong>Diário de bordo</strong>, com missões e desafios.
+      </p>
+      <div class="heroi-acoes">
+        <a class="btn botao-coral" href="explorador.html">🚀 Começar a explorar</a>
+        <a class="btn btn-outline-info botao-secundario" href="diario.html">📔 Meu Diário de bordo</a>
+      </div>
+      <p class="heroi-progresso" id="progresso-resumo" aria-live="polite"></p>
+    </section>
+
+    <!-- Três escalas -->
+    <section aria-labelledby="titulo-escalas">
+      <h2 id="titulo-escalas">Três escalas, uma viagem</h2>
+      <p class="nota-secao">Cada nível usa a sua unidade de medida. Trocar de nível é dar um "zoom" de milhares de vezes.</p>
+      <div class="escalas">
+        <a class="escala" href="explorador.html?nivel=solar">
+          <span class="escala-icone" aria-hidden="true">☀️</span>
+          <h3>Sistema Solar</h3>
+          <p>O Sol, os oito planetas, a Lua e a sonda Voyager 1, nas posições de hoje. Medido em <strong>UA</strong> (a distância Terra–Sol).</p>
+        </a>
+        <a class="escala" href="explorador.html?nivel=estrelas">
+          <span class="escala-icone" aria-hidden="true">✨</span>
+          <h3>Estrelas vizinhas</h3>
+          <p>As 30 estrelas mais conhecidas perto do Sol, com brilho real visto de onde você estiver. Medido em <strong>anos-luz</strong>.</p>
+        </a>
+        <a class="escala" href="explorador.html?nivel=galaxia">
+          <span class="escala-icone" aria-hidden="true">🌌</span>
+          <h3>Via Láctea</h3>
+          <p>Onde o Sol fica na galáxia, o buraco negro do centro, nebulosas e as galáxias vizinhas. Medido em <strong>mil anos-luz</strong>.</p>
+        </a>
+      </div>
+    </section>
+
+    <!-- Por que escala real -->
+    <section class="escala-real" aria-labelledby="titulo-por-que">
+      <h2 id="titulo-por-que">Por que em escala real?</h2>
+      <p>Livros e desenhos quase sempre mostram os planetas grudados uns nos outros. Na vida real o espaço é quase todo vazio — e é isso que o explorador deixa sentir. Imagine o Sol do tamanho de uma bola de futebol (22 cm):</p>
+      <ul class="comparacoes">
+        <li><strong>2 mm</strong><span>seria o tamanho da Terra — um grão de pimenta…</span></li>
+        <li><strong>24 m</strong><span>…a uns 24 metros da bola.</span></li>
+        <li><strong>710 m</strong><span>seria a distância até Netuno.</span></li>
+        <li><strong>6.300 km</strong><span>até Proxima Centauri, a estrela mais próxima: mais do que atravessar o Brasil de leste a oeste.</span></li>
+      </ul>
+    </section>
+
+    <!-- Como funciona -->
+    <section aria-labelledby="titulo-como">
+      <h2 id="titulo-como">Como funciona</h2>
+      <ol class="passos">
+        <li><span aria-hidden="true">🧭</span><div><strong>Explore</strong><p>Voe com o teclado, o mouse ou o toque, ou use o piloto automático. As velocidades vão de um carro até a luz (e "dobras" de ficção, avisadas como ficção).</p></div></li>
+        <li><span aria-hidden="true">✨</span><div><strong>Descubra</strong><p>Chegue perto de um astro para descobri-lo. Ele vira um verbete no Diário, com distâncias e quanto tempo a luz leva até lá.</p></div></li>
+        <li><span aria-hidden="true">🧠</span><div><strong>Aprenda</strong><p>Cada descoberta libera um desafio rápido, com explicação. A Biblioteca tem textos e fotos para ir mais fundo.</p></div></li>
+        <li><span aria-hidden="true">🏅</span><div><strong>Cumpra missões</strong><p>"Oito minutos de luz", "A vizinha mais próxima", "Além da Via Láctea"… dez missões guiam a exploração.</p></div></li>
+      </ol>
+    </section>
+
+    <!-- Para professores -->
+    <section class="professores" aria-labelledby="titulo-professores">
+      <h2 id="titulo-professores">Para professores e escolas</h2>
+      <ul>
+        <li><strong>Sem cadastro e sem coleta de dados:</strong> o progresso fica só no navegador do aluno e pode ser exportado.</li>
+        <li><strong>Funciona offline:</strong> pode ser instalado como app (PWA) e usado sem internet depois da primeira visita.</li>
+        <li><strong>Alinhado à BNCC (Ciências, 9º ano):</strong> trabalha EF09CI14 (estrutura do Sistema Solar e sua localização na Via Láctea e no Universo) e EF09CI16 (distâncias e tempos de viagens interplanetárias e interestelares); a Biblioteca apoia EF05CI10, EF09CI15 e EF09CI17.</li>
+        <li><strong>Dados conferidos:</strong> as posições são calculadas com elementos orbitais do JPL/NASA e validadas automaticamente contra equinócios, solstícios e oposições reais.</li>
+      </ul>
+      <a class="btn btn-outline-info" href="biblioteca.html">📖 Abrir a Biblioteca</a>
+    </section>
+
+  </main>
+
+  <div id="app-footer"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
+  <script src="js/dados.js" defer></script>
+  <script src="js/estrelas.js" defer></script>
+  <script src="js/app.js" defer></script>
+  <script src="js/extras.js" defer></script>
+  <script type="module">
+    import { resumo } from "./js/explorador/progresso.js";
+    const r = resumo();
+    const alvo = document.getElementById("progresso-resumo");
+    alvo.textContent = r.descobertos
+      ? `Você já descobriu ${r.descobertos} de ${r.totalObjetos} astros e cumpriu ${r.missoes} de ${r.totalMissoes} missões. Bora continuar?`
+      : `${r.totalObjetos} astros esperando para serem descobertos.`;
+  </script>
+</body>
+</html>

@@ -1,5 +1,6 @@
 // ---------------------------------------------------------------------------
-// Wiki do Universo — comportamento compartilhado por todas as páginas.
+// Explorador do Universo — comportamento compartilhado pelas páginas do site
+// (Biblioteca, Diário de bordo, atividades). O explorador 3D tem o próprio script.
 // Monta navbar e rodapé, os cards e o Sistema Solar animado da página
 // inicial, a foto do dia da NASA, a navegação e a ficha técnica dos planetas,
 // a busca, o botão de voltar ao topo, o som ambiente e o formulário.
@@ -43,7 +44,7 @@ function montarNavbar() {
     <header class="site-header sticky-top">
       <nav class="navbar navbar-expand-lg" aria-label="Navegação principal">
         <div class="container-fluid">
-          <a class="navbar-brand logo-rgb" href="index.html">🌌 Wiki do Universo</a>
+          <a class="navbar-brand logo-rgb" href="index.html">🔭 Explorador do Universo</a>
           <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu-principal"
                   aria-controls="menu-principal" aria-expanded="false" aria-label="Alternar navegação">
             <span class="navbar-toggler-icon"></span>
@@ -70,7 +71,7 @@ function montarRodape() {
 
   alvo.outerHTML = `
     <footer class="site-footer">
-      <p>Projeto de Desenvolvimento Web — UNEMAT</p>
+      <p>Explorador do Universo — MVP do TCC de Sistemas de Informação (UNEMAT, campus Sinop) · Davi Alves Mares</p>
     </footer>
   `;
 }

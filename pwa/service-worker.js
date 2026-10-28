@@ -1,18 +1,21 @@
 // ---------------------------------------------------------------------------
-// Wiki do Universo — service worker (PWA).
+// Explorador do Universo — service worker (PWA).
 // Carregado pelo sw.js da raiz (veja o comentário lá). Guarda as páginas,
 // estilos, scripts e imagens para o site funcionar offline e abrir mais
 // rápido. Os caminhos "./" abaixo são relativos à raiz do site. Ao publicar mudanças, aumente VERSAO para que os
 // visitantes recebam os arquivos novos (o cache antigo é apagado).
 // ---------------------------------------------------------------------------
 
-const VERSAO = "v2";
-const CACHE = `wiki-do-universo-${VERSAO}`;
+const VERSAO = "v3";
+const CACHE = `explorador-do-universo-${VERSAO}`;
 
 // Arquivos baixados já na instalação (o som ambiente fica de fora: é grande
 // e só é baixado se a pessoa ligar o som).
 const ARQUIVOS_ESSENCIAIS = [
   "./",
+  "./biblioteca.html",
+  "./diario.html",
+  "./explorador.html",
   "./constelacoes.html",
   "./curiosidades.html",
   "./index.html",
@@ -34,12 +37,22 @@ const ARQUIVOS_ESSENCIAIS = [
   "./pwa/manifest.webmanifest",
   "./css/base.css",
   "./css/componentes.css",
+  "./css/diario.css",
+  "./css/explorador.css",
+  "./css/inicio.css",
   "./css/extras.css",
   "./css/layout.css",
   "./css/paginas.css",
   "./js/app.js",
   "./js/constelacoes.js",
   "./js/dados.js",
+  "./js/diario.js",
+  "./js/explorador/astronomia.js",
+  "./js/explorador/catalogo.js",
+  "./js/explorador/cenas.js",
+  "./js/explorador/main.js",
+  "./js/explorador/progresso.js",
+  "./js/explorador/texturas.js",
   "./js/extras.js",
   "./js/estrelas.js",
   "./js/viagem-da-luz.js",
@@ -79,7 +92,8 @@ const ARQUIVOS_ESSENCIAIS = [
   "./img/universo/velocidade-da-luz.webp",
   "./img/universo/via-lactea.webp",
   "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css",
-  "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+  "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js",
+  "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
 ];
 
 self.addEventListener("install", (evento) => {
@@ -105,13 +119,13 @@ self.addEventListener("fetch", (evento) => {
 
   const url = new URL(request.url);
   const doProprioSite = url.origin === self.location.origin;
-  const doBootstrap = url.hostname === "cdn.jsdelivr.net";
+  const daCdn = url.hostname === "cdn.jsdelivr.net"; // Bootstrap e Three.js (versões fixas)
 
   // API da NASA, FormSubmit, áudio etc.: vão direto para a rede.
-  if ((!doProprioSite && !doBootstrap) || request.destination === "audio") return;
+  if ((!doProprioSite && !daCdn) || request.destination === "audio") return;
 
-  // Imagens e Bootstrap quase nunca mudam: saem direto do cache (rápido).
-  if (request.destination === "image" || doBootstrap) {
+  // Imagens e bibliotecas da CDN quase nunca mudam: saem direto do cache (rápido).
+  if (request.destination === "image" || daCdn) {
     evento.respondWith(
       caches.match(request).then((salva) => salva || buscarEGuardar(request))
     );

@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// Wiki do Universo — dados do site.
+// Explorador do Universo — dados da Biblioteca (a antiga Wiki do Universo).
 // Tudo o que é conteúdo repetido (planetas, menu, cards, busca, citações)
 // fica aqui, separado da lógica em app.js. Para adicionar uma página,
 // um dado ou uma citação, basta editar estas listas.
@@ -212,15 +212,27 @@ const PAGINAS_EXPLORAR = [
   }
 ];
 
+// Páginas da Biblioteca (a base de conhecimento em texto), no menu "Biblioteca".
+const PAGINAS_BIBLIOTECA = [
+  { nome: "Início da Biblioteca", pagina: "biblioteca.html" },
+  { nome: "O Universo", pagina: "universo.html" },
+  { nome: "Sol e planetas", pagina: "sol.html" },
+  { nome: "Via Láctea", pagina: "via-lactea.html" },
+  { nome: "Curiosidades", pagina: "curiosidades.html" }
+];
+
 // Itens do menu principal. "paginas" lista quais arquivos deixam o item
 // ativo; "submenu" vira uma lista suspensa.
 const NAVEGACAO_PRINCIPAL = [
   { href: "index.html", rotulo: "Início", paginas: ["index.html"] },
-  { href: "universo.html", rotulo: "Universo", paginas: ["universo.html"] },
-  { href: "sol.html", rotulo: "Planetas", paginas: CORPOS_CELESTES.map((corpo) => corpo.pagina) },
-  { href: "via-lactea.html", rotulo: "Via Láctea", paginas: ["via-lactea.html"] },
-  { href: "curiosidades.html", rotulo: "Curiosidades", paginas: ["curiosidades.html"] },
-  { rotulo: "Explorar", submenu: PAGINAS_EXPLORAR, paginas: PAGINAS_EXPLORAR.map((item) => item.pagina) },
+  { href: "explorador.html", rotulo: "🚀 Explorador 3D", paginas: ["explorador.html"] },
+  { href: "diario.html", rotulo: "📔 Diário de bordo", paginas: ["diario.html"] },
+  {
+    rotulo: "📖 Biblioteca",
+    submenu: PAGINAS_BIBLIOTECA,
+    paginas: [...PAGINAS_BIBLIOTECA.map((item) => item.pagina), ...CORPOS_CELESTES.map((corpo) => corpo.pagina)]
+  },
+  { rotulo: "Atividades", submenu: PAGINAS_EXPLORAR, paginas: PAGINAS_EXPLORAR.map((item) => item.pagina) },
   { href: "sobre.html", rotulo: "Sobre", paginas: ["sobre.html"] },
   { href: "pagina-de-contato.html", rotulo: "Contato", paginas: ["pagina-de-contato.html"] }
 ];
@@ -243,6 +255,18 @@ const PAGINAS_UNIVERSO = [
 
 const PAGINAS_OUTRAS = [
   {
+    nome: "Explorador 3D",
+    pagina: "explorador.html",
+    descricao: "Voe pelo universo em escala real, como num jogo",
+    palavras: "jogo 3d nave escala real distâncias missões explorar navegar estrelas vizinhas galáxia"
+  },
+  {
+    nome: "Diário de bordo",
+    pagina: "diario.html",
+    descricao: "Seus astros descobertos, missões e desafios",
+    palavras: "progresso descobertas missões quiz desafios conquistas"
+  },
+  {
     nome: "Curiosidades",
     pagina: "curiosidades.html",
     descricao: "Estrelas, galáxias e a velocidade da luz",
@@ -263,7 +287,7 @@ const PAGINAS_OUTRAS = [
 ];
 
 // Grupos de cards da página inicial. Cada chave corresponde a um elemento
-// com o atributo data-cards="<chave>" no index.html.
+// com o atributo data-cards="<chave>" na biblioteca.html.
 const GRUPOS_DE_CARDS = {
   "sistema-solar": CORPOS_CELESTES,
   universo: PAGINAS_UNIVERSO,
@@ -279,13 +303,13 @@ const ITENS_DA_BUSCA = [
   ...PAGINAS_OUTRAS,
   {
     nome: "Foto do dia da NASA",
-    pagina: "index.html#foto-do-dia",
+    pagina: "biblioteca.html#foto-do-dia",
     descricao: "A imagem astronômica do dia (APOD)",
     palavras: "apod foto imagem do dia nasa"
   },
   {
     nome: "Sistema Solar animado",
-    pagina: "index.html#sistema-animado",
+    pagina: "biblioteca.html#sistema-animado",
     descricao: "Os planetas girando em volta do Sol",
     palavras: "órbitas animação planetas girando"
   }
