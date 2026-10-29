@@ -2,14 +2,15 @@
 // Explorador do Universo — Comparador.
 // Dois astros lado a lado, na mesma escala, com os números que ajudam a
 // entender a diferença: tamanho, massa, gravidade, rotação, translação,
-// distância, temperatura e luas. Vai de Ceres até a Galáxia de Andrômeda.
+// distância, temperatura e luas. Vai de Ceres até a Galáxia de Andrômeda,
+// passando pelo Sistema Solar inteiro e por dois buracos negros.
 // Escolha pela URL: comparar.html?a=terra&b=jupiter
 // ---------------------------------------------------------------------------
 
 import * as THREE from "three";
 import * as astro from "./explorador/astronomia.js";
 import {
-  SOL, GALAXIA, COMPARAVEIS, categoriaDoAstro as categoria, raioParaComparar as raioKm, corDaEstrela
+  SOL, PLANETAS, CINTURAO, GALAXIA, COMPARAVEIS, categoriaDoAstro as categoria, raioParaComparar as raioKm, corDaEstrela
 } from "./explorador/catalogo.js";
 import { criarAstro, definirAnisotropia, texturaDeBrilho } from "./explorador/astros3d.js";
 import { criarViaLactea, criarGalaxiaEspiral, ajustarMateriais } from "./explorador/galaxias3d.js";
@@ -20,8 +21,9 @@ const G_TERRA = 9.8;
 const RAD = Math.PI / 180;
 
 // ---------- Astros que dá para comparar ----------
-// Uma lista só, do maior para o menor (de Andrômeda até Ceres). O raio de um
-// buraco negro é o do horizonte de eventos; o de uma galáxia, metade do diâmetro.
+// Uma lista só, em ordem crescente (de Ceres até Andrômeda). O raio de um
+// buraco negro é o do horizonte de eventos; o de uma galáxia, metade do
+// diâmetro; o do Sistema Solar, a distância de Netuno ao Sol.
 
 const ITENS = COMPARAVEIS;
 const ehEstrela = (o) => o.id === "sol" || Boolean(o.espectro);
@@ -32,7 +34,7 @@ const NOMES = { andromeda: "Andrômeda" };
 const nome = (o) => NOMES[o.id] || o.nomeComparador || o.nome;
 
 // Artigos e plurais para frases naturais ("do Sol", "na Terra", "1.321 Terras").
-const ARTIGOS = { sol: "o", terra: "a", lua: "a", "via-lactea": "a" };
+const ARTIGOS = { sol: "o", terra: "a", lua: "a", "via-lactea": "a", "sistema-solar": "o" };
 const PLURAIS = {
   sol: "Sóis", mercurio: "Mercúrios", venus: "Vênus", terra: "Terras", lua: "Luas", marte: "Martes",
   jupiter: "Júpiteres", saturno: "Saturnos", urano: "Uranos", netuno: "Netunos", ceres: "Ceres", plutao: "Plutões"
@@ -89,6 +91,8 @@ function diametro(o) {
   switch (categoria(o)) {
     case "galáxia":
       return `${astro.formatarGrande(o.diametroAnosLuz)} anos-luz (≈ ${textoKm(km)})`;
+    case "sistema planetário":
+      return `${textoKm(km)} (${numero(km / astro.KM_POR_UA)} UA), a órbita de Netuno de ponta a ponta`;
     case "buraco negro": {
       const ua = km / astro.KM_POR_UA;
       const comparacao = ua >= 10
@@ -110,6 +114,7 @@ function diametro(o) {
 function massa(o) {
   if (o.massaSolar) return `${quantidade(o.massaSolar)} vezes a do Sol`;
   if (o.id === "sol") return "333 mil vezes a da Terra";
+  if (o.id === "sistema-solar") return "99,8% dela está no Sol";
   return "—";
 }
 
@@ -133,6 +138,7 @@ function rotacao(o) {
 
 function translacao(o) {
   if (o.id === "sol") return "≈ 230 milhões de anos (em volta da galáxia)";
+  if (o.id === "sistema-solar") return "≈ 230 milhões de anos (o Sistema Solar inteiro gira em volta da galáxia)";
   if (o.id === "lua") return `${numero(o.periodoDias, 1)} dias (em volta da Terra)`;
   if (!o.periodoAnos) return "—";
   if (o.periodoAnos < 1.5) return `${numero(o.periodoAnos * 365.25)} dias`;
@@ -152,6 +158,7 @@ function distancia(o) {
 
 function textoDistancia(o) {
   if (o.id === "via-lactea") return "Estamos dentro dela: o Sol fica a ≈ 27 mil anos-luz do centro";
+  if (o.id === "sistema-solar") return "Estamos dentro dele: a Terra é o 3º planeta";
   if (o.anosLuzViagem) return "Bilhões de anos-luz, num universo que se expande";
   const d = distancia(o);
   if (!d) return "—";
@@ -161,6 +168,7 @@ function textoDistancia(o) {
 
 function textoLuz(o) {
   if (o.id === "via-lactea") return "100 mil anos para atravessar de ponta a ponta";
+  if (o.id === "sistema-solar") return `${astro.formatarDuracao((2 * raioKm(o)) / astro.VELOCIDADE_LUZ_KM_S)} para atravessar a órbita de Netuno de ponta a ponta`;
   if (o.anosLuzViagem) return `≈ ${numero(o.anosLuzViagem / 1e9, 1)} bilhões de anos (a luz que vemos hoje saiu de lá nessa época)`;
   const d = distancia(o);
   if (!d) return "—";
@@ -203,6 +211,30 @@ function escapar(texto) {
 
 // ---------- Textos de destaque ----------
 
+// Órbitas dos planetas (UA), para dizer até onde um astro gigante chegaria se
+// estivesse no lugar do Sol.
+const ORBITAS = PLANETAS.map((p) => ({ id: p.id, nome: p.nome, ua: p.orbita.elementos.a }));
+const listaComE = (itens) => (itens.length < 2 ? itens.join("") : `${itens.slice(0, -1).join(", ")} e ${itens.at(-1)}`);
+
+function noLugarDoSol(o) {
+  const raioUA = raioKm(o) / astro.KM_POR_UA;
+  const inicio = `Se ${com(o)} estivesse no lugar do Sol, ${o.categoria === "buraco negro" ? "o horizonte de eventos" : "a superfície dela"}`;
+  if (raioUA < ORBITAS[0].ua) return `${inicio} ficaria dentro da órbita de Mercúrio.`;
+  const netuno = ORBITAS.at(-1);
+  if (raioUA > netuno.ua) return `${inicio} engoliria o Sistema Solar inteiro: o raio seria ${vezes(raioUA / netuno.ua)} a distância de Netuno ao Sol.`;
+  const engolidas = ORBITAS.filter((p) => p.ua < raioUA).map((p) => (p.id === "terra" ? "da Terra" : `de ${p.nome}`));
+  let frase = `${inicio} engoliria ${engolidas.length > 1 ? "as órbitas" : "a órbita"} ${listaComE(engolidas)}`;
+  if (raioUA > CINTURAO.raioExternoUA) frase += " e passaria do Cinturão de Asteroides";
+  else if (raioUA > CINTURAO.raioInternoUA) frase += " e chegaria ao Cinturão de Asteroides";
+  return `${frase}.`;
+}
+
+/** Estrelas gigantes e buracos negros, comparados com o Sol ou com o Sistema Solar. */
+function cabeNoSistemaSolar(o) {
+  if (o.categoria === "buraco negro") return true;
+  return ehEstrela(o) && raioKm(o) / astro.KM_POR_UA >= 0.1;
+}
+
 function destaques(a, b) {
   const frases = [];
   if (a === b) {
@@ -230,6 +262,9 @@ function destaques(a, b) {
     const [quente, fria] = a.temperaturaK >= b.temperaturaK ? [a, b] : [b, a];
     frases.push(["🌡️", `${maiuscula(com(quente))} é mais quente (${numero(quente.temperaturaK)} K) que ${com(fria)} (${numero(fria.temperaturaK)} K): por isso a cor é diferente.`]);
   }
+  const referencia = [a, b].find((o) => o.id === "sol" || o.id === "sistema-solar");
+  const outro = referencia && (referencia === a ? b : a);
+  if (outro && outro !== referencia && cabeNoSistemaSolar(outro)) frases.push(["🌞", noLugarDoSol(outro)]);
   for (const o of [a, b]) {
     if (o.categoria === "buraco negro") {
       frases.push(["🕳️", `${maiuscula(com(o))} tem ${quantidade(o.massaSolar)} vezes a massa do Sol espremida numa bola de ${textoKm(2 * raioKm(o))}: a gravidade é tão forte que nem a luz escapa.`]);
@@ -352,11 +387,58 @@ function criarGalaxia3d(objeto) {
   };
 }
 
+/**
+ * Sistema Solar em 3D: as órbitas reais dos 8 planetas (raio 1 = Netuno),
+ * com o Sol e os planetas como pontos nas posições de hoje. Os pontos são
+ * muito maiores que os astros de verdade, que seriam invisíveis.
+ */
+function criarSistemaSolar3d() {
+  const plano = new THREE.Group();
+  plano.rotation.x = 0.85;          // plano das órbitas visto um pouco de cima
+  const grupo = new THREE.Group();
+  grupo.add(plano);
+  const netuno = ORBITAS.at(-1).ua;
+  const hoje = new Date();
+  const paraModelo = ({ x, y, z }) => new THREE.Vector3(x / netuno, z / netuno, -y / netuno);
+  const ponto = (cor, tamanho) => {
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: texturaDeBrilho(), color: cor, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
+    }));
+    sprite.scale.setScalar(tamanho);
+    return sprite;
+  };
+  for (const planeta of PLANETAS) {
+    const linha = new THREE.LineLoop(
+      new THREE.BufferGeometry().setFromPoints(astro.pontosDaOrbita(planeta, hoje, 256).map(paraModelo)),
+      new THREE.LineBasicMaterial({ color: planeta.cor, transparent: true, opacity: 0.8 })
+    );
+    plano.add(linha);
+    const marca = ponto(planeta.cor, 0.045);
+    marca.position.copy(paraModelo(astro.posicaoHeliocentrica(planeta, hoje)));
+    plano.add(marca);
+  }
+  // Cinturão de Asteroides: um anel bem fraco entre Marte e Júpiter.
+  const anel = new THREE.Mesh(
+    new THREE.RingGeometry(CINTURAO.raioInternoUA / netuno, CINTURAO.raioExternoUA / netuno, 96),
+    new THREE.MeshBasicMaterial({ color: CINTURAO.cor, transparent: true, opacity: 0.16, side: THREE.DoubleSide, depthWrite: false })
+  );
+  anel.rotation.x = -Math.PI / 2;
+  plano.add(anel);
+  plano.add(ponto("#ffd9a0", 0.11));
+  return {
+    grupo, planoContorno: plano, pontos: true,
+    dirSol: new THREE.Vector3(1, 0, 0),
+    raioVisual: 1.03,
+    contorno: 1.0,
+    carregar: () => Promise.resolve()
+  };
+}
+
 function descartar(lado) {
   cena.remove(lado.astro.grupo);
   lado.astro.grupo.traverse((o) => {
     if (o.material && o.material !== lado.brilho?.material) o.material.dispose();
-    if (o.isPoints) o.geometry.dispose();
+    if (o.isPoints || o.isLine) o.geometry.dispose();
   });
   if (lado.brilho) {
     cena.remove(lado.brilho);
@@ -369,8 +451,8 @@ function montarCena(a, b) {
   lados.forEach(descartar);
   lados = [a, b].map((objeto) => {
     const estrela = ehEstrela(objeto);
-    const astro3d = objeto.categoria === "galáxia"
-      ? criarGalaxia3d(objeto)
+    const astro3d = objeto.categoria === "galáxia" ? criarGalaxia3d(objeto)
+      : objeto.categoria === "sistema planetário" ? criarSistemaSolar3d()
       : criarAstro(estrela && objeto.id !== "sol" ? { ...objeto, corEstrela: corDaEstrela(objeto) } : objeto, { segmentos: 128 });
     astro3d.dirSol.copy(DIRECAO_DO_SOL);
     astro3d.carregar();
@@ -449,6 +531,9 @@ function posicionarRotulos(distancia) {
         <strong>${escapar(nome(lado.objeto))}</strong><small>${escapar(diametroCurto(lado.objeto))}</small>
       </span>`;
   }).join("");
+  if (lados.some((lado) => lado.astro.pontos) && !notas.length) {
+    notas.push("No Sistema Solar, as linhas são as órbitas reais dos planetas; o Sol e os planetas aparecem como pontos bem maiores que de verdade.");
+  }
   $("nota-escala").textContent = notas.join(" ");
 }
 

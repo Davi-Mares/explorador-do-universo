@@ -287,6 +287,44 @@ export function paraCena({ x, y, z }) {
   return { x, y: z, z: -y };
 }
 
+// ---------- Luz perto de um buraco negro (Schwarzschild) ----------
+// A mesma conta do desenho do buraco negro (shader em astros3d.js), aqui em
+// JavaScript para poder ser testada. Unidades: raio do horizonte (raio de
+// Schwarzschild) = 1. A trajetória da luz obedece à equação de Binet,
+// u'' + u = 1,5 u² (u = 1/r), que equivale a uma "força" −1,5 h² x / r⁵,
+// com h = momento angular do raio. Passo de Verlet igual ao do shader.
+
+/**
+ * Segue um raio de luz que chega de longe, em linha reta, a uma distância b
+ * do centro (parâmetro de impacto, em raios do horizonte).
+ * Devolve { capturado, desvio (rad), raioMinimo }.
+ */
+export function seguirRaioDeLuz(b, { inicio = Math.max(200, 60 * b), passos = 2_000_000 } = {}) {
+  let x = -inicio, y = b, vx = 1, vy = 0;
+  const h2 = b * b;
+  let raioMinimo = Infinity;
+  for (let i = 0; i < passos; i++) {
+    const r2 = x * x + y * y, r = Math.sqrt(r2);
+    raioMinimo = Math.min(raioMinimo, r);
+    const dt = Math.min(0.8, Math.max(0.015, 0.07 * r));
+    const k = -1.5 * h2 / (r2 * r2 * r);
+    const ax = k * x, ay = k * y;
+    const xn = x + vx * dt + 0.5 * ax * dt * dt;
+    const yn = y + vy * dt + 0.5 * ay * dt * dt;
+    const rn2 = xn * xn + yn * yn;
+    const kn = -1.5 * h2 / (rn2 * rn2 * Math.sqrt(rn2));
+    vx += 0.5 * (ax + kn * xn) * dt;
+    vy += 0.5 * (ay + kn * yn) * dt;
+    x = xn;
+    y = yn;
+    if (rn2 < 1) return { capturado: true, desvio: NaN, raioMinimo: Math.sqrt(rn2) };
+    if (rn2 > inicio * inicio && x * vx + y * vy > 0) {
+      return { capturado: false, desvio: Math.abs(Math.atan2(vy, vx)), raioMinimo };
+    }
+  }
+  return { capturado: false, desvio: Math.abs(Math.atan2(vy, vx)), raioMinimo };
+}
+
 // ---------- Formatação (pt-BR) ----------
 
 const numero = (valor, casas = 0) =>

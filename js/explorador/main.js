@@ -802,6 +802,9 @@ function selecionar(corpo) {
   painel.hidden = false;
   $("alvo-nome").textContent = corpo.nome;
   $("alvo-tipo").textContent = corpo.objeto.tipo || "";
+  // Quando o astro aparece fora de escala (ilustração), o painel avisa.
+  $("alvo-nota").textContent = corpo.objeto.notaEscala || "";
+  $("alvo-nota").hidden = !corpo.objeto.notaEscala;
   atualizarMarcadoresDescobertos();
   atualizarPainelAlvo();
   atualizarDestinos();

@@ -755,6 +755,7 @@ export const OBJETOS_GALAXIA = [
   {
     id: "sgr-a", nome: "Sagitário A*", tipo: "Buraco negro supermassivo", centro: true,
     cor: "#ffb36b", categoria: "buraco negro", massaSolar: 4.0e6,   // ESO/EHT (2022): ≈ 4 milhões de Sóis
+    notaEscala: "🎨 O buraco negro aqui é uma ilustração ampliada mais de 1 milhão de vezes. O de verdade tem 24 milhões de km de diâmetro e seria invisível nesta escala.",
     resumo: "O buraco negro no centro da Via Láctea, com cerca de 4 milhões de vezes a massa do Sol.",
     curiosidade: "Em 2022 o Event Horizon Telescope mostrou a primeira imagem da 'sombra' dele."
   },
@@ -1115,9 +1116,27 @@ export function corDaEstrela(estrela) {
 // ---------------------------------------------------------------------------
 
 const KM_POR_ANO_LUZ = NIVEIS[1].unidadeKm;
+const KM_POR_UA = NIVEIS[0].unidadeKm;
 const IDS_ANOES = new Set(PLANETAS_ANOES.map((p) => p.id));
 
-/** "planeta", "planeta anão", "lua", "estrela", "buraco negro" ou "galáxia". */
+/**
+ * O Sistema Solar inteiro, para comparar com estrelas gigantes, buracos
+ * negros e galáxias. O tamanho vai até a órbita de Netuno, o planeta mais
+ * distante (semieixo de 30,07 UA ≈ 4,5 bilhões de km, NASA). Contando a
+ * Nuvem de Oort, de cometas, ele iria muito mais longe.
+ */
+export const SISTEMA_SOLAR = {
+  id: "sistema-solar",
+  nome: "Sistema Solar",
+  nomeComparador: "Sistema Solar (até Netuno)",
+  tipo: "O Sol e os 8 planetas, até a órbita de Netuno",
+  categoria: "sistema planetário",
+  cor: "#ffd27a",
+  resumo: "O Sol, os 8 planetas e suas luas, os planetas anões e milhões de asteroides e cometas.",
+  fonte: "https://nssdc.gsfc.nasa.gov/planetary/factsheet/"
+};
+
+/** "planeta", "planeta anão", "lua", "estrela", "buraco negro", "galáxia" ou "sistema planetário". */
 export function categoriaDoAstro(objeto) {
   if (objeto.categoria) return objeto.categoria;
   if (objeto.id === "sol" || objeto.espectro) return "estrela";
@@ -1132,13 +1151,15 @@ export function categoriaDoAstro(objeto) {
 export function raioParaComparar(objeto) {
   if (objeto.categoria === "buraco negro") return objeto.massaSolar * KM_POR_MASSA_SOLAR_SCHWARZSCHILD;
   if (objeto.categoria === "galáxia") return (objeto.diametroAnosLuz / 2) * KM_POR_ANO_LUZ;
+  if (objeto.categoria === "sistema planetário") return PLANETAS.find((p) => p.id === "netuno").orbita.elementos.a * KM_POR_UA;
   return objeto.raioKm || objeto.raioSolar * SOL.raioKm;
 }
 
-/** Todos os astros do comparador, numa lista só, do maior para o menor. */
+/** Todos os astros do comparador, numa lista só, em ordem crescente (do menor para o maior). */
 export const COMPARAVEIS = [
   SOL, ...PLANETAS, LUA, ...PLANETAS_ANOES,
   ...ESTRELAS.filter((e) => e.raioSolar),
+  SISTEMA_SOLAR,
   ...GIGANTES,
   ...OBJETOS_GALAXIA.filter((o) => o.categoria)   // Sagitário A* e Andrômeda
-].sort((a, b) => raioParaComparar(b) - raioParaComparar(a));
+].sort((a, b) => raioParaComparar(a) - raioParaComparar(b));

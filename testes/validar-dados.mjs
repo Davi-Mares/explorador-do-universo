@@ -284,9 +284,35 @@ for (const p of cat.PLANETAS_ANOES) {
   const via = cat.GIGANTES.find((o) => o.id === "via-lactea"), andromeda = cat.objetoPorId("andromeda");
   teste("Buracos negros e galáxias", "Andrômeda tem ≈ 2,2 vezes o diâmetro da Via Láctea", cat.raioParaComparar(andromeda) / cat.raioParaComparar(via), 2.2, 0.01);
   const lista = cat.COMPARAVEIS;
-  verdadeiro("Buracos negros e galáxias", `Lista do comparador do maior para o menor (${lista.length} astros, de ${lista[0].nome} a ${lista.at(-1).nome})`,
-    lista.every((o, i) => i === 0 || cat.raioParaComparar(lista[i - 1]) >= cat.raioParaComparar(o)) && new Set(lista).size === lista.length);
-  verdadeiro("Buracos negros e galáxias", "Toda categoria do comparador tem nome", lista.every((o) => ["galáxia", "buraco negro", "estrela", "planeta", "planeta anão", "lua"].includes(cat.categoriaDoAstro(o))));
+  verdadeiro("Buracos negros e galáxias", `Lista do comparador em ordem crescente (${lista.length} astros, de ${lista[0].nome} a ${lista.at(-1).nome})`,
+    lista.every((o, i) => i === 0 || cat.raioParaComparar(lista[i - 1]) <= cat.raioParaComparar(o)) && new Set(lista).size === lista.length);
+  verdadeiro("Buracos negros e galáxias", "Toda categoria do comparador tem nome", lista.every((o) => ["galáxia", "buraco negro", "estrela", "planeta", "planeta anão", "lua", "sistema planetário"].includes(cat.categoriaDoAstro(o))));
+  // Sistema Solar até Netuno: 2 × 30,07 UA ≈ 9 bilhões de km (NASA: Netuno a 4.515 milhões de km do Sol).
+  const sistemaSolar = cat.raioParaComparar(cat.SISTEMA_SOLAR);
+  teste("Buracos negros e galáxias", "Sistema Solar até Netuno: ≈ 9 bilhões de km de diâmetro", 2 * sistemaSolar / 1e9, 9.0, 0.05, " bilhões de km");
+  verdadeiro("Buracos negros e galáxias", `O horizonte de TON 618 é maior que o Sistema Solar até Netuno (${Math.round(cat.raioParaComparar(ton) / sistemaSolar)} vezes)`,
+    cat.raioParaComparar(ton) > sistemaSolar);
+}
+
+// ---------- 7c. A luz perto de um buraco negro (a conta do desenho) ----------
+// O desenho do buraco negro segue cada raio de luz com a relatividade geral.
+// A mesma conta, em JavaScript, tem de reproduzir resultados conhecidos.
+{
+  let capturado = 2, escapa = 4;   // parâmetros de impacto (raios do horizonte)
+  for (let i = 0; i < 32; i++) {
+    const meio = (capturado + escapa) / 2;
+    if (astro.seguirRaioDeLuz(meio).capturado) capturado = meio; else escapa = meio;
+  }
+  teste("Luz e buracos negros", "Sombra: a luz é engolida até 3√3/2 ≈ 2,598 raios do horizonte (o tamanho da sombra)",
+    (capturado + escapa) / 2, (3 * Math.sqrt(3)) / 2, 0.01);
+  const quase = astro.seguirRaioDeLuz((3 * Math.sqrt(3)) / 2 + 0.002);
+  teste("Luz e buracos negros", "Luz que quase cai dá voltas na esfera de fótons (1,5 raio do horizonte)", quase.raioMinimo, 1.5, 0.1);
+  const b = 50;
+  const previsto = 2 / b + (15 * Math.PI / 16) / (b * b);
+  teste("Luz e buracos negros", "Desvio da luz a 50 raios do horizonte = 2/b + 15π/(16b²) (relatividade geral)",
+    astro.seguirRaioDeLuz(b).desvio, previsto, Number((previsto * 0.01).toPrecision(2)), " rad");
+  const desvioNoSol = ((2 * cat.KM_POR_MASSA_SOLAR_SCHWARZSCHILD) / cat.SOL.raioKm) * (180 / Math.PI) * 3600;
+  teste("Luz e buracos negros", "Desvio da luz na borda do Sol ≈ 1,75″ (Einstein, 1915; eclipse de 1919)", desvioNoSol, 1.75, 0.01, "″");
 }
 
 // ---------- 8. Integridade da base de conhecimento ----------

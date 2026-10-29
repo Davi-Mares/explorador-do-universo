@@ -1,6 +1,6 @@
 {
   "name": "explorador-do-universo",
-  "version": "6.0.0",
+  "version": "6.1.0",
   "description": "Explorador do Universo (MVP do TCC): ambiente para ensinar astronomia navegando pelo universo em escala real.",
   "private": true,
   "type": "module",

@@ -405,7 +405,7 @@ export function criarNivelEstrelas() {
 
 const RAIOS_GALAXIA = {
   "sol-galaxia": { descoberta: 1, chegada: 0.35 },
-  "sgr-a": { descoberta: 3, chegada: 0.12 },
+  "sgr-a": { descoberta: 3, chegada: 0.06 },
   pleiades: { descoberta: 0.8, chegada: 0.07 },
   "orion-nebula": { descoberta: 0.8, chegada: 0.04 },
   crab: { descoberta: 0.8, chegada: 0.011 },
@@ -424,6 +424,12 @@ const RAIOS_GALAXIA = {
  */
 export const GIRO_GALAXIA = { segundosPorVolta: 180, anosPorVolta: 230e6 };
 const GIRO_RAD_POR_SEGUNDO = (2 * Math.PI) / GIRO_GALAXIA.segundosPorVolta;
+/**
+ * Sagitário A* em ilustração: o horizonte de verdade (≈ 12 milhões de km de
+ * raio) seria invisível nesta escala, então ele é desenhado com 1,5 ano-luz
+ * de raio — ampliado ≈ 1,2 milhão de vezes. O aviso aparece no painel do alvo.
+ */
+export const ILUSTRACAO_SGR_A = { raioHorizonteKly: 0.0015 };
 /** Fora do disco (não giram com ele): as Nuvens de Magalhães e Andrômeda. */
 const FORA_DO_DISCO = new Set(["lmc", "smc", "andromeda"]);
 
@@ -522,6 +528,13 @@ export function criarNivelGalaxia() {
   }
   disco.add(brilhoSprite("#ffd27a", 0.012, { atenuar: false }).translateX(posicaoDoSol.x));
 
+  // Buraco negro do centro, com o disco de gás no plano da galáxia (ilustração ampliada).
+  const sgr = porId("sgr-a");
+  const buracoNegro = criarAstro(sgr.objeto);
+  buracoNegro.grupo.scale.setScalar(ILUSTRACAO_SGR_A.raioHorizonteKly);
+  buracoNegro.grupo.position.copy(sgr.posicaoNoDisco);
+  disco.add(buracoNegro.grupo);
+
   // Giro no sentido horário visto do polo norte galáctico (+Y da cena).
   let angulo = 0;
   let girando = true;
@@ -545,6 +558,8 @@ export function criarNivelGalaxia() {
       const { x, y, z } = camera.position;
       const noDisco = (1 - suave(1.5, 7, Math.abs(y))) * (1 - suave(55, 70, Math.hypot(x, z)));
       viaLactea.material.uniforms.extincao.value = noDisco / 7;
+      // O buraco negro só é desenhado de perto (de longe ele some num pixel).
+      buracoNegro.grupo.visible = camera.position.distanceTo(sgr.posicao) < 2.5;
       for (const { corpo, sprite, opacidade, tamanho } of marcas) {
         const d = camera.position.distanceTo(corpo.posicao);
         const t = Math.min(1, Math.max(0, (d - tamanho * 1.5) / (tamanho * 4.5)));

@@ -398,6 +398,13 @@
   font-size: 0.82rem;
 }
 
+.alvo-nota {
+  margin: -4px 0 10px !important;
+  color: var(--cor-ouro);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
 .alvo-acoes {
   display: flex;
   flex-wrap: wrap;

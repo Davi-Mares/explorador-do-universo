@@ -259,135 +259,185 @@ function paraLocal(objeto3d, camera, dirSolMundo, uniformes) {
  * (raio exibido) e orienta o grupo. "dirSol" é a direção, no mundo, do
  * astro para o Sol (quem usa atualiza a cada quadro).
  */
-export function criarAstro(objeto, { segmentos = 96 } = {}) {
-  if (objeto.categoria === "buraco negro") return criarBuracoNegro(objeto);
+export function criarAstro(objeto, { segmentos = 96, doppler } = {}) {
+  if (objeto.categoria === "buraco negro") return criarBuracoNegro(objeto, { doppler });
   const ehEstrela = objeto.id === "sol" || Boolean(objeto.espectro);
   return ehEstrela ? criarEstrela(objeto, segmentos) : criarPlaneta(objeto, segmentos);
 }
 
 // ---------- Buraco negro ----------
-// Esfera preta (horizonte de eventos, raio 1), a "sombra" com o anel de
-// fótons (≈ 2,6 vezes o horizonte, como na imagem do Event Horizon
-// Telescope) e o disco de acreção girando: mais quente e branco por dentro,
-// alaranjado por fora, mais brilhante do lado que vem na nossa direção.
+// Ilustração calculada com a relatividade geral (buraco negro sem rotação,
+// de Schwarzschild), no estilo das imagens de Luminet (1979), da NASA (2019)
+// e do Gargântua de Interstellar (James et al., 2015). Para cada pixel, o
+// raio de luz é seguido de trás para a frente, da câmera até o disco de gás:
+// perto do buraco negro ele se curva, e por isso o lado de trás do disco
+// aparece por cima e por baixo da "sombra". Unidades: raio do horizonte
+// (raio de Schwarzschild) = 1. A curva do raio usa a equação de Binet,
+// u'' + u = 1,5 u², escrita como uma "força" −1,5 h² x / r⁵ (h = momento
+// angular do raio); a mesma conta está em astronomia.js e é testada lá.
 
-/** Sombra: disco preto (raio ≈ 2,6 horizontes) que esconde o que está atrás. */
-const FRAGMENTO_SOMBRA = /* glsl */ `
-  varying vec2 vUv;
+/** Raio externo do disco desenhado e metade do quadrado onde a cena é traçada (em raios do horizonte). */
+export const DISCO_BURACO_NEGRO = { interno: 3, externo: 12, quadro: 16 };
+
+const VERTICE_BURACO = /* glsl */ `
+  uniform mat4 quadNoGrupo;
+  varying vec3 vPonto;
   #include <common>
-  #include <logdepthbuf_pars_fragment>
+  #include <logdepthbuf_pars_vertex>
   void main() {
-    #include <logdepthbuf_fragment>
-    if (length(vUv - 0.5) * 12.0 > 2.6) discard;     // raio em unidades do horizonte
-    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+    vPonto = (quadNoGrupo * vec4(position, 1.0)).xyz;   // ponto do quadrado, em raios do horizonte
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    #include <logdepthbuf_vertex>
   }`;
 
-/** Anel de fótons e brilho em volta da sombra. */
-const FRAGMENTO_ANEL_FOTONS = /* glsl */ `
-  uniform float brilho;
-  uniform vec3 cor;
-  varying vec2 vUv;
-  #include <common>
-  #include <logdepthbuf_pars_fragment>
-  void main() {
-    #include <logdepthbuf_fragment>
-    float r = length(vUv - 0.5) * 12.0;
-    if (r < 2.5) discard;
-    float anel = exp(-pow((r - 2.65) / 0.09, 2.0)) * 1.5 + exp(-pow((r - 2.65) / 0.45, 2.0)) * 0.3;
-    float halo = exp(-(r - 2.6) * 0.9) * 0.16 * (1.0 - smoothstep(4.2, 5.9, r));   // some antes da borda do quadrado
-    gl_FragColor = vec4(cor * (anel + halo) * brilho, 1.0);
-    #include <colorspace_fragment>
-    // Soma a cor (aditivo) com alfa proporcional ao brilho: num fundo
-    // transparente (comparador) o quadrado não fica opaco.
-    float alfa = clamp(max(gl_FragColor.r, max(gl_FragColor.g, gl_FragColor.b)), 0.0, 1.0);
-    gl_FragColor = vec4(gl_FragColor.rgb / max(alfa, 1e-4), alfa);
-  }`;
-
-const FRAGMENTO_DISCO = /* glsl */ `
-  uniform float tempo;
-  uniform float brilho;
+const FRAGMENTO_BURACO = /* glsl */ `
   uniform vec3 camLocal;
-  varying vec3 vLocal;
-  varying vec2 vUv;
+  uniform float tempo;
+  uniform float exposicao;
+  uniform float doppler;
+  varying vec3 vPonto;
   #include <common>
   #include <logdepthbuf_pars_fragment>
-  float h(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-  float ruido(vec2 p) {
-    vec2 i = floor(p), f = fract(p);
-    f = f * f * (3.0 - 2.0 * f);
-    return mix(mix(h(i), h(i + vec2(1.0, 0.0)), f.x), mix(h(i + vec2(0.0, 1.0)), h(i + vec2(1.0, 1.0)), f.x), f.y);
+
+  const float R_IN = ${DISCO_BURACO_NEGRO.interno.toFixed(1)};    // órbita estável mais interna: 3 raios do horizonte
+  const float R_OUT = ${DISCO_BURACO_NEGRO.externo.toFixed(1)};
+  const float R_INICIO = 20.0;                                    // longe disso a luz anda quase em linha reta
+
+  // Cor do gás pela temperatura vista daqui (relativa): vermelho, laranja,
+  // dourado, branco. Valores lineares (a conversão para a tela vem no fim).
+  vec3 paleta(float t) {
+    vec3 c1 = vec3(0.26, 0.013, 0.002), c2 = vec3(1.0, 0.17, 0.012), c3 = vec3(1.0, 0.48, 0.10);
+    vec3 c4 = vec3(1.0, 0.85, 0.60), c5 = vec3(0.75, 0.85, 1.0);
+    if (t < 0.4) return mix(c1, c2, t / 0.4);
+    if (t < 0.75) return mix(c2, c3, (t - 0.4) / 0.35);
+    if (t < 1.1) return mix(c3, c4, (t - 0.75) / 0.35);
+    return mix(c4, c5, clamp((t - 1.1) / 0.9, 0.0, 1.0));
   }
+
   void main() {
     #include <logdepthbuf_fragment>
-    float r = length(vLocal.xz);
-    float ang = atan(vLocal.z, vLocal.x);
-    float giro = ang + tempo * 1.6 / pow(r, 1.5);       // por dentro gira mais rápido (Kepler)
-    float n = ruido(vec2(giro * 6.0, r * 2.2)) * 0.6 + ruido(vec2(giro * 14.0, r * 6.0)) * 0.4;
-    float t = clamp((r - 3.0) / 7.0, 0.0, 1.0);          // 0 por dentro, 1 na borda
-    vec3 quente = vec3(1.0, 0.95, 0.85), medio = vec3(1.0, 0.62, 0.25), frio = vec3(0.75, 0.22, 0.08);
-    vec3 c = t < 0.35 ? mix(quente, medio, t / 0.35) : mix(medio, frio, (t - 0.35) / 0.65);
-    // Efeito Doppler: o lado que se aproxima de nós fica mais brilhante.
-    vec3 velocidade = normalize(vec3(-vLocal.z, 0.0, vLocal.x));
-    vec3 paraCamera = normalize(camLocal - vLocal);
-    float doppler = 1.0 + 0.75 * dot(velocidade, paraCamera);
-    float bordas = smoothstep(3.0, 3.6, r) * (1.0 - smoothstep(8.0, 10.0, r));
-    float intensidade = (0.55 + 0.9 * n) * bordas * doppler * (1.25 - t) * brilho;
-    gl_FragColor = vec4(c * intensidade, clamp(intensidade, 0.0, 1.0));
-    #include <colorspace_fragment>
+    vec3 o = camLocal;
+    vec3 d = normalize(vPonto - camLocal);
+    vec3 x = o;
+    if (dot(o, o) > R_INICIO * R_INICIO) {
+      // Até a esfera R_INICIO a luz anda em linha reta.
+      float b = dot(o, d);
+      float c = dot(o, o) - R_INICIO * R_INICIO;
+      float delta = b * b - c;
+      if (delta <= 0.0) discard;
+      float t0 = -b - sqrt(delta);
+      if (t0 < 0.0) discard;
+      x = o + t0 * d;
+    }
+    vec3 v = d;
+    vec3 hv = cross(x, v);
+    float h2 = dot(hv, hv);                     // (momento angular)², conservado
+    float perfilMax = pow(R_IN * 49.0 / 36.0, -3.0) * (1.0 - sqrt(36.0 / 49.0));
+    vec3 cor = vec3(0.0);
+    float alfa = 0.0;
+
+    for (int i = 0; i < 320; i++) {
+      float r2 = dot(x, x);
+      float r = sqrt(r2);
+      float dt = clamp(0.07 * r, 0.015, 0.8);    // passos menores perto do buraco negro
+      vec3 a = -1.5 * h2 * x / (r2 * r2 * r);
+      vec3 xn = x + v * dt + 0.5 * a * dt * dt;  // Verlet
+      float rn2 = dot(xn, xn);
+      vec3 an = -1.5 * h2 * xn / (rn2 * rn2 * sqrt(rn2));
+      vec3 vn = v + 0.5 * (a + an) * dt;
+
+      // Cruzou o plano do disco?
+      if (x.y * xn.y < 0.0) {
+        vec3 p = mix(x, xn, x.y / (x.y - xn.y));
+        float rc = length(p.xz);
+        if (rc > R_IN && rc < R_OUT) {
+          // Temperatura de um disco fino (Page e Thorne, 1974): T ∝ [r⁻³ (1 − √(r_in/r))]^¼.
+          float fluxo = pow(rc, -3.0) * (1.0 - sqrt(R_IN / rc)) / perfilMax;
+          float temperatura = pow(fluxo, 0.25);
+          // Gás em órbita: v = √(0,5 / (r − 1)) da luz (metade da luz na borda de dentro).
+          float beta = sqrt(0.5 / (rc - 1.0));
+          float gama = inversesqrt(1.0 - beta * beta);
+          vec3 sentido = normalize(vec3(-p.z, 0.0, p.x));
+          vec3 paraNos = -normalize(vn);
+          // Efeito Doppler (o lado que vem na nossa direção brilha mais) e
+          // desvio gravitacional para o vermelho.
+          float g = sqrt(1.0 - 1.0 / rc) / (gama * (1.0 - beta * dot(sentido, paraNos)));
+          float gVisto = mix(1.0, g, doppler);
+          // Faixas de gás girando (mais rápido por dentro, como pede Kepler).
+          float ang = atan(p.z, p.x) - tempo * 0.9 * pow(rc, -1.5);
+          float n = 0.30 * sin(3.0 * ang + 4.0 * rc) + 0.22 * sin(7.0 * ang - 6.5 * rc + 1.3)
+                  + 0.16 * sin(12.0 * ang + 9.0 * rc + 2.1) + 0.12 * sin(19.0 * ang - 13.0 * rc + 4.7)
+                  + 0.08 * sin(15.0 * rc + 0.5);
+          float faixas = 0.7 + 0.45 * n;
+          float borda = smoothstep(R_IN, R_IN + 0.35, rc) * (1.0 - smoothstep(R_OUT - 4.0, R_OUT, rc));
+          float luz = pow(fluxo, 0.6) * pow(gVisto, 3.0) * faixas * borda;
+          vec3 emissao = paleta(temperatura * gVisto * 0.95) * luz * 2.0;
+          float opaco = 0.93 * borda;
+          cor += (1.0 - alfa) * opaco * emissao;
+          alfa += (1.0 - alfa) * opaco;
+        }
+      }
+      if (rn2 < 1.0) { alfa = 1.0; break; }                                    // caiu no horizonte: sombra
+      if (rn2 > R_INICIO * R_INICIO * 1.1 && dot(xn, vn) > 0.0) break;         // escapou
+      if (alfa > 0.995) break;
+      x = xn;
+      v = vn;
+    }
+    if (alfa < 0.004) discard;
+    vec3 tom = 1.0 - exp(-cor * exposicao);
+    gl_FragColor = vec4(pow(tom, vec3(1.0 / 2.2)), alfa);   // cor pré-multiplicada pelo alfa
   }`;
 
-function criarBuracoNegro(objeto) {
+const movimentoReduzido = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+/**
+ * Buraco negro com disco de acreção (horizonte de raio 1 no espaço local; o
+ * disco fica no plano XZ). "doppler" = 0 desenha o disco igual dos dois
+ * lados; 1 = efeito Doppler completo. Aqui fica no meio-termo, para o disco
+ * aparecer inteiro mas com o lado que se aproxima mais brilhante.
+ */
+function criarBuracoNegro(objeto, { doppler = 0.55 } = {}) {
   const grupo = new THREE.Group();
-  const quasar = objeto.massaSolar > 1e9;
-  const horizonte = new THREE.Mesh(esfera(1, 48), new THREE.MeshBasicMaterial({ color: 0x000000 }));
-  grupo.add(horizonte);
-
-  // Sombra (opaca) e anel de fótons (aditivo): quadrados sempre virados para a câmera.
-  const quadrado = new THREE.PlaneGeometry(12, 12);
-  const sombra = new THREE.Mesh(quadrado, new THREE.ShaderMaterial({
-    uniforms: {}, vertexShader: VERTICE_LOCAL, fragmentShader: FRAGMENTO_SOMBRA
+  const { quadro, externo } = DISCO_BURACO_NEGRO;
+  const uniformes = {
+    camLocal: { value: new THREE.Vector3(0, 0, 100) },
+    quadNoGrupo: { value: new THREE.Matrix4() },
+    tempo: { value: 0 },
+    exposicao: { value: objeto.massaSolar > 1e9 ? 1.4 : 1.1 },
+    doppler: { value: doppler }
+  };
+  const quadrado = new THREE.Mesh(new THREE.PlaneGeometry(2 * quadro, 2 * quadro), new THREE.ShaderMaterial({
+    uniforms: uniformes,
+    vertexShader: VERTICE_BURACO,
+    fragmentShader: FRAGMENTO_BURACO,
+    transparent: true,
+    premultipliedAlpha: true,
+    depthWrite: false
   }));
-  const anelFotons = new THREE.Mesh(quadrado, new THREE.ShaderMaterial({
-    uniforms: { brilho: { value: quasar ? 1.2 : 0.8 }, cor: { value: new THREE.Color(quasar ? "#ffd9a8" : "#ffb070") } },
-    vertexShader: VERTICE_LOCAL, fragmentShader: FRAGMENTO_ANEL_FOTONS,
-    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
-  }));
-  anelFotons.renderOrder = 3;
+  quadrado.renderOrder = 10;
+  quadrado.frustumCulled = false;
   const qAux = new THREE.Quaternion();
-  const deFrente = (malha) => (_r, _c, camera) => {
-    // Desfaz a rotação do grupo e copia a da câmera: o quadrado fica de frente.
+  quadrado.onBeforeRender = (_r, _c, camera) => {
+    // Quadrado sempre de frente para a câmera; o shader recebe a câmera e o
+    // quadrado no espaço do buraco negro.
+    grupo.updateWorldMatrix(true, false);
     grupo.getWorldQuaternion(qAux).invert();
-    malha.quaternion.copy(qAux).multiply(camera.quaternion);
-    malha.updateMatrixWorld();
+    quadrado.quaternion.copy(qAux).multiply(camera.quaternion);
+    quadrado.updateMatrix();
+    quadrado.updateMatrixWorld();
+    uniformes.quadNoGrupo.value.copy(quadrado.matrix);
+    uniformes.camLocal.value.setFromMatrixPosition(camera.matrixWorld);
+    grupo.worldToLocal(uniformes.camLocal.value);
+    if (!movimentoReduzido) uniformes.tempo.value = performance.now() / 1000;
   };
-  sombra.onBeforeRender = deFrente(sombra);
-  anelFotons.onBeforeRender = deFrente(anelFotons);
-  grupo.add(sombra, anelFotons);
-
-  // Disco de acreção (de 3 a 10 vezes o horizonte), no plano XZ.
-  const geometria = new THREE.RingGeometry(3, 10, 180, 8);
-  geometria.rotateX(-Math.PI / 2);
-  const uniformesDisco = { tempo: { value: 0 }, brilho: { value: quasar ? 1.5 : 0.55 }, camLocal: { value: new THREE.Vector3() } };
-  const disco = new THREE.Mesh(geometria, new THREE.ShaderMaterial({
-    uniforms: uniformesDisco, vertexShader: VERTICE_LOCAL, fragmentShader: FRAGMENTO_DISCO,
-    transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending
-  }));
-  disco.renderOrder = 2;
-  disco.onBeforeRender = (_r, _c, camera) => {
-    uniformesDisco.tempo.value = performance.now() / 1000;
-    uniformesDisco.camLocal.value.setFromMatrixPosition(camera.matrixWorld);
-    disco.worldToLocal(uniformesDisco.camLocal.value);
-  };
-  grupo.add(disco);
-  // Disco um pouco inclinado em relação a nós, para aparecer como elipse.
-  grupo.rotation.x = 0.32;
+  grupo.add(quadrado);
 
   return {
     grupo,
-    superficie: horizonte,
+    superficie: quadrado,
     dirSol: new THREE.Vector3(1, 0, 0),
-    raioVisual: 10,
-    contorno: 10,
+    raioVisual: externo,
+    contorno: externo,
     carregar: () => Promise.resolve(),
     pedido: true
   };
