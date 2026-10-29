@@ -12,7 +12,10 @@
 // - Polos e meridianos: IAU WGCCRE (Archinal et al., 2018).
 // - Estrelas: coordenadas J2000 (SIMBAD) e distâncias por paralaxe
 //   (Hipparcos/Gaia); distâncias de supergigantes têm incerteza grande.
-// - Galáxia: R0 = 8,178 kpc (GRAVITY, 2019); coordenadas galácticas SIMBAD.
+// - Galáxia: R0 = 8,178 kpc (GRAVITY, 2019); coordenadas galácticas SIMBAD;
+//   distâncias e tamanhos das nebulosas e aglomerados: catálogos Messier e
+//   Caldwell do Hubble (NASA); Sagitário A*: ESO (eso2208).
+// - Plutão e Ceres: NASA (NSSDC e NASA Science); Cinturão: NASA e equipe Lucy (SwRI).
 // ---------------------------------------------------------------------------
 
 /** Níveis de escala do explorador. "unidadeKm" converte a unidade da cena. */
@@ -774,13 +777,13 @@ export const OBJETOS_GALAXIA = [
     curiosidade: "A explosão foi vista na Terra em 1054 e registrada por astrônomos chineses: brilhou até de dia."
   },
   {
-    id: "eagle", nome: "Nebulosa da Águia", tipo: "Berçário de estrelas", l: 16.95, b: 0.79, d: 5.7,
+    id: "eagle", nome: "Nebulosa da Águia", tipo: "Berçário de estrelas", l: 16.95, b: 0.79, d: 7.0,
     cor: "#ff9a6b",
     resumo: "Casa dos famosos 'Pilares da Criação', colunas de gás onde nascem estrelas.",
     curiosidade: "Os Pilares foram fotografados pelo Hubble em 1995 e de novo pelo James Webb em 2022."
   },
   {
-    id: "carina", nome: "Nebulosa de Carina", tipo: "Berçário de estrelas", l: 287.6, b: -0.63, d: 8.5,
+    id: "carina", nome: "Nebulosa de Carina", tipo: "Berçário de estrelas", l: 287.6, b: -0.63, d: 7.5,
     cor: "#ff8f8f",
     resumo: "Uma das maiores nebulosas da galáxia, com algumas das estrelas mais pesadas conhecidas.",
     curiosidade: "Dentro dela está Eta Carinae, uma estrela que pode explodir a qualquer momento (em termos astronômicos)."

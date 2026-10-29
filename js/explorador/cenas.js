@@ -410,7 +410,7 @@ const RAIOS_GALAXIA = {
   "orion-nebula": { descoberta: 0.8, chegada: 0.04 },
   crab: { descoberta: 0.8, chegada: 0.011 },
   eagle: { descoberta: 0.8, chegada: 0.11 },
-  carina: { descoberta: 1, chegada: 0.42 },
+  carina: { descoberta: 1, chegada: 0.45 },
   "omega-centauri": { descoberta: 1.5, chegada: 0.2 },
   lmc: { descoberta: 60, chegada: 45 },
   smc: { descoberta: 40, chegada: 28 },
@@ -483,13 +483,13 @@ export function criarNivelGalaxia() {
     "orion-nebula": () => criarNebulosaDeOrion({ raio: 0.012, materiais: materiaisDePontos }),
     crab: () => criarNebulosaDoCaranguejo({ raio: 0.003, materiais: materiaisDePontos }),
     eagle: () => criarNebulosaDaAguia({ raio: 0.035, materiais: materiaisDePontos }),
-    carina: () => criarNebulosaDeCarina({ raio: 0.13, materiais: materiaisDePontos }),
-    "omega-centauri": () => criarAglomeradoGlobular({ raio: 0.075, materiais: materiaisDePontos }),
+    carina: () => criarNebulosaDeCarina({ raio: 0.15, materiais: materiaisDePontos }),
+    "omega-centauri": () => criarAglomeradoGlobular({ raio: 0.225, materiais: materiaisDePontos }),
     lmc: () => criarGalaxiaIrregular({ raio: 16, semente: 41, quantidade: 18000, alongamento: 1.25, tarantula: true, materiais: materiaisDePontos }),
     smc: () => criarGalaxiaIrregular({ raio: 9.5, semente: 42, quantidade: 7000, alongamento: 1.7, materiais: materiaisDePontos }),
     andromeda: () => criarGalaxiaEspiral({ raio: 110, semente: 31, quantidade: 50000, anel: 0.3, companheiras: true, materiais: materiaisDePontos })
   };
-  const TAMANHO_MODELO = { "sgr-a": 0.03, pleiades: 0.025, "orion-nebula": 0.012, crab: 0.003, eagle: 0.035, carina: 0.13, "omega-centauri": 0.075, lmc: 16, smc: 9.5, andromeda: 110 };
+  const TAMANHO_MODELO = { "sgr-a": 0.03, pleiades: 0.025, "orion-nebula": 0.012, crab: 0.003, eagle: 0.035, carina: 0.15, "omega-centauri": 0.225, lmc: 16, smc: 9.5, andromeda: 110 };
 
   const marcas = [];
   for (const corpo of corpos) {

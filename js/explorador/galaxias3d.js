@@ -512,7 +512,7 @@ export function criarNebulosaDaAguia({ raio, semente = 16, materiais }) {
   // Pilares da Criação: colunas de gás e poeira que sobem da borda de baixo
   // da cavidade (4 a 5 anos-luz de altura), escuras por dentro e com a
   // borda e a ponta iluminadas pelas estrelas jovens lá de cima.
-  const pilares = [[-0.1, -0.44, 0.05, 0.17], [0.04, -0.4, 0.07, 0.125], [0.15, -0.42, 0.04, 0.09]];
+  const pilares = [[-0.1, -0.44, 0.05, 0.14], [0.04, -0.4, 0.07, 0.12], [0.15, -0.42, 0.04, 0.09]];
   const base = corRgb("#7a3a20"), meio = corRgb("#b8693c"), borda = corRgb("#ffc58a"), escuro = corRgb("#2a170e");
   for (const [px, py, pz, h] of pilares) {
     for (let i = 0; i < 620; i++) {
@@ -570,7 +570,7 @@ export function criarNebulosaDeCarina({ raio, semente = 72, materiais }) {
     const x = s * raio * 0.6;
     const y = (Math.abs(s) * 0.42 - 0.1) * raio + gaussiana(aleatorio) * raio * (0.03 + Math.abs(s) * 0.03);
     if (ruido(x / raio * 4 + 1, y / raio * 4, 3, 3) < 0.38) continue;
-    poeira.add(x, y, raio * 0.08 + gaussiana(aleatorio) * raio * 0.03, corRgb("#1c0f0b"), raio * 0.05, 0.22);
+    poeira.add(x, y, raio * 0.08 + gaussiana(aleatorio) * raio * 0.03, corRgb("#2a160f"), raio * 0.06, 0.13);
   }
   // Eta Carinae e o Homúnculo (dois lóbulos).
   estrelas.add(raio * 0.05, raio * 0.04, raio * 0.1, corRgb("#fff4d8"), raio * 0.025, 1.8);
@@ -665,18 +665,23 @@ export function criarPleiades({ raio, estrelasPrincipais, semente = 45, materiai
   return montarNebulosa(gas, poeira, estrelas, materiais);
 }
 
-/** Aglomerado globular (Ômega Centauri): milhões de estrelas velhas numa bola. */
+/**
+ * Aglomerado globular (Ômega Centauri): milhões de estrelas velhas numa bola.
+ * "raio" = até onde vão as estrelas mais afastadas (≈ 225 anos-luz, NASA);
+ * a maior parte fica num miolo bem menor (distribuição de Plummer).
+ */
 export function criarAglomeradoGlobular({ raio, quantidade = 26000, semente = 5139, materiais }) {
   const aleatorio = aleatorioComSemente(semente);
   const lote = new Lote();
   const amarela = corRgb("#fff0d2"), gigante = corRgb("#ffb27a"), azul = corRgb("#bccdff");
+  const miolo = raio * 0.055;
   for (let i = 0; i < quantidade; i++) {
-    const r = raioPlummer(aleatorio, raio * 0.12, raio);
+    const r = raioPlummer(aleatorio, miolo, raio);
     const [dx, dy, dz] = direcao(aleatorio);
     const sorteio = aleatorio();
     const tipo = sorteio < 0.07 ? 1 : sorteio < 0.13 ? 2 : 0;
     lote.add(dx * r, dy * r * 0.92, dz * r, tipo === 1 ? gigante : tipo === 2 ? azul : amarela,
-      raio * (tipo === 1 ? 0.014 : 0.008), tipo === 1 ? 0.7 : 0.22 + aleatorio() * 0.16);
+      miolo * (tipo === 1 ? 0.085 : 0.05), tipo === 1 ? 0.7 : 0.22 + aleatorio() * 0.16);
   }
   return lote.criar(materialDePontos({ atenuar: true }), materiais);
 }
