@@ -474,17 +474,151 @@
   flex: 1;
   flex-direction: column;
   align-items: center;
+  min-width: 0;
+  padding: 2px 8px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: inherit;
   text-align: center;
+}
+
+.velocidade-texto:hover,
+.velocidade-texto[aria-expanded="true"] {
+  background: rgba(73, 214, 255, 0.1);
 }
 
 .velocidade-texto strong {
   font-size: 0.95rem;
 }
 
-.velocidade-texto span {
+.velocidade-texto > span {
   color: var(--cor-texto-apagado);
   font-size: 0.78rem;
   font-variant-numeric: tabular-nums;
+}
+
+.velocidade-texto .seta {
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+.velocidade-texto[aria-expanded="true"] .seta {
+  transform: rotate(180deg);
+}
+
+/* Lista de velocidades */
+.painel-velocidades {
+  bottom: calc(var(--altura-hud, 100px) + 22px);
+  left: 50%;
+  z-index: 9;
+  width: min(360px, calc(100vw - 28px));
+  max-height: calc(100dvh - var(--altura-hud, 100px) - var(--altura-topo) - 50px);
+  padding: 10px 8px;
+  overflow-y: auto;
+  transform: translateX(-50%);
+}
+
+.painel-velocidades .opcao-titulo,
+.painel-velocidades .nota-tamanho {
+  padding: 0 8px;
+}
+
+.nota-velocidades {
+  margin: 0 0 8px !important;
+}
+
+.lista-velocidades {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.opcao-velocidade {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: none;
+  text-align: left;
+}
+
+.opcao-velocidade small {
+  color: var(--cor-texto-apagado);
+  font-size: 0.74rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.opcao-velocidade:hover {
+  background: rgba(73, 214, 255, 0.1);
+}
+
+.opcao-velocidade[aria-pressed="true"] {
+  border-color: var(--cor-destaque);
+  background: rgba(73, 214, 255, 0.18);
+  color: #fff;
+}
+
+.opcao-velocidade.ficcao span {
+  color: var(--cor-coral);
+}
+
+.velocidade-separador {
+  margin: 8px 10px 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--cor-borda);
+  color: var(--cor-coral);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Piloto automático / acompanhando um astro */
+.estado-nave {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 6px 6px 6px 14px;
+  border: 1px solid rgba(73, 214, 255, 0.45);
+  border-radius: 999px;
+  background: var(--vidro-forte);
+  box-shadow: var(--sombra-painel);
+  animation: entrar 0.3s ease both;
+}
+
+.estado-textos {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.84rem;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.estado-detalhe {
+  color: var(--cor-texto-apagado);
+  font-variant-numeric: tabular-nums;
+}
+
+.estado-acao {
+  flex: none;
+  padding: 7px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--cor-coral);
+  color: #1a0f0a;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.estado-acao:hover {
+  filter: brightness(1.1);
 }
 
 .hud-velocidade.ficcao {
@@ -590,7 +724,7 @@
 
 .cartao-descoberta {
   position: fixed;
-  bottom: 130px;
+  bottom: calc(var(--altura-hud, 100px) + 30px);
   left: 50%;
   z-index: 7;
   width: min(420px, calc(100vw - 28px));
@@ -752,12 +886,17 @@ kbd {
   .painel-alvo {
     top: auto;
     right: 10px;
-    bottom: 120px;
+    bottom: calc(var(--altura-hud, 100px) + 22px);
     left: 10px;
     width: auto;
   }
 
   .cartao-descoberta {
-    bottom: 120px;
+    bottom: calc(var(--altura-hud, 100px) + 22px);
+  }
+
+  .estado-textos {
+    font-size: 0.8rem;
+    white-space: normal;
   }
 }

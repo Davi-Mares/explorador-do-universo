@@ -120,6 +120,7 @@ function entrarNoNivel(id, { alvo = null } = {}) {
   piloto = null;
   estacionadoEm = null;
   fecharAlvo();
+  fecharVelocidades();
 
   camera.near = nivel.near;
   camera.far = nivel.far;
@@ -133,7 +134,7 @@ function entrarNoNivel(id, { alvo = null } = {}) {
     aplicarOrientacao();
     indiceVelocidade = memoria.velocidade;
     const corpo = nivel.corpos.find((c) => c.id === memoria.estacionadoEm);
-    if (corpo) estacionadoEm = { corpo, ultima: corpo.posicao.clone() };
+    if (corpo && !corpo.regiao) estacionadoEm = { corpo, ultima: corpo.posicao.clone() };
   } else {
     const { posicao, olharPara: ponto } = nivel.inicio();
     camera.position.copy(posicao);
@@ -159,7 +160,9 @@ function entrarNoNivel(id, { alvo = null } = {}) {
 
   montarMarcadores();
   montarDestinos();
+  montarVelocidades();
   atualizarHud();
+  atualizarEstadoNave();
   atualizarMissaoAtual();
   progresso.registrarNivel(id);
   for (const idDescoberta of nivel.descobrirAoEntrar || []) {
@@ -265,27 +268,100 @@ document.querySelectorAll(".controles-toque [data-tecla]").forEach((botao) => {
   botao.addEventListener("pointerup", soltarTecla);
   botao.addEventListener("pointerleave", soltarTecla);
   botao.addEventListener("pointercancel", soltarTecla);
+  botao.addEventListener("lostpointercapture", soltarTecla);
   botao.addEventListener("contextmenu", (evento) => evento.preventDefault());
 });
 
 // ---------- Velocidade ----------
+// A velocidade é a da nave quando ela anda: segurando W/▲ ou no piloto
+// automático. Soltou a tecla, a nave para.
 
-function mudarVelocidade(delta) {
-  const novo = Math.max(0, Math.min(velocidades().length - 1, indiceVelocidade + delta));
+function definirVelocidade(indice) {
+  const novo = Math.max(0, Math.min(velocidades().length - 1, indice));
   if (novo === indiceVelocidade) return;
   indiceVelocidade = novo;
   if (piloto) piloto.trocouVelocidade = true;
   atualizarHud();
+  atualizarEstadoNave();
 }
+const mudarVelocidade = (delta) => definirVelocidade(indiceVelocidade + delta);
 $("velocidade-mais").addEventListener("click", () => mudarVelocidade(1));
 $("velocidade-menos").addEventListener("click", () => mudarVelocidade(-1));
+
+/** Lista com todas as velocidades do nível, para escolher direto. */
+function montarVelocidades() {
+  const lista = $("lista-velocidades");
+  lista.innerHTML = "";
+  let separou = false;
+  velocidades().forEach((velocidade, indice) => {
+    if (velocidade.ficcao && !separou) {
+      separou = true;
+      const separador = document.createElement("li");
+      separador.className = "velocidade-separador";
+      separador.textContent = "Mais rápido que a luz: ficção";
+      lista.append(separador);
+    }
+    const item = document.createElement("li");
+    const botao = document.createElement("button");
+    botao.type = "button";
+    botao.className = velocidade.ficcao ? "opcao-velocidade ficcao" : "opcao-velocidade";
+    botao.dataset.indice = String(indice);
+    // O separador já avisa que é ficção: na lista o nome fica mais curto.
+    const nomeCurto = velocidade.nome.replace(/\s*\(ficção\)$/, "");
+    botao.innerHTML = `<span>${escapar(nomeCurto)}</span><small>${escapar(astro.formatarVelocidade(velocidade.kmS))}</small>`;
+    botao.addEventListener("click", () => {
+      definirVelocidade(indice);
+      fecharVelocidades();
+      $("botao-velocidades").focus();
+    });
+    item.append(botao);
+    lista.append(item);
+  });
+}
+
+function fecharVelocidades() {
+  alternarPainel("painel-velocidades", "botao-velocidades", false);
+}
+
+$("botao-velocidades").addEventListener("click", () => {
+  if (alternarPainel("painel-velocidades", "botao-velocidades")) {
+    fecharDestinos();
+    fecharOpcoes();
+    const atual = document.querySelector(`#lista-velocidades [data-indice="${indiceVelocidade}"]`);
+    atual?.focus();
+    atual?.scrollIntoView({ block: "nearest" });
+  }
+});
+
+// Clicar fora fecha a lista.
+document.addEventListener("pointerdown", (evento) => {
+  if ($("painel-velocidades").hidden) return;
+  if (evento.target.closest?.("#painel-velocidades, #botao-velocidades")) return;
+  fecharVelocidades();
+});
 
 // ---------- Movimento ----------
 
 const direcaoAuxiliar = new THREE.Vector3();
 
+/** Na Via Láctea: a nave está dentro do disco (onde ficam as estrelas)? */
+function dentroDoDisco() {
+  return Math.hypot(camera.position.x, camera.position.z) < 60 && Math.abs(camera.position.y) < 8;
+}
+
 function mover(dt) {
-  if (estacionadoEm) {
+  // Com a galáxia girando, a nave gira junto quando está dentro do disco ou
+  // parada num objeto do disco, como o Sol de verdade: a vizinhança fica
+  // parada e a nave não "escorrega" sozinha. De fora do disco dá para ver o giro.
+  const giro = nivel.ultimoGiro || 0;
+  const corpoSeguido = estacionadoEm?.corpo;
+  if (giro && (corpoSeguido ? corpoSeguido.gira : dentroDoDisco())) {
+    camera.position.applyAxisAngle(EIXO_Y, giro);
+    olhar.yaw += giro;
+    aplicarOrientacao();
+    if (estacionadoEm) estacionadoEm.ultima.copy(corpoSeguido.posicao);
+  } else if (estacionadoEm) {
+    // Parada perto de um astro: a nave anda junto com ele (na órbita).
     const { corpo, ultima } = estacionadoEm;
     camera.position.add(direcaoAuxiliar.copy(corpo.posicao).sub(ultima));
     ultima.copy(corpo.posicao);
@@ -313,6 +389,7 @@ function mover(dt) {
   evitarColisao();
   if (estacionadoEm && camera.position.distanceTo(estacionadoEm.corpo.posicao) > estacionadoEm.corpo.raioDescoberta * 3) {
     estacionadoEm = null;
+    atualizarEstadoNave();
   }
 }
 
@@ -346,6 +423,7 @@ function cancelarPilotoPorMovimento() {
     piloto = null;
     avisar("Piloto automático desligado: você assumiu o controle.");
     atualizarPainelAlvo();
+    atualizarEstadoNave();
   }
 }
 
@@ -363,13 +441,24 @@ function iniciarPiloto(corpo) {
   };
   estacionadoEm = null;
   atualizarPainelAlvo();
+  atualizarEstadoNave();
 }
 
 function pararPiloto() {
   if (!piloto) return;
   piloto = null;
-  avisar("Nave parada.");
+  avisar("⏹ Nave parada. Ela só volta a andar se você mandar.");
   atualizarPainelAlvo();
+  atualizarEstadoNave();
+}
+
+/** Deixa de acompanhar o astro: a nave fica parada no espaço. */
+function pararAqui() {
+  if (!estacionadoEm) return;
+  const { corpo } = estacionadoEm;
+  estacionadoEm = null;
+  avisar(`⏸ A nave ficou parada no espaço. ${maiuscula(com(corpo))} continua andando na órbita.`);
+  atualizarEstadoNave();
 }
 
 function passoDoPiloto(dt, v) {
@@ -413,15 +502,56 @@ function chegar(corpo, { salto }) {
     km: piloto?.km || 0
   };
   piloto = null;
-  estacionadoEm = { corpo, ultima: corpo.posicao.clone() };
-  olharPara(corpo.posicao);
+  // Uma região (o Cinturão) não é um corpo: não dá para acompanhá-la.
+  estacionadoEm = corpo.regiao ? null : { corpo, ultima: corpo.posicao.clone() };
+  olharPara(corpo.pontoDeOlhar?.() || corpo.posicao);
   verificarDescobertas();
   if (!salto) {
     avisar(`📍 ${corpo.nome}: viagem de ${astro.formatarDuracao(viagem.segundos)} (${astro.formatarDistancia(viagem.km)})`);
   }
   progresso.registrarChegada(viagem);
   atualizarPainelAlvo();
+  atualizarEstadoNave();
 }
+
+// ---------- Estado da nave: piloto automático ou acompanhando um astro ----------
+
+const ARTIGOS = { terra: "a", lua: "a", voyager: "a", sol: "o" };
+const com = (corpo) => (ARTIGOS[corpo.id] ? `${ARTIGOS[corpo.id]} ${corpo.nome}` : corpo.nome);
+const maiuscula = (texto) => texto.charAt(0).toUpperCase() + texto.slice(1);
+
+/** No Sistema Solar os astros andam: parada perto de um, a nave vai junto. */
+function acompanhandoAstro() {
+  return Boolean(estacionadoEm && nivel.temTempo && estacionadoEm.corpo !== nivel.sol);
+}
+
+let estadoAnterior = "";
+function atualizarEstadoNave() {
+  let texto = "", detalhe = "", acao = "", dica = "";
+  if (piloto) {
+    const corpo = piloto.corpo;
+    const restanteKm = km(Math.max(0, camera.position.distanceTo(corpo.posicao) - corpo.distanciaChegada));
+    texto = `🚀 Piloto automático: indo para ${corpo.nome}`;
+    detalhe = `· faltam ${astro.formatarDuracao(restanteKm / velocidadeAtual().kmS)}`;
+    acao = "⏹ Parar";
+    dica = "Parar a nave aqui (tecla Espaço)";
+  } else if (acompanhandoAstro()) {
+    texto = `📍 Acompanhando ${com(estacionadoEm.corpo)}`;
+    detalhe = "· vai junto na órbita";
+    acao = "⏸ Parar aqui";
+    dica = "Parar de acompanhar e ficar parada no espaço";
+  }
+  $("estado-detalhe").textContent = detalhe;
+  if (texto === estadoAnterior) return;
+  estadoAnterior = texto;
+  $("estado-nave").hidden = !texto;
+  $("estado-texto").textContent = texto;
+  const botao = $("estado-acao");
+  botao.textContent = acao;
+  botao.title = dica;
+}
+
+$("estado-acao").addEventListener("click", () => (piloto ? pararPiloto() : pararAqui()));
 
 // ---------- Descobertas ----------
 
@@ -717,10 +847,20 @@ function atualizarHud() {
   const velocidade = velocidadeAtual();
   $("velocidade-nome").textContent = velocidade.nome;
   $("velocidade-valor").textContent = astro.formatarVelocidade(velocidade.kmS);
+  $("velocidade-nivel").textContent = `${indiceVelocidade + 1}/${velocidades().length}`;
   document.querySelector(".hud-velocidade").classList.toggle("ficcao", Boolean(velocidade.ficcao));
   $("velocidade-menos").disabled = indiceVelocidade === 0;
   $("velocidade-mais").disabled = indiceVelocidade === velocidades().length - 1;
+  document.querySelectorAll("#lista-velocidades [data-indice]").forEach((botao) => {
+    botao.setAttribute("aria-pressed", String(Number(botao.dataset.indice) === indiceVelocidade));
+  });
 }
+
+// A altura do painel da nave muda (piloto automático, telas pequenas):
+// os painéis de baixo se ajustam a ela.
+new ResizeObserver(() => {
+  document.documentElement.style.setProperty("--altura-hud", `${Math.ceil(document.querySelector(".hud").offsetHeight)}px`);
+}).observe(document.querySelector(".hud"));
 
 // Missão atual: uma de cada vez, de preferência do nível em que a nave está.
 function missaoAtual() {
@@ -815,6 +955,11 @@ function atualizarContadores() {
 }
 
 function fecharPaineis() {
+  if (!$("painel-velocidades").hidden) {
+    fecharVelocidades();
+    $("botao-velocidades").focus();
+    return;
+  }
   fecharDestinos();
   fecharOpcoes();
   fecharAlvo();
@@ -907,6 +1052,7 @@ function quadro(agora) {
   if (acumuladoInterface > 0.25) {
     acumuladoInterface = 0;
     atualizarPainelAlvo();
+    atualizarEstadoNave();
     if (!$("painel-destinos").hidden) atualizarDestinos();
     if (nivel.temTempo) $("data-simulada").textContent = formatoData.format(dataSimulada);
     if (nivel.temGiro && !$("painel-opcoes").hidden) atualizarControleGiro();

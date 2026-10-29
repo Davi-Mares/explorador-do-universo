@@ -392,6 +392,119 @@ export const VOYAGER = {
 };
 
 // ---------------------------------------------------------------------------
+// Planetas anões e o Cinturão de Asteroides.
+// Ceres: elementos osculantes do JPL Small-Body Database (época JD 2458000,5);
+// Plutão: elementos médios J2000 da NASA (NSSDC, Pluto Fact Sheet). Sem as
+// perturbações dos planetas, a posição pode errar alguns décimos de grau.
+// ---------------------------------------------------------------------------
+
+/** Elementos de uma época (JD) → formato J2000 + taxa da longitude média (Kepler). */
+function elementosDaEpoca({ a, e, I, O, w, M }, jdEpoca) {
+  const grausPorDia = 0.9856076686 / a ** 1.5; // constante de Gauss
+  const longitudeMedia = O + w + M - grausPorDia * (jdEpoca - 2_451_545.0);
+  return {
+    elementos: { a, e, I, L: longitudeMedia, w: O + w, O },
+    taxas: { a: 0, e: 0, I: 0, L: grausPorDia * 36_525, w: 0, O: 0 }
+  };
+}
+
+export const PLANETAS_ANOES = [
+  {
+    id: "ceres", nome: "Ceres", tipo: "Planeta anão (no Cinturão de Asteroides)", raioKm: 469.7, cor: "#a49f97",
+    gravidade: 0.28, periodoAnos: 4.6,
+    orbita: elementosDaEpoca({ a: 2.76740933, e: 0.07560729, I: 10.59321706, O: 80.30888261, w: 73.02374265, M: 309.49405514 }, 2_458_000.5),
+    // Rotação: IAU WGCCRE (Archinal et al., 2018); período de 9,074 h (NASA NSSDC).
+    rotacao: { poloAr: 291.418, poloDec: 66.764, meridiano: 170.65, horas: 9.074, inclinacao: 4 },
+    resumo: "O maior objeto do Cinturão de Asteroides: sozinho, tem cerca de um quarto de toda a massa do cinturão.",
+    curiosidade: "Foi o primeiro planeta anão visitado por uma sonda: a Dawn, da NASA, chegou lá em 2015.",
+    fonte: "https://nssdc.gsfc.nasa.gov/planetary/factsheet/asteroidfact.html",
+    saibaMais: "Ceres foi descoberto em 1801 e, desde 2006, é classificado como planeta anão. Tem gelo de água misturado às rochas e manchas claras de sal no fundo de algumas crateras. A sonda Dawn orbitou Ceres de 2015 a 2018.",
+    ficha: [
+      ["Tipo", "Planeta anão"],
+      ["Diâmetro", "939 km"],
+      ["Distância do Sol", "414 milhões de km (2,8 UA)"],
+      ["Rotação", "9 h 4 min"],
+      ["Ano", "4,6 anos terrestres"],
+      ["Luas", "Nenhuma"],
+      ["Gravidade", "0,28 m/s² (3% da Terra)"]
+    ]
+  },
+  {
+    id: "plutao", nome: "Plutão", tipo: "Planeta anão", raioKm: 1_188, cor: "#c9b49a",
+    gravidade: 0.62, periodoAnos: 247.94,
+    orbita: {
+      elementos: { a: 39.48168677, e: 0.24880766, I: 17.14175, L: 238.92881, w: 224.06676, O: 110.30347 },
+      taxas: { a: 0, e: 0, I: 0, L: 145.197, w: 0, O: 0 }
+    },
+    // Polo positivo (regra da mão direita) e meridiano: IAU WGCCRE (Archinal et al., 2018).
+    rotacao: { poloAr: 132.993, poloDec: -6.163, meridiano: 302.695, horas: 153.2928, inclinacao: 119.51 },
+    resumo: "Foi chamado de planeta até 2006. É menor que a nossa Lua e tem um 'coração' de gelo de nitrogênio.",
+    curiosidade: "Em 2015 a sonda New Horizons, da NASA, passou por Plutão e mostrou montanhas de gelo e uma névoa azulada.",
+    fonte: "https://nssdc.gsfc.nasa.gov/planetary/factsheet/plutofact.html",
+    saibaMais: "Em 2006 a União Astronômica Internacional definiu que um planeta precisa ter 'limpado' a vizinhança da sua órbita. Plutão divide a região com muitos outros corpos gelados, o Cinturão de Kuiper, e virou o primeiro de uma nova categoria: os planetas anões. Ele tem cinco luas; a maior, Caronte, tem metade do tamanho dele.",
+    ficha: [
+      ["Tipo", "Planeta anão"],
+      ["Diâmetro", "2.376 km"],
+      ["Distância do Sol", "5,9 bilhões de km (39,5 UA)"],
+      ["Rotação", "6,4 dias (gira de lado, eixo a 120°)"],
+      ["Ano", "248 anos terrestres"],
+      ["Luas", "5 (a maior é Caronte)"],
+      ["Temperatura", "−249 °C a −235 °C"],
+      ["Gravidade", "0,62 m/s² (6% da Terra)"]
+    ]
+  }
+].map((objeto) => ({ ...objeto, nivel: "solar" }));
+
+/**
+ * O Cinturão de Asteroides é uma região, não um corpo: no explorador ele é
+ * desenhado como milhares de pontos com órbitas de Kepler, e o "destino" é o
+ * ponto do cinturão mais perto da nave.
+ */
+export const CINTURAO = {
+  id: "cinturao",
+  nome: "Cinturão de Asteroides",
+  nivel: "solar",
+  tipo: "Região entre Marte e Júpiter",
+  cor: "#bba98e",
+  raioInternoUA: 2.1,
+  raioExternoUA: 3.3,
+  resumo: "Uma faixa entre Marte e Júpiter com milhões de rochas que sobraram da formação dos planetas.",
+  curiosidade: "Ao contrário dos filmes, ele é quase vazio: os asteroides maiores que 1 km ficam, em média, a centenas de milhares de km uns dos outros.",
+  fonte: "https://science.nasa.gov/solar-system/asteroids/",
+  saibaMais: "A NASA estima que existam de 1,1 a 1,9 milhão de asteroides com mais de 1 km no cinturão principal. Somados, eles têm menos massa que a nossa Lua. Na mesma órbita de Júpiter há ainda dois enxames, os asteroides troianos, que a sonda Lucy, da NASA, vai visitar a partir de 2027.",
+  ficha: [
+    ["Onde fica", "Entre Marte e Júpiter (≈ 2,1 a 3,3 UA do Sol)"],
+    ["Asteroides com mais de 1 km", "≈ 1,1 a 1,9 milhão"],
+    ["Massa total", "Menor que a da Lua"],
+    ["Maior objeto", "Ceres (planeta anão)"]
+  ]
+};
+
+// ---------------------------------------------------------------------------
+// Gigantes para o comparador: galáxias e buracos negros. Raio de um buraco
+// negro = raio do horizonte de eventos, Rs = 2GM/c² ≈ 2,953 km por massa solar.
+// ---------------------------------------------------------------------------
+
+export const KM_POR_MASSA_SOLAR_SCHWARZSCHILD = 2.95325;
+
+/** Objetos que só aparecem no comparador (grandes demais ou longe demais para o explorador). */
+export const GIGANTES = [
+  {
+    id: "via-lactea", nome: "Via Láctea", tipo: "Galáxia espiral barrada (a nossa)", categoria: "galáxia",
+    cor: "#dfe6ff", diametroAnosLuz: 100_000,
+    resumo: "A nossa galáxia: um disco com centenas de bilhões de estrelas. O Sol fica a uns 27 mil anos-luz do centro.",
+    fonte: "https://imagine.gsfc.nasa.gov/science/featured_science/milkyway"
+  },
+  {
+    id: "ton-618", nome: "TON 618", tipo: "Buraco negro supermassivo (no centro de um quasar)", categoria: "buraco negro",
+    cor: "#ffb36b", massaSolar: 6.6e10, anosLuzViagem: 10.8e9,
+    resumo: "Um dos buracos negros mais pesados já medidos: cerca de 66 bilhões de vezes a massa do Sol.",
+    // Massa: Shemmer et al. (2004), ApJ 614, 547 (log M = 10,82). Outras estimativas dão ~40 bilhões.
+    fonte: "https://arxiv.org/abs/astro-ph/0406559"
+  }
+];
+
+// ---------------------------------------------------------------------------
 // Nível 2 — Estrelas vizinhas (unidade da cena: ano-luz)
 // ar = ascensão reta "h m s"; dec = declinação "±g m s" (J2000);
 // mag = magnitude aparente vista da Terra (quanto menor, mais brilhante).
@@ -638,7 +751,7 @@ export const OBJETOS_GALAXIA = [
   },
   {
     id: "sgr-a", nome: "Sagitário A*", tipo: "Buraco negro supermassivo", centro: true,
-    cor: "#ffb36b",
+    cor: "#ffb36b", categoria: "buraco negro", massaSolar: 4.0e6,   // ESO/EHT (2022): ≈ 4 milhões de Sóis
     resumo: "O buraco negro no centro da Via Láctea, com cerca de 4 milhões de vezes a massa do Sol.",
     curiosidade: "Em 2022 o Event Horizon Telescope mostrou a primeira imagem da 'sombra' dele."
   },
@@ -693,6 +806,7 @@ export const OBJETOS_GALAXIA = [
   {
     id: "andromeda", nome: "Galáxia de Andrômeda", tipo: "Galáxia espiral vizinha", l: 121.17, b: -21.57, d: 2537,
     cor: "#e6dcff", imagem: "img/universo/andromeda.webp",
+    categoria: "galáxia", diametroAnosLuz: 220_000,   // NASA (Hubble, 2025): "mais de 200 mil anos-luz" de diâmetro
     resumo: "A grande galáxia mais próxima, com cerca de 1 trilhão de estrelas. É um dos objetos mais distantes que dá para ver a olho nu.",
     curiosidade: "Andrômeda e a Via Láctea se aproximam a ≈ 110 km/s e podem se fundir daqui a bilhões de anos (estudos de 2025 estimam uma chance de cerca de 50% nos próximos 10 bilhões de anos)."
   }
@@ -847,6 +961,27 @@ export const PERGUNTAS = [
     explicacao: "Netuno está a 30 UA. Se a luz leva 8 min 20 s por UA, são ≈ 4 horas e 10 minutos."
   },
   {
+    id: "q-ceres", objeto: "ceres",
+    pergunta: "Quanto da massa de todo o Cinturão de Asteroides está só em Ceres?",
+    opcoes: ["Quase nada (1%)", "Cerca de um quarto (25%)", "Metade (50%)", "Tudo (100%)"],
+    certa: 1,
+    explicacao: "Segundo a NASA, Ceres sozinho tem cerca de 25% da massa do cinturão. O resto está espalhado em milhões de rochas bem menores."
+  },
+  {
+    id: "q-plutao", objeto: "plutao",
+    pergunta: "Por que Plutão deixou de ser chamado de planeta em 2006?",
+    opcoes: ["Porque ele se partiu ao meio", "Porque não 'limpou' a vizinhança da sua órbita", "Porque saiu do Sistema Solar", "Porque não é redondo"],
+    certa: 1,
+    explicacao: "A União Astronômica Internacional decidiu que um planeta precisa ser o corpo dominante da sua órbita. Plutão divide a região com muitos corpos gelados e virou um planeta anão."
+  },
+  {
+    id: "q-cinturao", objeto: "cinturao",
+    pergunta: "Uma nave atravessando o Cinturão de Asteroides precisa desviar de rochas o tempo todo?",
+    opcoes: ["Sim, elas estão coladas umas nas outras", "Não: em média, ficam a centenas de milhares de km umas das outras", "Sim, mas só de dia", "Ninguém nunca atravessou o cinturão"],
+    certa: 1,
+    explicacao: "O cinturão é quase vazio. Segundo a equipe da sonda Lucy, da NASA, ela cruza o cinturão sem precisar ligar os motores para desviar de nenhuma rocha."
+  },
+  {
     id: "q-voyager", objeto: "voyager",
     pergunta: "Lançada em 1977, a Voyager 1 está hoje tão longe que um sinal de rádio (que viaja na velocidade da luz) leva quanto tempo para chegar até ela?",
     opcoes: ["Cerca de 1 minuto", "Cerca de 1 hora", "Quase 1 dia inteiro"],
@@ -951,7 +1086,7 @@ export const PERGUNTAS = [
 // ---------------------------------------------------------------------------
 
 /** Todos os objetos que podem ser descobertos, com o nível de cada um. */
-export const TODOS_OS_OBJETOS = [SOL, ...PLANETAS, LUA, VOYAGER, ...ESTRELAS, ...OBJETOS_GALAXIA];
+export const TODOS_OS_OBJETOS = [SOL, ...PLANETAS, LUA, ...PLANETAS_ANOES, CINTURAO, VOYAGER, ...ESTRELAS, ...OBJETOS_GALAXIA];
 
 const PORID = new Map(TODOS_OS_OBJETOS.map((objeto) => [objeto.id, objeto]));
 
@@ -971,3 +1106,36 @@ export function nivelPorId(id) {
 export function corDaEstrela(estrela) {
   return CORES_ESPECTRAIS[estrela.espectro.trim()[0]] || "#ffffff";
 }
+
+// ---------------------------------------------------------------------------
+// Comparador: os astros que dá para pôr lado a lado
+// ---------------------------------------------------------------------------
+
+const KM_POR_ANO_LUZ = NIVEIS[1].unidadeKm;
+const IDS_ANOES = new Set(PLANETAS_ANOES.map((p) => p.id));
+
+/** "planeta", "planeta anão", "lua", "estrela", "buraco negro" ou "galáxia". */
+export function categoriaDoAstro(objeto) {
+  if (objeto.categoria) return objeto.categoria;
+  if (objeto.id === "sol" || objeto.espectro) return "estrela";
+  if (objeto.id === "lua") return "lua";
+  return IDS_ANOES.has(objeto.id) ? "planeta anão" : "planeta";
+}
+
+/**
+ * Raio (km) usado no comparador. Buraco negro: raio do horizonte de eventos
+ * (raio de Schwarzschild, 2GM/c²). Galáxia: metade do diâmetro.
+ */
+export function raioParaComparar(objeto) {
+  if (objeto.categoria === "buraco negro") return objeto.massaSolar * KM_POR_MASSA_SOLAR_SCHWARZSCHILD;
+  if (objeto.categoria === "galáxia") return (objeto.diametroAnosLuz / 2) * KM_POR_ANO_LUZ;
+  return objeto.raioKm || objeto.raioSolar * SOL.raioKm;
+}
+
+/** Todos os astros do comparador, numa lista só, do maior para o menor. */
+export const COMPARAVEIS = [
+  SOL, ...PLANETAS, LUA, ...PLANETAS_ANOES,
+  ...ESTRELAS.filter((e) => e.raioSolar),
+  ...GIGANTES,
+  ...OBJETOS_GALAXIA.filter((o) => o.categoria)   // Sagitário A* e Andrômeda
+].sort((a, b) => raioParaComparar(b) - raioParaComparar(a));

@@ -85,14 +85,14 @@ for (const [id, nome, iso] of oposicoes) {
 }
 
 // ---------- 3. Leis físicas e coerência da ficha técnica ----------
-for (const p of cat.PLANETAS) {
+for (const p of [...cat.PLANETAS, ...cat.PLANETAS_ANOES]) {
   const periodo = astro.periodoKeplerAnos(p.orbita.elementos.a);
   teste("Kepler", `${p.nome}: período pela 3ª lei (${p.periodoAnos} anos)`, periodo / p.periodoAnos, 1, 0.005);
 }
 
 // A ficha técnica (em texto) precisa bater com a órbita usada
 // na simulação: a distância em UA escrita na ficha × semieixo maior.
-for (const p of cat.PLANETAS) {
+for (const p of [...cat.PLANETAS, ...cat.PLANETAS_ANOES]) {
   const linha = p.ficha.find(([campo]) => campo.startsWith("Distância"));
   const ua = linha && Number(linha[1].match(/\(([\d,]+) UA\)/)?.[1].replace(",", "."));
   verdadeiro("Ficha", `${p.nome}: ficha técnica, texto e fonte presentes`, p.ficha?.length >= 6 && p.saibaMais && p.fonte?.startsWith("https://"));
@@ -104,7 +104,7 @@ const numeroDaFicha = (objeto, campo) => {
   const linha = objeto.ficha?.find(([c]) => c === campo);
   return linha ? Number(linha[1].match(/^≈?\s*([\d.,]+)/)[1].replace(/\./g, "").replace(",", ".")) : null;
 };
-for (const o of [cat.SOL, ...cat.PLANETAS, cat.LUA]) {
+for (const o of [cat.SOL, ...cat.PLANETAS, cat.LUA, ...cat.PLANETAS_ANOES]) {
   teste("Ficha", `${o.nome}: diâmetro da ficha × raio do modelo`, numeroDaFicha(o, "Diâmetro") / (2 * o.raioKm), 1, 0.01);
   teste("Ficha", `${o.nome}: gravidade da ficha × comparador`, numeroDaFicha(o, "Gravidade") / o.gravidade, 1, 0.01);
 }
@@ -150,6 +150,44 @@ teste("Luz", "1 ano-luz ≈ 63.241 UA", astro.UA_POR_ANO_LUZ, 63_241, 1, " UA");
 }
 for (const p of cat.PLANETAS) {
   teste("Rotação", `${p.nome}: inclinação do eixo pelo polo da IAU × NASA (${p.rotacao.inclinacao}°)`, astro.inclinacaoDoEixo(p), p.rotacao.inclinacao, 0.5, "°");
+}
+// Planetas anões: a inclinação publicada é arredondada (Ceres ≈ 4°), daí a tolerância maior.
+for (const p of cat.PLANETAS_ANOES) {
+  teste("Rotação", `${p.nome}: inclinação do eixo pelo polo da IAU × NASA (${p.rotacao.inclinacao}°)`, astro.inclinacaoDoEixo(p), p.rotacao.inclinacao, 1, "°");
+}
+
+// ---------- 3d. Planetas anões e Cinturão de Asteroides ----------
+{
+  const distanciaDoSol = (objeto, data) => {
+    const p = astro.posicaoHeliocentrica(objeto, data);
+    return Math.hypot(p.x, p.y, p.z);
+  };
+  const periélio = (objeto, inicio, fim, passoDias) => {
+    let menor = Infinity, quando = null;
+    for (let t = inicio; t <= fim; t += passoDias * 86_400_000) {
+      const r = distanciaDoSol(objeto, new Date(t));
+      if (r < menor) { menor = r; quando = t; }
+    }
+    return { menor, quando };
+  };
+  const anao = (id) => cat.PLANETAS_ANOES.find((p) => p.id === id);
+  // Plutão: de 1979 a 1999 esteve perto do periélio (NASA), que caiu em 1989;
+  // distância no periélio: 4.434,987 milhões de km = 29,646 UA (NASA/NSSDC).
+  const plutao = periélio(anao("plutao"), Date.UTC(1980, 0, 1), Date.UTC(1999, 0, 1), 5);
+  const anoDoPerielio = 1970 + plutao.quando / (365.25 * 86_400_000);
+  teste("Planetas anões", "Plutão: periélio no meio de 1979–1999 (em 1989) — anos depois de 1º/jul/1989", anoDoPerielio - 1989.5, 0, 0.5, " ano");
+  teste("Planetas anões", "Plutão: distância no periélio (29,646 UA, NSSDC)", plutao.menor, 29.646, 0.02, " UA");
+  // Ceres: periélio em abril de 2018 (NASA/JPL, missão Dawn).
+  const ceres = periélio(anao("ceres"), Date.UTC(2017, 6, 1), Date.UTC(2019, 0, 1), 1);
+  teste("Planetas anões", "Ceres: periélio em abril de 2018 (NASA/JPL) — dias depois de 15/04/2018", (ceres.quando - Date.UTC(2018, 3, 15)) / 86_400_000, 0, 15, " dia(s)");
+  const netuno = planeta("netuno");
+  teste("Planetas anões", "Plutão dá 2 voltas enquanto Netuno dá 3 (ressonância 3:2)", anao("plutao").periodoAnos / netuno.periodoAnos, 1.5, 0.01);
+  const a = anao("ceres").orbita.elementos.a;
+  verdadeiro("Planetas anões", `Ceres (${a.toFixed(2)} UA) fica dentro do Cinturão (${cat.CINTURAO.raioInternoUA}–${cat.CINTURAO.raioExternoUA} UA)`,
+    a > cat.CINTURAO.raioInternoUA && a < cat.CINTURAO.raioExternoUA);
+  verdadeiro("Planetas anões", "O Cinturão fica entre Marte e Júpiter",
+    cat.CINTURAO.raioInternoUA > planeta("marte").orbita.elementos.a && cat.CINTURAO.raioExternoUA < planeta("jupiter").orbita.elementos.a);
+  verdadeiro("Planetas anões", "Plutão é menor que a Lua (o quiz e o comparador dizem isso)", anao("plutao").raioKm < cat.LUA.raioKm);
 }
 
 // ---------- 3c. Comparador e texturas ----------
@@ -223,6 +261,32 @@ for (const p of cat.PLANETAS) {
   const lmc = cat.OBJETOS_GALAXIA.find((o) => o.id === "lmc");
   const p = astro.galacticaParaGalactocentrica(lmc.l, lmc.b, lmc.d, r0);
   teste("Galáxia", "Grande Nuvem de Magalhães a ≈ 160 mil anos-luz do centro", Math.hypot(p.x, p.y, p.z), 160, 6, " mil anos-luz");
+  // Equatorial → galáctica (matriz do Hipparcos): pontos de referência da IAU.
+  const centroGalactico = astro.equatorialParaGalactica(266.40499, -28.93617);
+  teste("Galáxia", "Centro galáctico (AR 266,405°, Dec −28,936°) → l = 0°", diferencaAngular(centroGalactico.l, 0), 0, 0.01, "°");
+  teste("Galáxia", "Centro galáctico → b = 0°", centroGalactico.b, 0, 0.01, "°");
+  teste("Galáxia", "Polo norte galáctico (AR 192,859°, Dec +27,128°) → b = 90°", astro.equatorialParaGalactica(192.85948, 27.12825).b, 90, 0.001, "°");
+  const orion = astro.equatorialParaGalactica(astro.arParaGraus("05 35 17.3"), astro.decParaGraus("-05 23 28"));
+  teste("Galáxia", "Nebulosa de Órion (M42) → l = 209,01° (SIMBAD)", orion.l, 209.01, 0.05, "°");
+  teste("Galáxia", "Nebulosa de Órion (M42) → b = −19,38° (SIMBAD)", orion.b, -19.38, 0.05, "°");
+}
+
+// ---------- 7b. Buracos negros e galáxias no comparador ----------
+{
+  // Raio de Schwarzschild: r = 2GM/c², com GM do Sol = 1,32712440041 × 10¹¹ km³/s² (IAU 2015).
+  const esperado = (2 * 1.32712440041e11) / astro.VELOCIDADE_LUZ_KM_S ** 2;
+  teste("Buracos negros e galáxias", "Raio do horizonte por massa do Sol = 2GM/c² (≈ 2,953 km)", cat.KM_POR_MASSA_SOLAR_SCHWARZSCHILD, esperado, 1e-4, " km");
+  const sgr = cat.objetoPorId("sgr-a");
+  const raioSgrUa = cat.raioParaComparar(sgr) / astro.KM_POR_UA;
+  verdadeiro("Buracos negros e galáxias", `O horizonte de Sagitário A* (${raioSgrUa.toFixed(3)} UA) caberia dentro da órbita de Mercúrio`, raioSgrUa < planeta("mercurio").orbita.elementos.a);
+  const ton = cat.GIGANTES.find((o) => o.id === "ton-618");
+  teste("Buracos negros e galáxias", "TON 618: raio do horizonte ≈ 1.300 UA", cat.raioParaComparar(ton) / astro.KM_POR_UA, 1300, 50, " UA");
+  const via = cat.GIGANTES.find((o) => o.id === "via-lactea"), andromeda = cat.objetoPorId("andromeda");
+  teste("Buracos negros e galáxias", "Andrômeda tem ≈ 2,2 vezes o diâmetro da Via Láctea", cat.raioParaComparar(andromeda) / cat.raioParaComparar(via), 2.2, 0.01);
+  const lista = cat.COMPARAVEIS;
+  verdadeiro("Buracos negros e galáxias", `Lista do comparador do maior para o menor (${lista.length} astros, de ${lista[0].nome} a ${lista.at(-1).nome})`,
+    lista.every((o, i) => i === 0 || cat.raioParaComparar(lista[i - 1]) >= cat.raioParaComparar(o)) && new Set(lista).size === lista.length);
+  verdadeiro("Buracos negros e galáxias", "Toda categoria do comparador tem nome", lista.every((o) => ["galáxia", "buraco negro", "estrela", "planeta", "planeta anão", "lua"].includes(cat.categoriaDoAstro(o))));
 }
 
 // ---------- 8. Integridade da base de conhecimento ----------

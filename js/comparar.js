@@ -1,14 +1,18 @@
 // ---------------------------------------------------------------------------
 // Explorador do Universo — Comparador.
 // Dois astros lado a lado, na mesma escala, com os números que ajudam a
-// entender a diferença: tamanho, gravidade, rotação, translação, distância,
-// temperatura e luas. Escolha pela URL: comparar.html?a=terra&b=jupiter
+// entender a diferença: tamanho, massa, gravidade, rotação, translação,
+// distância, temperatura e luas. Vai de Ceres até a Galáxia de Andrômeda.
+// Escolha pela URL: comparar.html?a=terra&b=jupiter
 // ---------------------------------------------------------------------------
 
 import * as THREE from "three";
 import * as astro from "./explorador/astronomia.js";
-import { SOL, PLANETAS, LUA, ESTRELAS, corDaEstrela } from "./explorador/catalogo.js";
+import {
+  SOL, GALAXIA, COMPARAVEIS, categoriaDoAstro as categoria, raioParaComparar as raioKm, corDaEstrela
+} from "./explorador/catalogo.js";
 import { criarAstro, definirAnisotropia, texturaDeBrilho } from "./explorador/astros3d.js";
+import { criarViaLactea, criarGalaxiaEspiral, ajustarMateriais } from "./explorador/galaxias3d.js";
 
 const $ = (id) => document.getElementById(id);
 const movimentoReduzido = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -16,24 +20,22 @@ const G_TERRA = 9.8;
 const RAD = Math.PI / 180;
 
 // ---------- Astros que dá para comparar ----------
+// Uma lista só, do maior para o menor (de Andrômeda até Ceres). O raio de um
+// buraco negro é o do horizonte de eventos; o de uma galáxia, metade do diâmetro.
 
-const GRUPOS = [
-  { rotulo: "Sistema Solar", itens: [SOL, ...PLANETAS, LUA] },
-  { rotulo: "Estrelas", itens: ESTRELAS.filter((e) => e.raioSolar) }
-];
-const ITENS = GRUPOS.flatMap((g) => g.itens);
+const ITENS = COMPARAVEIS;
+const ehEstrela = (o) => o.id === "sol" || Boolean(o.espectro);
 const porId = (id) => ITENS.find((o) => o.id === id);
 const PADRAO = { a: "terra", b: "jupiter" };
 
-const nome = (o) => o.nomeComparador || o.nome;
-const raioKm = (o) => o.raioKm || o.raioSolar * SOL.raioKm;
-const ehEstrela = (o) => o.id === "sol" || Boolean(o.espectro);
+const NOMES = { andromeda: "Andrômeda" };
+const nome = (o) => NOMES[o.id] || o.nomeComparador || o.nome;
 
 // Artigos e plurais para frases naturais ("do Sol", "na Terra", "1.321 Terras").
-const ARTIGOS = { sol: "o", terra: "a", lua: "a" };
+const ARTIGOS = { sol: "o", terra: "a", lua: "a", "via-lactea": "a" };
 const PLURAIS = {
   sol: "Sóis", mercurio: "Mercúrios", venus: "Vênus", terra: "Terras", lua: "Luas", marte: "Martes",
-  jupiter: "Júpiteres", saturno: "Saturnos", urano: "Uranos", netuno: "Netunos"
+  jupiter: "Júpiteres", saturno: "Saturnos", urano: "Uranos", netuno: "Netunos", ceres: "Ceres", plutao: "Plutões"
 };
 const com = (o) => (ARTIGOS[o.id] ? `${ARTIGOS[o.id]} ${nome(o)}` : nome(o));
 const de = (o) => (ARTIGOS[o.id] ? `d${ARTIGOS[o.id]} ${nome(o)}` : `de ${nome(o)}`);
@@ -44,10 +46,38 @@ const maiuscula = (texto) => texto.charAt(0).toUpperCase() + texto.slice(1);
 const numero = (valor, casas = 0) => valor.toLocaleString("pt-BR", { minimumFractionDigits: casas, maximumFractionDigits: casas });
 const casasPara = (v) => (v < 10 ? 1 : 0);
 
+/** Inteiro; acima de 10 mil, com 3 algarismos significativos (fica legível). */
+function redondo(v) {
+  if (v < 10_000) return Math.round(v);
+  const base = 10 ** (Math.floor(Math.log10(v)) - 2);
+  return Math.round(v / base) * base;
+}
+
 /** "1.321", "1,3 milhão de" (pronto para vir antes de um substantivo). */
 function quantidade(v) {
-  const texto = astro.formatarGrande(v < 10 ? Math.round(v * 10) / 10 : Math.round(v));
+  const texto = astro.formatarGrande(v < 10 ? Math.round(v * 10) / 10 : redondo(v));
   return /(lhão|lhões)$/.test(texto) ? `${texto} de` : texto;
+}
+
+/** "1,5 vez", "11 vezes", "16 mil vezes", "4,6 trilhões de vezes". */
+function vezes(r) {
+  if (r < 2) return `${numero(r, 1)} vez`;
+  return `${quantidade(r)} vezes`;
+}
+
+/** Distâncias enormes: além de trilhões vêm quatrilhões e quintilhões. */
+function textoKm(km) {
+  if (km < 1e6) return `${numero(Math.round(km))} km`;
+  if (km < 1e15) return astro.formatarKm(km);
+  const [base, singular, pluralTexto] = km >= 1e18 ? [1e18, "quintilhão", "quintilhões"] : [1e15, "quatrilhão", "quatrilhões"];
+  const n = km / base;
+  return `${numero(n, n < 10 ? 1 : 0)} ${n < 2 ? singular : pluralTexto} de km`;
+}
+
+/** "4,2 anos-luz", "27 mil anos-luz", "2,5 milhões de anos-luz". */
+function textoAnosLuz(v) {
+  if (v < 10_000) return `${numero(v, v < 10 ? 1 : 0)} anos-luz`;
+  return `${quantidade(v)} anos-luz`;
 }
 
 const ficha = (o, campo) => o.ficha?.find(([c]) => c === campo)?.[1] || null;
@@ -56,11 +86,31 @@ const ficha = (o, campo) => o.ficha?.find(([c]) => c === campo)?.[1] || null;
 
 function diametro(o) {
   const km = 2 * raioKm(o);
-  const texto = km < 1e6 ? `${numero(Math.round(km))} km` : astro.formatarKm(km);
-  if (o.id === "terra" || o.id === "sol") return texto;
-  if (ehEstrela(o)) return `${texto} (${numero(o.raioSolar, o.raioSolar < 10 ? 1 : 0)} × o Sol)`;
-  const terras = raioKm(o) / 6371;
-  return `${texto} (${numero(terras, terras < 10 ? 2 : 0)} × a Terra)`;
+  switch (categoria(o)) {
+    case "galáxia":
+      return `${astro.formatarGrande(o.diametroAnosLuz)} anos-luz (≈ ${textoKm(km)})`;
+    case "buraco negro": {
+      const ua = km / astro.KM_POR_UA;
+      const comparacao = ua >= 10
+        ? `≈ ${numero(ua >= 1000 ? Math.round(ua / 100) * 100 : Math.round(ua))} vezes a distância da Terra ao Sol`
+        : `${vezes(raioKm(o) / SOL.raioKm)} o Sol`;
+      return `${textoKm(km)} no horizonte de eventos (${comparacao})`;
+    }
+    case "estrela":
+      if (o.id === "sol") return textoKm(km);
+      return `${textoKm(km)} (${numero(o.raioSolar, o.raioSolar < 10 ? 1 : 0)} × o Sol)`;
+    default: {
+      if (o.id === "terra") return textoKm(km);
+      const terras = raioKm(o) / 6371;
+      return `${textoKm(km)} (${numero(terras, terras < 10 ? 2 : 0)} × a Terra)`;
+    }
+  }
+}
+
+function massa(o) {
+  if (o.massaSolar) return `${quantidade(o.massaSolar)} vezes a do Sol`;
+  if (o.id === "sol") return "333 mil vezes a da Terra";
+  return "—";
 }
 
 function gravidade(o) {
@@ -70,10 +120,12 @@ function gravidade(o) {
 }
 
 function rotacao(o) {
+  if (o.id === "via-lactea") return "≈ 230 milhões de anos (uma volta, na altura do Sol)";
   const horas = o.rotacao?.horas;
   if (!horas) return "—";
   const texto = astro.formatarDuracao(Math.abs(horas) * 3600);
-  if (horas < 0) return `${texto} (gira ao contrário)`;
+  // Eixo inclinado mais de 90°: gira "ao contrário" em relação à órbita.
+  if (o.rotacao.inclinacao > 90) return `${texto} (gira ao contrário)`;
   if (o.id === "sol") return `${texto} (no equador)`;
   if (o.id === "lua") return `${texto} (sempre a mesma face para a Terra)`;
   return texto;
@@ -87,27 +139,33 @@ function translacao(o) {
   return `${numero(o.periodoAnos, o.periodoAnos < 100 ? 1 : 0)} anos`;
 }
 
-/** Distância média (km) e de onde ela é medida. */
+/** Distância média: { km } dentro do Sistema Solar ou { anosLuz } fora dele. */
 function distancia(o) {
   if (o.id === "sol") return { km: astro.KM_POR_UA, de: "da Terra" };
   if (o.id === "lua") return { km: o.distanciaMediaKm, de: "da Terra" };
   if (o.orbita) return { km: o.orbita.elementos.a * astro.KM_POR_UA, de: "do Sol" };
-  if (o.anosLuz) return { km: o.anosLuz * astro.KM_POR_ANO_LUZ, de: "do Sol" };
+  if (o.anosLuz) return { anosLuz: o.anosLuz, de: "do Sol" };
+  if (o.id === "sgr-a") return { anosLuz: GALAXIA.distanciaSolCentroKly * 1000, de: "do Sol, no centro da Via Láctea", aprox: true };
+  if (o.d) return { anosLuz: o.d * 1000, de: "do Sol", aprox: true };   // d em mil anos-luz
   return null;
 }
 
 function textoDistancia(o) {
+  if (o.id === "via-lactea") return "Estamos dentro dela: o Sol fica a ≈ 27 mil anos-luz do centro";
+  if (o.anosLuzViagem) return "Bilhões de anos-luz, num universo que se expande";
   const d = distancia(o);
   if (!d) return "—";
-  if (o.anosLuz) return `${numero(o.anosLuz, o.anosLuz < 10 ? 1 : 0)} anos-luz ${d.de}`;
+  if (d.anosLuz) return `${d.aprox ? "≈ " : ""}${textoAnosLuz(d.anosLuz)} ${d.de}`;
   return `${astro.formatarKm(d.km)} ${d.de}`;
 }
 
 function textoLuz(o) {
+  if (o.id === "via-lactea") return "100 mil anos para atravessar de ponta a ponta";
+  if (o.anosLuzViagem) return `≈ ${numero(o.anosLuzViagem / 1e9, 1)} bilhões de anos (a luz que vemos hoje saiu de lá nessa época)`;
   const d = distancia(o);
   if (!d) return "—";
-  if (o.anosLuz) return `${numero(o.anosLuz, o.anosLuz < 10 ? 1 : 0)} anos até nós`;
-  const quem = o.id === "sol" ? "até a Terra" : o.id === "lua" ? "até a Terra" : "vindo do Sol";
+  if (d.anosLuz) return `${d.aprox ? "≈ " : ""}${textoAnosLuz(d.anosLuz).replace("anos-luz", "anos")} até nós`;
+  const quem = o.id === "sol" || o.id === "lua" ? "até a Terra" : "vindo do Sol";
   return `${astro.formatarDuracao(d.km / astro.VELOCIDADE_LUZ_KM_S)} ${quem}`;
 }
 
@@ -118,17 +176,25 @@ function temperatura(o) {
   return ficha(o, "Temperatura") || "—";
 }
 
+function inclinacao(o) {
+  const graus = o.rotacao?.inclinacao;
+  if (graus === undefined) return "—";
+  const nota = graus >= 150 ? " (quase de cabeça para baixo)" : graus >= 60 ? " (gira quase deitado)" : "";
+  return `${numero(graus, 1)}°${nota}`;
+}
+
 const LINHAS = [
   ["Tipo", (o) => o.tipo || "—"],
   ["Diâmetro", diametro],
+  ["Massa", massa],
   ["Gravidade", gravidade],
   ["Rotação (volta em si)", rotacao],
   ["Translação (volta em órbita)", translacao],
-  ["Distância média", textoDistancia],
+  ["Distância", textoDistancia],
   ["A luz leva", textoLuz],
   ["Temperatura", temperatura],
   ["Luas", (o) => ficha(o, "Luas") || "—"],
-  ["Inclinação do eixo", (o) => (o.rotacao?.inclinacao !== undefined ? `${numero(o.rotacao.inclinacao, 1)}°` : "—")]
+  ["Inclinação do eixo", inclinacao]
 ];
 
 function escapar(texto) {
@@ -138,19 +204,21 @@ function escapar(texto) {
 // ---------- Textos de destaque ----------
 
 function destaques(a, b) {
-  const [maior, menor] = raioKm(a) >= raioKm(b) ? [a, b] : [b, a];
-  const razao = raioKm(maior) / raioKm(menor);
   const frases = [];
   if (a === b) {
     frases.push(["🪞", `Você escolheu ${com(a)} duas vezes. Troque um dos dois para comparar.`]);
     return frases;
   }
+  const [maior, menor] = raioKm(a) >= raioKm(b) ? [a, b] : [b, a];
+  const razao = raioKm(maior) / raioKm(menor);
   if (razao < 1.05) {
     frases.push(["📏", `${maiuscula(com(a))} e ${com(b)} têm quase o mesmo tamanho.`]);
   } else {
-    frases.push(["📏", `O diâmetro ${de(maior)} é ${numero(razao, casasPara(razao))} ${razao < 2 ? "vez" : "vezes"} o ${de(menor)}.`]);
+    frases.push(["📏", `O diâmetro ${de(maior)} é ${vezes(razao)} o ${de(menor)}.`]);
+    // "Quantos cabem dentro" só faz sentido entre corpos sólidos ou gasosos.
+    const corpos = ![a, b].some((o) => o.categoria);
     const volume = razao ** 3;
-    if (volume >= 1.5) frases.push(["🫙", `Dentro ${de(maior)} caberiam ${quantidade(volume)} ${plural(menor)}.`]);
+    if (corpos && volume >= 1.5) frases.push(["🫙", `Dentro ${de(maior)} caberiam ${quantidade(volume)} ${plural(menor)}.`]);
   }
   if (a.gravidade && b.gravidade) {
     const [forte, fraco] = a.gravidade >= b.gravidade ? [a, b] : [b, a];
@@ -162,6 +230,15 @@ function destaques(a, b) {
     const [quente, fria] = a.temperaturaK >= b.temperaturaK ? [a, b] : [b, a];
     frases.push(["🌡️", `${maiuscula(com(quente))} é mais quente (${numero(quente.temperaturaK)} K) que ${com(fria)} (${numero(fria.temperaturaK)} K): por isso a cor é diferente.`]);
   }
+  for (const o of [a, b]) {
+    if (o.categoria === "buraco negro") {
+      frases.push(["🕳️", `${maiuscula(com(o))} tem ${quantidade(o.massaSolar)} vezes a massa do Sol espremida numa bola de ${textoKm(2 * raioKm(o))}: a gravidade é tão forte que nem a luz escapa.`]);
+    } else if (o.id === "via-lactea") {
+      frases.push(["🌌", "A luz leva uns 100 mil anos para atravessar a Via Láctea. O Sol é só uma das centenas de bilhões de estrelas dela."]);
+    } else if (o.id === "andromeda") {
+      frases.push(["🔭", "A luz de Andrômeda que chega hoje aos nossos olhos saiu de lá há uns 2,5 milhões de anos."]);
+    }
+  }
   return frases;
 }
 
@@ -170,16 +247,17 @@ function destaques(a, b) {
 const selecaoA = $("astro-a"), selecaoB = $("astro-b");
 
 function preencherSelecao(selecao) {
-  selecao.innerHTML = GRUPOS.map((g) => `<optgroup label="${escapar(g.rotulo)}">${g.itens
-    .map((o) => `<option value="${o.id}">${escapar(nome(o))}</option>`).join("")}</optgroup>`).join("");
+  selecao.innerHTML = ITENS.map((o) => `<option value="${o.id}">${escapar(nome(o))} — ${escapar(categoria(o))}</option>`).join("");
 }
 preencherSelecao(selecaoA);
 preencherSelecao(selecaoB);
 
 function atualizarTextos(a, b) {
+  // Linhas sem dado para nenhum dos dois ficam de fora.
+  const linhas = LINHAS.map(([rotulo, valor]) => [rotulo, valor(a), valor(b)]).filter(([, va, vb]) => va !== "—" || vb !== "—");
   $("tabela").innerHTML = `
     <thead><tr><th scope="col"><span class="visualmente-oculto">Dado</span></th><th scope="col">${escapar(nome(a))}</th><th scope="col">${escapar(nome(b))}</th></tr></thead>
-    <tbody>${LINHAS.map(([rotulo, valor]) => `<tr><th scope="row">${escapar(rotulo)}</th><td>${escapar(valor(a))}</td><td>${escapar(valor(b))}</td></tr>`).join("")}</tbody>`;
+    <tbody>${linhas.map(([rotulo, va, vb]) => `<tr><th scope="row">${escapar(rotulo)}</th><td>${escapar(va)}</td><td>${escapar(vb)}</td></tr>`).join("")}</tbody>`;
 
   $("destaques").innerHTML = destaques(a, b)
     .map(([icone, texto]) => `<p class="destaque"><span aria-hidden="true">${icone}</span> ${escapar(texto)}</p>`).join("");
@@ -251,10 +329,34 @@ const ESPACO = 0.32;               // distância entre os dois, em raios do maio
 let lados = [];                    // [{ objeto, astro, brilho, x, escala, raioVisual }]
 let tamanhoTela = { largura: 1, altura: 1 };
 
+/**
+ * Galáxia em 3D (milhares de pontos), com raio 1 e o disco inclinado para a
+ * câmera. Mesma "interface" de criarAstro: { grupo, raioVisual, ... }.
+ */
+function criarGalaxia3d(objeto) {
+  const materiais = [];
+  const modelo = objeto.id === "via-lactea"
+    ? criarViaLactea({ escala: 1 / GALAXIA.raioDiscoKly, materiais })
+    : criarGalaxiaEspiral({ raio: 1, semente: 31, quantidade: 60000, anel: 0.3, companheiras: true, materiais });
+  const plano = new THREE.Group();
+  plano.rotation.x = 0.85;          // disco visto de lado, um pouco de cima
+  plano.add(modelo);
+  const grupo = new THREE.Group();
+  grupo.add(plano);
+  return {
+    grupo, modelo, materiais, planoContorno: plano,
+    dirSol: new THREE.Vector3(1, 0, 0),
+    raioVisual: 1.05,
+    contorno: 1.05,
+    carregar: () => Promise.resolve()
+  };
+}
+
 function descartar(lado) {
   cena.remove(lado.astro.grupo);
   lado.astro.grupo.traverse((o) => {
     if (o.material && o.material !== lado.brilho?.material) o.material.dispose();
+    if (o.isPoints) o.geometry.dispose();
   });
   if (lado.brilho) {
     cena.remove(lado.brilho);
@@ -267,7 +369,9 @@ function montarCena(a, b) {
   lados.forEach(descartar);
   lados = [a, b].map((objeto) => {
     const estrela = ehEstrela(objeto);
-    const astro3d = criarAstro(estrela && objeto.id !== "sol" ? { ...objeto, corEstrela: corDaEstrela(objeto) } : objeto, { segmentos: 128 });
+    const astro3d = objeto.categoria === "galáxia"
+      ? criarGalaxia3d(objeto)
+      : criarAstro(estrela && objeto.id !== "sol" ? { ...objeto, corEstrela: corDaEstrela(objeto) } : objeto, { segmentos: 128 });
     astro3d.dirSol.copy(DIRECAO_DO_SOL);
     astro3d.carregar();
     cena.add(astro3d.grupo);
@@ -297,10 +401,16 @@ function arrumar() {
   const largura = 2 * a.raioVisual + 2 * b.raioVisual + ESPACO;
   a.x = -largura / 2 + a.raioVisual;
   b.x = largura / 2 - b.raioVisual;
+  const escalaProjecao = tamanhoTela.altura / (2 * Math.tan((camera.fov * RAD) / 2));
   for (const lado of lados) {
     lado.astro.grupo.position.set(lado.x, 0, 0);
     lado.astro.grupo.scale.setScalar(lado.escala);
     orientar(lado, 30);
+    if (lado.astro.materiais) {
+      // Pontos das galáxias: o tamanho acompanha a escala do grupo.
+      ajustarMateriais(lado.astro.materiais, renderer.getPixelRatio(), escalaProjecao);
+      for (const material of lado.astro.materiais) material.uniforms.escalaTamanho.value = lado.escala;
+    }
     if (lado.brilho) {
       lado.brilho.position.set(lado.x, 0, 0);
       lado.brilho.scale.setScalar(lado.escala * 3.2);
@@ -327,11 +437,12 @@ function posicionarRotulos(distancia) {
   const notas = [];
   $("rotulos").innerHTML = lados.map((lado) => {
     const diametroPx = 2 * lado.escala * pixelsPorUnidade;
-    const pequeno = diametroPx < 3;
+    // Pequeno demais para ver (o disco de um buraco negro conta como visível).
+    const pequeno = 2 * lado.raioVisual * pixelsPorUnidade < 3;
     const p = { x: paraTela(lado.x, 0, 0).x, y: baseNaTela(lado) };
     const centro = paraTela(lado.x, 0, 0);
     if (pequeno) {
-      notas.push(`Na mesma escala, ${com(lado.objeto)} teria só ${numero(diametroPx, diametroPx < 0.1 ? 3 : 1)} pixel de diâmetro nesta tela, pequeno demais para aparecer. O círculo tracejado mostra onde está.`);
+      notas.push(`Na mesma escala, ${com(lado.objeto)} teria só ${numeroPequeno(diametroPx)} pixel de diâmetro nesta tela, pequeno demais para aparecer. O círculo tracejado mostra onde está.`);
     }
     return `${pequeno ? `<span class="marca-pequeno" style="left:${centro.x}px;top:${centro.y}px"></span>` : ""}
       <span class="rotulo" style="left:${(pequeno ? centro.x : p.x)}px;top:${(pequeno ? centro.y + 14 : p.y)}px">
@@ -341,15 +452,24 @@ function posicionarRotulos(distancia) {
   $("nota-escala").textContent = notas.join(" ");
 }
 
-/** Ponto mais baixo do astro na tela (o globo e, em Saturno, a borda dos anéis). */
+/** "0,3", "0,004", "0,0000001" (sem virar "0,000"). */
+function numeroPequeno(v) {
+  if (v >= 0.1) return numero(v, 1);
+  const casas = Math.min(20, Math.ceil(-Math.log10(v)) + 1);
+  return v.toLocaleString("pt-BR", { maximumSignificantDigits: 1, maximumFractionDigits: casas });
+}
+
+/** Ponto mais baixo do astro na tela (o globo, os anéis de Saturno, o disco de um buraco negro...). */
 const pontoLocal = new THREE.Vector3();
 function baseNaTela(lado) {
   lado.astro.grupo.updateMatrixWorld(true);
   let maisBaixo = paraTela(lado.x, -lado.escala * 1.03, 0).y;
-  if (lado.astro.aneis) {
+  const raioContorno = lado.astro.aneis ? 2.27 : lado.astro.contorno || 0;
+  if (raioContorno) {
+    const plano = lado.astro.planoContorno || lado.astro.grupo;
     for (let i = 0; i < 72; i++) {
       const angulo = (i / 72) * Math.PI * 2;
-      pontoLocal.set(Math.cos(angulo) * 2.27, 0, Math.sin(angulo) * 2.27).applyMatrix4(lado.astro.grupo.matrixWorld);
+      pontoLocal.set(Math.cos(angulo) * raioContorno, 0, Math.sin(angulo) * raioContorno).applyMatrix4(plano.matrixWorld);
       maisBaixo = Math.max(maisBaixo, paraTela(pontoLocal.x, pontoLocal.y, pontoLocal.z).y);
     }
   }
@@ -357,8 +477,9 @@ function baseNaTela(lado) {
 }
 
 function diametroCurto(o) {
+  if (o.categoria === "galáxia") return `${astro.formatarGrande(o.diametroAnosLuz)} anos-luz`;
   const km = 2 * raioKm(o);
-  return km < 1e6 ? `${numero(Math.round(km))} km` : astro.formatarKm(km);
+  return km < 1e6 ? `${numero(Math.round(km))} km` : textoKm(km);
 }
 
 function redimensionar() {
@@ -378,11 +499,16 @@ const EIXO_X = new THREE.Vector3(1, 0, 0), EIXO_Y = new THREE.Vector3(0, 1, 0), 
 qParaCamera.setFromAxisAngle(EIXO_X, INCLINACAO_PARA_CAMERA);
 
 function orientar(lado, horas) {
+  if (lado.astro.modelo) {
+    // Galáxia: uma volta a cada 2 minutos (de verdade, centenas de milhões de anos).
+    lado.astro.modelo.rotation.y = -(horas / 120) * Math.PI * 2;
+    return;
+  }
   const rot = lado.objeto.rotacao;
   if (!rot) return;
   // Polo norte da IAU para cima; quem gira ao contrário tem período negativo.
-  const inclinacao = rot.horas < 0 ? 180 - rot.inclinacao : rot.inclinacao;
-  qInclina.setFromAxisAngle(EIXO_Z, -inclinacao * RAD);
+  const inclinacaoEixo = rot.horas < 0 ? 180 - rot.inclinacao : rot.inclinacao;
+  qInclina.setFromAxisAngle(EIXO_Z, -inclinacaoEixo * RAD);
   qGiro.setFromAxisAngle(EIXO_Y, ((horas / rot.horas) % 1) * Math.PI * 2);
   lado.astro.grupo.quaternion.copy(qParaCamera).multiply(qInclina).multiply(qGiro);
   if (lado.astro.nuvens) lado.astro.nuvens.rotation.y = ((horas / 24) * 8 * RAD) % (Math.PI * 2);

@@ -6,7 +6,7 @@
 
 import * as astro from "./explorador/astronomia.js";
 import {
-  NIVEIS, SOL, PLANETAS, LUA, VOYAGER, ESTRELAS, OBJETOS_GALAXIA, MISSOES, PERGUNTAS, GALAXIA,
+  NIVEIS, SOL, PLANETAS, LUA, PLANETAS_ANOES, CINTURAO, VOYAGER, ESTRELAS, OBJETOS_GALAXIA, MISSOES, PERGUNTAS, GALAXIA,
   TODOS_OS_OBJETOS, perguntaDoObjeto, corDaEstrela
 } from "./explorador/catalogo.js";
 import * as progresso from "./explorador/progresso.js";
@@ -29,6 +29,9 @@ function distanciaDoObjeto(objeto) {
     return { km: Math.hypot(p.x, p.y, p.z) * astro.KM_POR_UA, rotulo: "do Sol, hoje" };
   }
   if (objeto.orbita) return { km: objeto.orbita.elementos.a * astro.KM_POR_UA, rotulo: "do Sol" };
+  if (objeto.id === "cinturao") {
+    return { km: ((CINTURAO.raioInternoUA + CINTURAO.raioExternoUA) / 2) * astro.KM_POR_UA, rotulo: "do Sol (no meio dele)" };
+  }
   if (objeto.anosLuz) return { km: objeto.anosLuz * astro.KM_POR_ANO_LUZ, rotulo: "do Sol" };
   if (objeto.id === "sol-galaxia") return { km: GALAXIA.distanciaSolCentroKly * kmPorKly, rotulo: "do centro da galáxia" };
   if (objeto.id === "sgr-a") return { km: GALAXIA.distanciaSolCentroKly * kmPorKly, rotulo: "do Sol" };
@@ -37,7 +40,7 @@ function distanciaDoObjeto(objeto) {
 }
 
 const GRUPOS = [
-  { nivel: "solar", objetos: [SOL, ...PLANETAS, LUA, VOYAGER] },
+  { nivel: "solar", objetos: [SOL, ...PLANETAS, LUA, ...PLANETAS_ANOES, CINTURAO, VOYAGER] },
   { nivel: "estrelas", objetos: ESTRELAS },
   { nivel: "galaxia", objetos: OBJETOS_GALAXIA }
 ];
@@ -48,10 +51,22 @@ function imagem(objeto) {
   return `<span class="orbe" style="--cor:${cor}" aria-hidden="true"></span>`;
 }
 
-/** Link para o comparador: com a Terra (planetas, Lua, Sol) ou com o Sol (estrelas). */
+/** Com quem comparar cada verbete (o par mais interessante para ele). */
+const PARES = {
+  terra: ["lua", "a Lua"],
+  plutao: ["lua", "a Lua"],
+  ceres: ["lua", "a Lua"],
+  "sgr-a": ["ton-618", "TON 618"],
+  andromeda: ["via-lactea", "a Via Láctea"]
+};
+
+/** Link para o comparador: com a Terra (planetas, Lua, Sol), com o Sol (estrelas) ou com um par especial. */
 function linkComparar(objeto) {
+  if (PARES[objeto.id]) {
+    const [outro, nome] = PARES[objeto.id];
+    return `<a href="comparar.html?a=${objeto.id}&b=${outro}">⚖️ Comparar com ${nome}</a>`;
+  }
   if (objeto.raioSolar) return `<a href="comparar.html?a=sol&b=${objeto.id}">⚖️ Comparar com o Sol</a>`;
-  if (objeto.id === "terra") return `<a href="comparar.html?a=terra&b=lua">⚖️ Comparar com a Lua</a>`;
   if (objeto.raioKm && objeto.id !== "voyager") return `<a href="comparar.html?a=terra&b=${objeto.id}">⚖️ Comparar com a Terra</a>`;
   return "";
 }

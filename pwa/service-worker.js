@@ -6,7 +6,7 @@
 // visitantes recebam os arquivos novos (o cache antigo é apagado).
 // ---------------------------------------------------------------------------
 
-const VERSAO = "v5";
+const VERSAO = "v6";
 const CACHE = `explorador-do-universo-${VERSAO}`;
 
 // Arquivos baixados já na instalação. As texturas dos outros planetas são
@@ -33,6 +33,8 @@ const ARQUIVOS_ESSENCIAIS = [
   "./js/explorador/main.js",
   "./js/explorador/progresso.js",
   "./js/explorador/astros3d.js",
+  "./js/explorador/galaxias3d.js",
+  "./js/explorador/cinturao3d.js",
   "./img/icones/apple-touch-icon.png",
   "./img/icones/favicon.svg",
   "./img/icones/icone-192.png",

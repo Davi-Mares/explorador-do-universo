@@ -70,6 +70,7 @@
         <button type="button" data-giro="nao" aria-pressed="false">Parada</button>
       </div>
       <p class="nota-tamanho">Bem acelerada: de verdade, o Sol leva cerca de 230 milhões de anos para dar uma volta; aqui, uns 3 minutos. E aqui tudo gira junto, uma simplificação: na galáxia real cada estrela gira no próprio ritmo.</p>
+      <p class="nota-tamanho">Dentro do disco, a nave gira junto com as estrelas, como o Sol: a vizinhança fica parada. Para ver o giro, saia do disco e olhe de longe.</p>
       <p class="nota-tamanho" id="giro-tempo"></p>
     </div>
   </div>
@@ -92,14 +93,25 @@
     </div>
   </section>
 
+  <!-- Lista de velocidades (abre ao tocar no nome da velocidade) -->
+  <div class="painel painel-velocidades" id="painel-velocidades" hidden>
+    <p class="opcao-titulo">Velocidade da nave</p>
+    <p class="nota-tamanho nota-velocidades">A nave só anda enquanto você segura <kbd>W</kbd> ou ▲ (ou no piloto automático). Soltou, ela para.</p>
+    <ul class="lista-velocidades" id="lista-velocidades" aria-label="Velocidades"></ul>
+  </div>
+
   <!-- Painel da nave -->
   <footer class="hud" aria-label="Painel da nave">
+    <div class="estado-nave" id="estado-nave" hidden>
+      <p class="estado-textos"><span id="estado-texto" aria-live="polite"></span> <span class="estado-detalhe" id="estado-detalhe"></span></p>
+      <button type="button" class="estado-acao" id="estado-acao"></button>
+    </div>
     <div class="hud-velocidade">
       <button type="button" class="botao-redondo" id="velocidade-menos" aria-label="Mais devagar (tecla −)">−</button>
-      <div class="velocidade-texto">
+      <button type="button" class="velocidade-texto" id="botao-velocidades" aria-controls="painel-velocidades" aria-expanded="false" title="Escolher a velocidade">
         <strong id="velocidade-nome">—</strong>
-        <span id="velocidade-valor">—</span>
-      </div>
+        <span><span id="velocidade-valor">—</span> · <span id="velocidade-nivel">—</span> <span class="seta" aria-hidden="true">▾</span></span>
+      </button>
       <button type="button" class="botao-redondo" id="velocidade-mais" aria-label="Mais rápido (tecla +)">+</button>
     </div>
     <button type="button" class="missao-atual" id="missao-atual" title="Ver dica da missão"></button>
@@ -143,9 +155,9 @@
       <h2 id="ajuda-titulo">🚀 Como explorar</h2>
       <p>Tudo aqui está em <strong>escala real</strong>. Por isso o espaço parece tão vazio — e ele é!</p>
       <ul class="lista-ajuda">
-        <li><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> para voar e <strong>arraste</strong> para olhar (no celular: arraste e use ▲ ▼).</li>
-        <li><kbd>+</kbd> <kbd>−</kbd> mudam a velocidade, de um carro até a luz.</li>
-        <li>Abra <strong>🧭 Destinos</strong>, escolha um astro e toque em <strong>Ir</strong>.</li>
+        <li><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> para voar e <strong>arraste</strong> para olhar (no celular: arraste e use ▲ ▼). Soltou, a nave para.</li>
+        <li><kbd>+</kbd> <kbd>−</kbd> mudam a velocidade, de um carro até a luz. Toque no nome da velocidade para ver todas.</li>
+        <li>Abra <strong>🧭 Destinos</strong>, escolha um astro e toque em <strong>Ir</strong>. Para parar no meio do caminho: <strong>⏹ Parar</strong> ou <kbd>Espaço</kbd>.</li>
         <li>Chegue perto de um astro para <strong>descobri-lo</strong> e guardá-lo no Diário.</li>
       </ul>
       <p class="nota-ajuda">Mais rápido que a luz é ficção: está aqui só para dar tempo de visitar tudo.</p>

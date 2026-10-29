@@ -14,10 +14,18 @@
 import * as THREE from "three";
 import * as astro from "./astronomia.js";
 import {
-  SOL, PLANETAS, LUA, VOYAGER, ESTRELAS, SOL_MAGNITUDE_ABSOLUTA,
+  SOL, PLANETAS, LUA, VOYAGER, PLANETAS_ANOES, CINTURAO, ESTRELAS, SOL_MAGNITUDE_ABSOLUTA,
   DIRECAO_CENTRO_GALAXIA, GALAXIA, OBJETOS_GALAXIA, corDaEstrela
 } from "./catalogo.js";
 import { criarAstro, orientarPelaIau, texturaDeBrilho } from "./astros3d.js";
+import {
+  aleatorioComSemente, gaussiana, corRgb, materialDePontos, pontos, criarViaLactea, criarGalaxiaEspiral,
+  criarGalaxiaIrregular, criarNebulosaDeOrion, criarNebulosaDaAguia, criarNebulosaDeCarina,
+  criarNebulosaDoCaranguejo, criarPleiades, criarAglomeradoGlobular, criarNucleoGalactico
+} from "./galaxias3d.js";
+import { criarCinturao } from "./cinturao3d.js";
+
+export { materialDePontos };
 
 const EIXO_Y = new THREE.Vector3(0, 1, 0);
 
@@ -26,96 +34,12 @@ function vetor(objeto) {
   return new THREE.Vector3(p.x, p.y, p.z);
 }
 
-/** Gerador pseudoaleatório com semente (a cena sai igual em toda visita). */
-function aleatorioComSemente(semente) {
-  let s = semente >>> 0;
-  return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
-}
-
-function gaussiana(aleatorio) {
-  let u = 0, v = 0;
-  while (u === 0) u = aleatorio();
-  while (v === 0) v = aleatorio();
-  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
-}
-
 const limitar = (v, min, max) => Math.min(max, Math.max(min, v));
 
 /** Tamanho (px) e brilho de um ponto a partir da magnitude aparente. */
 export function aparenciaPorMagnitude(m) {
   const x = 6.5 - m; // > 0: visível a olho nu
   return [limitar(1.4 + x * 1.15, 1.2, 40), limitar(0.22 + x * 0.13, 0.07, 1.6)];
-}
-
-// ---------- Material de pontos (estrelas, galáxia) ----------
-
-/**
- * Pontos com cor, tamanho e brilho próprios. Com "atenuar", o tamanho é em
- * unidades da cena (cresce ao se aproximar); sem, é em pixels.
- * Inclui os trechos de profundidade logarítmica usados pelo renderizador.
- */
-export function materialDePontos({ atenuar = false } = {}) {
-  return new THREE.ShaderMaterial({
-    uniforms: {
-      escalaPixel: { value: 1 },
-      escalaProjecao: { value: 800 },
-      atenuar: { value: atenuar ? 1 : 0 }
-    },
-    vertexShader: /* glsl */ `
-      attribute float tamanho;
-      attribute float brilho;
-      attribute vec3 cor;
-      uniform float escalaPixel;
-      uniform float escalaProjecao;
-      uniform float atenuar;
-      varying vec3 vCor;
-      varying float vBrilho;
-      #include <common>
-      #include <logdepthbuf_pars_vertex>
-      void main() {
-        vec4 mv = modelViewMatrix * vec4(position, 1.0);
-        gl_Position = projectionMatrix * mv;
-        float px = atenuar > 0.5 ? tamanho * escalaProjecao / max(-mv.z, 1e-9) : tamanho;
-        float limitado = clamp(px, 1.0, 64.0);
-        float fator = atenuar > 0.5 ? min(1.0, px) * min(1.0, 18.0 / limitado) : 1.0;
-        vBrilho = brilho * fator;
-        vCor = cor;
-        gl_PointSize = limitado * escalaPixel;
-        #include <logdepthbuf_vertex>
-      }`,
-    fragmentShader: /* glsl */ `
-      varying vec3 vCor;
-      varying float vBrilho;
-      #include <common>
-      #include <logdepthbuf_pars_fragment>
-      void main() {
-        #include <logdepthbuf_fragment>
-        vec2 c = gl_PointCoord - 0.5;
-        float d = length(c) * 2.0;
-        if (d > 1.0) discard;
-        float a = (exp(-d * d * 5.5) + exp(-d * 3.0) * 0.35) * vBrilho;
-        gl_FragColor = vec4(vCor, min(a, 1.0));
-      }`,
-    transparent: true,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending
-  });
-}
-
-function pontos(posicoes, cores, tamanhos, brilhos, material) {
-  const geometria = new THREE.BufferGeometry();
-  geometria.setAttribute("position", new THREE.Float32BufferAttribute(posicoes, 3));
-  geometria.setAttribute("cor", new THREE.Float32BufferAttribute(cores, 3));
-  geometria.setAttribute("tamanho", new THREE.Float32BufferAttribute(tamanhos, 1));
-  geometria.setAttribute("brilho", new THREE.Float32BufferAttribute(brilhos, 1));
-  const objeto = new THREE.Points(geometria, material);
-  objeto.frustumCulled = false;
-  return objeto;
-}
-
-function corRgb(hex) {
-  const c = new THREE.Color(hex);
-  return [c.r, c.g, c.b];
 }
 
 // ---------- Céu de fundo com a faixa da Via Láctea ----------
@@ -241,6 +165,31 @@ export function criarNivelSolar(dataInicial) {
   // A face visível (longitude 0°) fica em +Z, que o lookAt aponta para a Terra.
   lua.astro.superficie.rotation.y = -Math.PI / 2;
 
+  // --- Planetas anões (Ceres e Plutão), com órbita ---
+  const anoes = PLANETAS_ANOES.map((planeta) => {
+    const corpo = montar(criarCorpo(planeta, { raioReal: planeta.raioKm / ua }), 64);
+    const orbita = new THREE.LineLoop(
+      new THREE.BufferGeometry().setFromPoints(astro.pontosDaOrbita(planeta, dataInicial, 360).map(vetor)),
+      new THREE.LineBasicMaterial({ color: planeta.cor, transparent: true, opacity: 0.28, depthWrite: false })
+    );
+    cena.add(orbita);
+    return corpo;
+  });
+
+  // --- Cinturão de Asteroides (milhares de órbitas de Kepler) e troianos ---
+  const jupiterJ2000 = PLANETAS.find((p) => p.id === "jupiter").orbita.elementos;
+  const asteroides = criarCinturao({ jupiter: jupiterJ2000 });
+  materiaisDePontos.push(asteroides.material);
+  cena.add(asteroides.objeto);
+  // O "destino" Cinturão é o ponto do anel (≈ 2,7 UA) mais perto da nave.
+  const raioMedioCinturao = (CINTURAO.raioInternoUA + CINTURAO.raioExternoUA) / 2;
+  const cinturao = criarCorpo(CINTURAO, {
+    raioExibido: 0, raioDescoberta: (CINTURAO.raioExternoUA - CINTURAO.raioInternoUA) / 2, distanciaChegada: 0.03, regiao: true
+  });
+  cinturao.posicao.set(raioMedioCinturao, 0, 0);
+  // Ao chegar, olhar ao longo do anel (25° à frente): os asteroides aparecem em fila.
+  cinturao.pontoDeOlhar = () => cinturao.posicao.clone().applyAxisAngle(EIXO_Y, (25 * Math.PI) / 180);
+
   // --- Voyager 1 e a fronteira do vento solar ---
   const voyager = criarCorpo(VOYAGER, { raioReal: 0, raioExibido: 1e-9, raioDescoberta: 2, distanciaChegada: 0.01 });
   const marcaVoyager = brilhoSprite("#f4f1e8", 0.008, { atenuar: false, opacidade: 0.9 });
@@ -264,14 +213,14 @@ export function criarNivelSolar(dataInicial) {
     cena.add(ceu.objeto);
   }
 
-  const corpos = [sol, ...planetas, lua, voyager];
+  const corpos = [sol, ...planetas, lua, ...anoes, cinturao, voyager];
 
   let modoTamanho = "real";
   function aplicarTamanho(modo) {
     modoTamanho = modo;
     const fatorPlanetas = modo === "ampliado" ? AMPLIACAO.planetas : 1;
     const fatorSol = modo === "ampliado" ? AMPLIACAO.sol : 1;
-    for (const corpo of [sol, ...planetas, lua]) {
+    for (const corpo of [sol, ...planetas, lua, ...anoes]) {
       const fator = corpo === sol ? fatorSol : fatorPlanetas;
       corpo.raioExibido = corpo.raioReal * fator;
       corpo.malha.scale.setScalar(corpo.raioExibido);
@@ -289,14 +238,14 @@ export function criarNivelSolar(dataInicial) {
   const J2000 = Date.UTC(2000, 0, 1, 12);
 
   function atualizar(data, camera) {
-    for (const corpo of planetas) corpo.posicao.copy(vetor(astro.posicaoHeliocentrica(corpo.objeto, data)));
+    for (const corpo of [...planetas, ...anoes]) corpo.posicao.copy(vetor(astro.posicaoHeliocentrica(corpo.objeto, data)));
     const geo = astro.posicaoLuaGeocentrica(data);
     lua.posicao.copy(terra.posicao).add(vetor({ x: geo.x / ua, y: geo.y / ua, z: geo.z / ua }));
     voyager.posicao.copy(vetor(astro.posicaoSondaHeliocentrica(VOYAGER, data)));
 
     // Eixos e rotação pelo modelo da IAU: o lado da Terra virado para o Sol
     // é o que está de dia agora (na data simulada).
-    for (const corpo of [sol, ...planetas]) {
+    for (const corpo of [sol, ...planetas, ...anoes]) {
       corpo.malha.position.copy(corpo.posicao);
       orientarPelaIau(corpo.malha, corpo.objeto.rotacao, data);
     }
@@ -306,7 +255,15 @@ export function criarNivelSolar(dataInicial) {
     const dias = (data.getTime() - J2000) / 86_400_000;
     if (terra.astro.nuvens) terra.astro.nuvens.rotation.y = (dias * DERIVA_NUVENS_RAD_POR_DIA) % (Math.PI * 2);
 
-    for (const corpo of [...planetas, lua]) {
+    asteroides.atualizar(dias);
+    if (camera) {
+      // Ponto do cinturão na direção da nave (projetada no plano da eclíptica).
+      const x = camera.position.x, z = camera.position.z;
+      const r = Math.hypot(x, z);
+      if (r > 1e-9) cinturao.posicao.set((x / r) * raioMedioCinturao, 0, (z / r) * raioMedioCinturao);
+    }
+
+    for (const corpo of [...planetas, lua, ...anoes]) {
       corpo.astro.dirSol.copy(corpo.posicao).negate().normalize();
       // Texturas só quando o astro aparece maior que um pontinho (economiza memória).
       if (camera && !corpo.astro.pedido && !corpo.oculto
@@ -348,7 +305,7 @@ export function criarNivelSolar(dataInicial) {
      * se vê a face dos anéis que está recebendo luz).
      */
     pontoDeVista(corpo) {
-      if (corpo === sol || corpo === voyager) return null;
+      if (corpo === sol || corpo === voyager || !corpo.malha) return null;
       const paraOSol = sol.posicao.clone().sub(corpo.posicao).normalize();
       const polo = EIXO_Y.clone().applyQuaternion(corpo.malha.quaternion);
       const lado = Math.sign(paraOSol.dot(polo)) || 1;
@@ -441,115 +398,22 @@ export function criarNivelEstrelas() {
 
 // ===========================================================================
 // Nível 3 — Via Láctea (unidade: mil anos-luz)
-// Os braços são uma representação esquemática (espiral logarítmica com
-// inclinação de 12°, ajustada aos raios medidos dos braços na direção do Sol).
-// As posições do Sol, do centro e dos objetos marcados são as reais.
+// Os braços são uma representação esquemática; as posições do Sol, do
+// centro e dos objetos marcados são as reais. Cada objeto marcado ganha um
+// modelo 3D próprio (nebulosas, aglomerados, galáxias), no tamanho real.
 // ===========================================================================
-
-function gerarGalaxia(materiaisDePontos) {
-  const aleatorio = aleatorioComSemente(2026);
-  const { distanciaSolCentroKly: r0, bracos, barra, inclinacaoEspiralGraus } = GALAXIA;
-  const k = Math.tan((inclinacaoEspiralGraus * Math.PI) / 180);
-  const posicoes = [], rgb = [], tamanhos = [], brilhos = [];
-  const braco = corRgb("#cfe0ff"), quente = corRgb("#ffd7a0"), rosa = corRgb("#ff8fb8"), disco = corRgb("#dfe6ff");
-
-  function adicionar(x, y, z, cor, tamanho, brilho) {
-    const p = astro.paraCena({ x, y, z });
-    posicoes.push(p.x, p.y, p.z);
-    rgb.push(...cor);
-    tamanhos.push(tamanho);
-    brilhos.push(brilho);
-  }
-
-  // Braços espirais: r = r_sol · e^{k(θ − π)} (o Sol está no azimute π).
-  for (const { raioNoSol } of bracos) {
-    const thetaMin = Math.PI + Math.log(12 / raioNoSol) / k;
-    const thetaMax = Math.PI + Math.log(52 / raioNoSol) / k;
-    for (let i = 0; i < 11000; i++) {
-      const theta = thetaMin + aleatorio() * (thetaMax - thetaMin);
-      const r = raioNoSol * Math.exp(k * (theta - Math.PI));
-      const largura = 0.9 + r * 0.035;
-      const rr = r + gaussiana(aleatorio) * largura;
-      const t = theta + gaussiana(aleatorio) * 0.02;
-      const z = gaussiana(aleatorio) * 0.25;
-      const regiaoHii = aleatorio() < 0.035;
-      adicionar(rr * Math.cos(t), rr * Math.sin(t), z, regiaoHii ? rosa : braco,
-        regiaoHii ? 0.5 : 0.32 + aleatorio() * 0.3, (regiaoHii ? 0.5 : 0.22) * (1.15 - r / 60));
-    }
-  }
-
-  // Esporão (braço) de Órion, onde o Sol está.
-  for (let i = 0; i < 2600; i++) {
-    const theta = Math.PI + (aleatorio() * 2 - 1) * 0.24;
-    const r = r0 * Math.exp(0.176 * (theta - Math.PI)) + gaussiana(aleatorio) * 0.7;
-    adicionar(r * Math.cos(theta), r * Math.sin(theta), gaussiana(aleatorio) * 0.2, braco, 0.3, 0.16);
-  }
-
-  // Disco difuso (estrelas fora dos braços).
-  for (let i = 0; i < 16000; i++) {
-    const r = -10 * Math.log(1 - aleatorio() * 0.99);
-    if (r > 55) continue;
-    const t = aleatorio() * Math.PI * 2;
-    adicionar(r * Math.cos(t), r * Math.sin(t), gaussiana(aleatorio) * 0.5, disco, 0.4, 0.07);
-  }
-
-  // Barra central (≈ 27° da linha Sol–centro, ponta próxima em l > 0) e bojo.
-  const angulo = Math.PI - (barra.anguloGraus * Math.PI) / 180;
-  const ux = Math.cos(angulo), uy = Math.sin(angulo);
-  for (let i = 0; i < 9000; i++) {
-    const s = gaussiana(aleatorio) * barra.meioComprimentoKly * 0.45;
-    const lateral = gaussiana(aleatorio) * 2.6;
-    adicionar(s * ux - lateral * uy, s * uy + lateral * ux, gaussiana(aleatorio) * 1.1, quente, 0.45, 0.13);
-  }
-  for (let i = 0; i < 9000; i++) {
-    const r = Math.abs(gaussiana(aleatorio)) * 3.2;
-    const z = aleatorio() * 2 - 1, fi = aleatorio() * Math.PI * 2, s = Math.sqrt(1 - z * z);
-    adicionar(r * s * Math.cos(fi), r * s * Math.sin(fi), r * z * 0.6, quente, 0.5, 0.16);
-  }
-
-  const material = materialDePontos({ atenuar: true });
-  materiaisDePontos.push(material);
-  return pontos(posicoes, rgb, tamanhos, brilhos, material);
-}
-
-/** Nuvem de pontos irregular (galáxias anãs) ou em disco (Andrômeda). */
-function nuvemDeGalaxia(centro, raio, quantidade, cor, semente, materiaisDePontos, { disco = false, normal = null } = {}) {
-  const aleatorio = aleatorioComSemente(semente);
-  const posicoes = [], rgb = [], tamanhos = [], brilhos = [];
-  const base = corRgb(cor);
-  const orientacao = new THREE.Quaternion().setFromUnitVectors(EIXO_Y, (normal || EIXO_Y).clone().normalize());
-  const p = new THREE.Vector3();
-  for (let i = 0; i < quantidade; i++) {
-    if (disco) {
-      const r = -raio * 0.28 * Math.log(1 - aleatorio() * 0.98);
-      const bracoEspiral = Math.floor(aleatorio() * 2) * Math.PI;
-      const t = bracoEspiral + Math.log(Math.max(r, 0.5) / 5) / 0.3 + gaussiana(aleatorio) * 0.35;
-      p.set(r * Math.cos(t), gaussiana(aleatorio) * raio * 0.012, r * Math.sin(t)).applyQuaternion(orientacao);
-    } else {
-      p.set(gaussiana(aleatorio) * raio * 0.5, gaussiana(aleatorio) * raio * 0.25, gaussiana(aleatorio) * raio * 0.4);
-    }
-    p.add(centro);
-    posicoes.push(p.x, p.y, p.z);
-    rgb.push(...base);
-    tamanhos.push(raio * 0.03);
-    brilhos.push(disco ? 0.2 : 0.16);
-  }
-  const material = materialDePontos({ atenuar: true });
-  materiaisDePontos.push(material);
-  return pontos(posicoes, rgb, tamanhos, brilhos, material);
-}
 
 const RAIOS_GALAXIA = {
   "sol-galaxia": { descoberta: 1, chegada: 0.35 },
-  "sgr-a": { descoberta: 3, chegada: 0.8 },
-  pleiades: { descoberta: 0.8, chegada: 0.15 },
-  "orion-nebula": { descoberta: 0.8, chegada: 0.15 },
-  crab: { descoberta: 0.8, chegada: 0.15 },
-  eagle: { descoberta: 0.8, chegada: 0.15 },
-  carina: { descoberta: 1, chegada: 0.2 },
-  "omega-centauri": { descoberta: 1.5, chegada: 0.4 },
-  lmc: { descoberta: 30, chegada: 14 },
-  smc: { descoberta: 22, chegada: 9 },
+  "sgr-a": { descoberta: 3, chegada: 0.12 },
+  pleiades: { descoberta: 0.8, chegada: 0.07 },
+  "orion-nebula": { descoberta: 0.8, chegada: 0.04 },
+  crab: { descoberta: 0.8, chegada: 0.011 },
+  eagle: { descoberta: 0.8, chegada: 0.11 },
+  carina: { descoberta: 1, chegada: 0.42 },
+  "omega-centauri": { descoberta: 1.5, chegada: 0.2 },
+  lmc: { descoberta: 60, chegada: 45 },
+  smc: { descoberta: 40, chegada: 28 },
   andromeda: { descoberta: 420, chegada: 230 }
 };
 
@@ -563,6 +427,25 @@ const GIRO_RAD_POR_SEGUNDO = (2 * Math.PI) / GIRO_GALAXIA.segundosPorVolta;
 /** Fora do disco (não giram com ele): as Nuvens de Magalhães e Andrômeda. */
 const FORA_DO_DISCO = new Set(["lmc", "smc", "andromeda"]);
 
+/** Estrelas mais brilhantes das Plêiades (J2000, SIMBAD) e brilho relativo. */
+const ESTRELAS_PLEIADES = [
+  ["Alcyone", "03 47 29.08", "+24 06 18.5", 1],
+  ["Atlas", "03 49 09.74", "+24 03 12.3", 0.75],
+  ["Electra", "03 44 52.54", "+24 06 48.0", 0.72],
+  ["Maia", "03 45 49.61", "+24 22 03.9", 0.65],
+  ["Merope", "03 46 19.57", "+23 56 54.1", 0.62],
+  ["Taygeta", "03 45 12.50", "+24 28 02.2", 0.55],
+  ["Pleione", "03 49 11.22", "+24 08 12.2", 0.4],
+  ["Celaeno", "03 44 48.22", "+24 17 22.1", 0.35],
+  ["Asterope", "03 45 54.48", "+24 33 16.2", 0.3]
+];
+
+/** Transição suave de 0 (em a) a 1 (em b). */
+function suave(a, b, v) {
+  const t = Math.min(1, Math.max(0, (v - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+}
+
 export function criarNivelGalaxia() {
   const cena = new THREE.Scene();
   const materiaisDePontos = [];
@@ -570,7 +453,8 @@ export function criarNivelGalaxia() {
   const disco = new THREE.Group();
   cena.add(disco);
 
-  disco.add(gerarGalaxia(materiaisDePontos));
+  const viaLactea = criarViaLactea({ materiais: materiaisDePontos });
+  disco.add(viaLactea);
 
   const corpos = OBJETOS_GALAXIA.map((objeto) => {
     const posicao = objeto.centro
@@ -584,38 +468,88 @@ export function criarNivelGalaxia() {
     return corpo;
   });
   const porId = (id) => corpos.find((c) => c.id === id);
+  const posicaoDoSol = porId("sol-galaxia").posicao.clone();
 
-  // Marcas visuais de cada objeto (as do disco giram com ele).
+  // Modelos 3D de cada objeto (tamanhos em mil anos-luz).
+  const pleiades = porId("pleiades");
+  const estrelasPrincipais = ESTRELAS_PLEIADES.map(([, ar, dec, brilho]) => {
+    const { l, b } = astro.equatorialParaGalactica(astro.arParaGraus(ar), astro.decParaGraus(dec));
+    const p = vetor(astro.galacticaParaGalactocentrica(l, b, pleiades.objeto.d, r0));
+    return { posicao: p.sub(pleiades.posicaoNoDisco), brilho };
+  });
+  const MODELOS = {
+    "sgr-a": () => criarNucleoGalactico({ raio: 0.03, materiais: materiaisDePontos }),
+    pleiades: () => criarPleiades({ raio: 0.025, estrelasPrincipais, materiais: materiaisDePontos }),
+    "orion-nebula": () => criarNebulosaDeOrion({ raio: 0.012, materiais: materiaisDePontos }),
+    crab: () => criarNebulosaDoCaranguejo({ raio: 0.003, materiais: materiaisDePontos }),
+    eagle: () => criarNebulosaDaAguia({ raio: 0.035, materiais: materiaisDePontos }),
+    carina: () => criarNebulosaDeCarina({ raio: 0.13, materiais: materiaisDePontos }),
+    "omega-centauri": () => criarAglomeradoGlobular({ raio: 0.075, materiais: materiaisDePontos }),
+    lmc: () => criarGalaxiaIrregular({ raio: 16, semente: 41, quantidade: 18000, alongamento: 1.25, tarantula: true, materiais: materiaisDePontos }),
+    smc: () => criarGalaxiaIrregular({ raio: 9.5, semente: 42, quantidade: 7000, alongamento: 1.7, materiais: materiaisDePontos }),
+    andromeda: () => criarGalaxiaEspiral({ raio: 110, semente: 31, quantidade: 50000, anel: 0.3, companheiras: true, materiais: materiaisDePontos })
+  };
+  const TAMANHO_MODELO = { "sgr-a": 0.03, pleiades: 0.025, "orion-nebula": 0.012, crab: 0.003, eagle: 0.035, carina: 0.13, "omega-centauri": 0.075, lmc: 16, smc: 9.5, andromeda: 110 };
+
+  const marcas = [];
   for (const corpo of corpos) {
+    const pai = corpo.gira ? disco : cena;
+    if (MODELOS[corpo.id]) {
+      const modelo = MODELOS[corpo.id]();
+      modelo.position.copy(corpo.posicaoNoDisco);
+      if (corpo.id === "andromeda") {
+        // Disco inclinado ≈ 77° em relação à nossa linha de visada.
+        const linhaDeVisada = corpo.posicaoNoDisco.clone().sub(posicaoDoSol).normalize();
+        const normal = linhaDeVisada.clone().applyAxisAngle(new THREE.Vector3(1, 0, 0), (77 * Math.PI) / 180);
+        modelo.quaternion.setFromUnitVectors(EIXO_Y, normal.normalize());
+      } else if (corpo.id === "lmc" || corpo.id === "smc") {
+        // As Nuvens aparecem quase de frente para nós.
+        const paraOSol = posicaoDoSol.clone().sub(corpo.posicaoNoDisco).normalize();
+        modelo.quaternion.setFromUnitVectors(EIXO_Y, paraOSol.applyAxisAngle(new THREE.Vector3(0, 0, 1), 0.5).normalize());
+      } else if (corpo.id !== "pleiades") {
+        // Nebulosas: o lado que vemos da Terra fica virado para o Sol.
+        modelo.lookAt(posicaoDoSol);
+      }
+      pai.add(modelo);
+    }
+    // Brilho que marca o objeto de longe e some quando a nave chega perto.
     const tamanho = { "sgr-a": 1.6, lmc: 9, smc: 6, andromeda: 60, "sol-galaxia": 0.25 }[corpo.id] || 0.35;
-    const sprite = brilhoSprite(corpo.cor, tamanho, { opacidade: corpo.id === "sol-galaxia" ? 1 : 0.85 });
-    sprite.position.copy(corpo.posicao);
-    (corpo.gira ? disco : cena).add(sprite);
+    const opacidade = corpo.id === "sol-galaxia" ? 1 : 0.85;
+    const sprite = brilhoSprite(corpo.cor, tamanho, { opacidade });
+    sprite.position.copy(corpo.posicaoNoDisco);
+    pai.add(sprite);
+    if (TAMANHO_MODELO[corpo.id]) marcas.push({ corpo, sprite, opacidade, tamanho: Math.max(TAMANHO_MODELO[corpo.id], tamanho * 0.5) });
   }
-  disco.add(brilhoSprite("#ffd27a", 0.012, { atenuar: false }).translateX(porId("sol-galaxia").posicao.x));
-
-  cena.add(nuvemDeGalaxia(porId("lmc").posicao, 16, 3500, "#cfd8ff", 41, materiaisDePontos));
-  cena.add(nuvemDeGalaxia(porId("smc").posicao, 9.5, 1800, "#c4ccff", 42, materiaisDePontos));
-  {
-    // Andrômeda: disco inclinado ≈ 77° em relação a nós.
-    const andromeda = porId("andromeda").posicao;
-    const linhaDeVisada = andromeda.clone().sub(porId("sol-galaxia").posicao).normalize();
-    const normal = linhaDeVisada.clone().applyAxisAngle(new THREE.Vector3(1, 0, 0), (77 * Math.PI) / 180);
-    cena.add(nuvemDeGalaxia(andromeda, 110, 14000, "#e6dcff", 43, materiaisDePontos, { disco: true, normal }));
-  }
+  disco.add(brilhoSprite("#ffd27a", 0.012, { atenuar: false }).translateX(posicaoDoSol.x));
 
   // Giro no sentido horário visto do polo norte galáctico (+Y da cena).
   let angulo = 0;
   let girando = true;
   let anosDeGiro = 0;
-  function atualizar(_data, _camera, dt = 0) {
+  let ultimoGiro = 0;
+  function atualizar(_data, camera, dt = 0) {
+    ultimoGiro = 0;
     if (girando && dt > 0) {
-      angulo = (angulo - GIRO_RAD_POR_SEGUNDO * dt) % (Math.PI * 2);
+      ultimoGiro = -GIRO_RAD_POR_SEGUNDO * dt;
+      angulo = (angulo + ultimoGiro) % (Math.PI * 2);
       anosDeGiro += (dt / GIRO_GALAXIA.segundosPorVolta) * GIRO_GALAXIA.anosPorVolta;
     }
     disco.rotation.y = angulo;
     for (const corpo of corpos) {
       if (corpo.gira) corpo.posicao.copy(corpo.posicaoNoDisco).applyAxisAngle(EIXO_Y, angulo);
+    }
+    if (camera) {
+      // Dentro do disco, a poeira apaga a luz das estrelas distantes (≈ 7 mil
+      // anos-luz aqui; de verdade é ainda mais): a faixa da galáxia não estoura
+      // de brilho e as nebulosas aparecem. De fora do disco, sem poeira.
+      const { x, y, z } = camera.position;
+      const noDisco = (1 - suave(1.5, 7, Math.abs(y))) * (1 - suave(55, 70, Math.hypot(x, z)));
+      viaLactea.material.uniforms.extincao.value = noDisco / 7;
+      for (const { corpo, sprite, opacidade, tamanho } of marcas) {
+        const d = camera.position.distanceTo(corpo.posicao);
+        const t = Math.min(1, Math.max(0, (d - tamanho * 1.5) / (tamanho * 4.5)));
+        sprite.material.opacity = opacidade * t * t * (3 - 2 * t);
+      }
     }
   }
 
@@ -636,11 +570,21 @@ export function criarNivelGalaxia() {
     get girando() { return girando; },
     definirGiro(valor) { girando = Boolean(valor); },
     get anosDeGiro() { return anosDeGiro; },
+    /** Ângulo girado no último quadro (rad), para a nave acompanhar o disco. */
+    get ultimoGiro() { return ultimoGiro; },
     unidadeKm: astro.KM_POR_ANO_LUZ * 1000,
     sol: porId("sol-galaxia"),
     descobrirAoEntrar: ["sol-galaxia"],
     atualizar,
     inicio,
-    pontoDeVista: () => null
+    /**
+     * Ao saltar até um objeto, chega do lado do Sol (um pouco acima do disco):
+     * é o lado que vemos da Terra, o das fotos dos telescópios.
+     */
+    pontoDeVista(corpo) {
+      const sol = porId("sol-galaxia");
+      if (corpo === sol) return null;
+      return sol.posicao.clone().sub(corpo.posicao).normalize().addScaledVector(EIXO_Y, 0.12).normalize();
+    }
   };
 }
