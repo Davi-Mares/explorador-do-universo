@@ -46,7 +46,10 @@ let nivel = null;
 let indiceVelocidade = 0;
 let selecionado = null;
 let piloto = null;             // viagem em andamento
-let estacionadoEm = null;      // corpo que a câmera acompanha depois de chegar
+// Em órbita de um astro (depois de chegar): a nave fica parada em relação a
+// ele. { corpo, distancia, alvo, azimute, elevacao } — distância ao centro e
+// direção (ângulos em volta do eixo Y da cena).
+let orbita = null;
 let marcadores = [];
 
 const BUILDERS = {
@@ -113,12 +116,12 @@ function entrarNoNivel(id, { alvo = null } = {}) {
   if (nivel) {
     memoriaDosNiveis[nivel.id] = {
       posicao: camera.position.clone(), yaw: olhar.yaw, pitch: olhar.pitch,
-      velocidade: indiceVelocidade, estacionadoEm: estacionadoEm?.corpo.id || null
+      velocidade: indiceVelocidade, orbita: orbita ? { ...orbita, corpo: orbita.corpo.id } : null
     };
   }
   nivel = obterNivel(id);
   piloto = null;
-  estacionadoEm = null;
+  orbita = null;
   fecharAlvo();
   fecharVelocidades();
 
@@ -133,8 +136,11 @@ function entrarNoNivel(id, { alvo = null } = {}) {
     olhar.pitch = memoria.pitch;
     aplicarOrientacao();
     indiceVelocidade = memoria.velocidade;
-    const corpo = nivel.corpos.find((c) => c.id === memoria.estacionadoEm);
-    if (corpo && !corpo.regiao) estacionadoEm = { corpo, ultima: corpo.posicao.clone() };
+    const corpo = memoria.orbita && nivel.corpos.find((c) => c.id === memoria.orbita.corpo);
+    if (corpo && !corpo.oculto) {
+      orbita = { ...memoria.orbita, corpo };
+      posicionarNaOrbita();
+    }
   } else {
     const { posicao, olharPara: ponto } = nivel.inicio();
     camera.position.copy(posicao);
@@ -228,29 +234,59 @@ window.addEventListener("keyup", (evento) => {
 });
 window.addEventListener("blur", () => teclas.clear());
 
-let arrastando = null;
+// Arrastar: em voo livre, olha em volta; em órbita, gira em volta do astro.
+// Dois dedos (pinça): em órbita, aproxima ou afasta.
+const ponteiros = new Map();
+let pinca = 0;
+const distanciaEntreDedos = () => {
+  const [a, b] = [...ponteiros.values()];
+  return a && b ? Math.hypot(a.x - b.x, a.y - b.y) : 0;
+};
 canvas.addEventListener("pointerdown", (evento) => {
-  arrastando = { id: evento.pointerId, x: evento.clientX, y: evento.clientY };
-  canvas.setPointerCapture(evento.pointerId);
+  ponteiros.set(evento.pointerId, { x: evento.clientX, y: evento.clientY });
+  try { canvas.setPointerCapture(evento.pointerId); } catch { /* ponteiro já solto */ }
+  pinca = ponteiros.size === 2 ? distanciaEntreDedos() : 0;
 });
 canvas.addEventListener("pointermove", (evento) => {
-  if (!arrastando || arrastando.id !== evento.pointerId) return;
-  const dx = evento.clientX - arrastando.x, dy = evento.clientY - arrastando.y;
-  arrastando.x = evento.clientX;
-  arrastando.y = evento.clientY;
+  const ponteiro = ponteiros.get(evento.pointerId);
+  if (!ponteiro) return;
+  const dx = evento.clientX - ponteiro.x, dy = evento.clientY - ponteiro.y;
+  ponteiro.x = evento.clientX;
+  ponteiro.y = evento.clientY;
+  if (ponteiros.size >= 2) {
+    const distancia = distanciaEntreDedos();
+    if (orbita && pinca > 0 && distancia > 0) aproximarNaOrbita(pinca / distancia);
+    pinca = distancia;
+    return;
+  }
   const sensibilidade = evento.pointerType === "touch" ? 0.005 : 0.0035;
+  if (orbita) {
+    orbita.azimute -= dx * sensibilidade * 1.4;
+    orbita.elevacao += dy * sensibilidade * 1.4;
+    return;
+  }
   olhar.yaw -= dx * sensibilidade;
   olhar.pitch -= dy * sensibilidade;
   aplicarOrientacao();
   if (piloto) piloto.olharLivre = true;
 });
-const soltar = () => { arrastando = null; };
+const soltar = (evento) => {
+  ponteiros.delete(evento.pointerId);
+  if (ponteiros.size < 2) pinca = 0;
+};
 canvas.addEventListener("pointerup", soltar);
 canvas.addEventListener("pointercancel", soltar);
+canvas.addEventListener("lostpointercapture", soltar);
 
+// Rodinha: em órbita, aproxima ou afasta; em voo livre, muda a velocidade.
 let ultimaRodinha = 0;
 canvas.addEventListener("wheel", (evento) => {
   evento.preventDefault();
+  if (orbita) {
+    const passos = Math.max(-3, Math.min(3, evento.deltaY / (evento.deltaMode === 1 ? 3 : 100)));
+    aproximarNaOrbita(Math.pow(PASSO_DA_RODINHA, -passos));
+    return;
+  }
   const agora = performance.now();
   if (agora - ultimaRodinha < 140) return;
   ultimaRodinha = agora;
@@ -349,22 +385,107 @@ function dentroDoDisco() {
   return Math.hypot(camera.position.x, camera.position.z) < 60 && Math.abs(camera.position.y) < 8;
 }
 
+// ---------- Órbita ----------
+// Ao chegar num astro, a nave entra em órbita: fica parada em relação a ele
+// (anda junto quando ele se move). Arrastar gira em volta; rodinha, pinça,
+// W/S ou ▲▼ aproximam e afastam, sempre devagar perto da superfície — assim
+// a nave nunca "sai voando" sem querer. Só sai da órbita quando a pessoa pede.
+
+const PASSO_DA_RODINHA = 0.84;   // cada "clique" da rodinha muda a altitude em 16%
+const APROXIMAR_POR_SEGUNDO = 1.1; // W/S: a altitude muda ≈ 3× por segundo
+const GIRO_EM_ORBITA = 1.1;      // A/D e R/F: radianos por segundo
+const ELEVACAO_MAXIMA = 1.45;    // não passa por cima do polo (≈ 83°)
+const avisosDeOrbita = { primeiro: true, limite: true };
+
+/** Distâncias mínima e máxima da órbita (ao centro do astro) e o raio da superfície. */
+function limitesDaOrbita(corpo) {
+  const proprio = nivel.limitesDaOrbita?.(corpo);
+  if (proprio) return proprio;
+  const superficie = corpo.raioExibido || 0;
+  const minimo = superficie > 0 ? superficie * 1.06 : corpo.distanciaChegada * 0.25;
+  const maximo = Math.max(corpo.raioDescoberta * 2.5, corpo.distanciaChegada * 4, minimo * 4);
+  return { minimo, maximo, superficie };
+}
+
+function entrarEmOrbita(corpo) {
+  if (corpo.regiao) {
+    orbita = null;
+    return;
+  }
+  const relativa = camera.position.clone().sub(corpo.posicao);
+  const distancia = relativa.length() || corpo.distanciaChegada;
+  orbita = {
+    corpo,
+    distancia,
+    alvo: distancia,
+    azimute: Math.atan2(relativa.x, relativa.z),
+    elevacao: Math.asin(Math.max(-1, Math.min(1, relativa.y / distancia)))
+  };
+  aproximarNaOrbita(1);
+  orbita.distancia = orbita.alvo;
+  posicionarNaOrbita();
+}
+
+/** Multiplica a altitude (distância à superfície) pelo fator, dentro dos limites. */
+function aproximarNaOrbita(fator) {
+  if (!orbita) return;
+  const { minimo, maximo, superficie } = limitesDaOrbita(orbita.corpo);
+  const altitude = Math.max(orbita.alvo - superficie, (minimo - superficie) * 0.5) * fator;
+  const novo = Math.min(maximo, Math.max(minimo, superficie + altitude));
+  if (fator > 1 && novo >= maximo && orbita.alvo >= maximo * 0.999 && avisosDeOrbita.limite) {
+    avisosDeOrbita.limite = false;
+    avisar(`🛰️ Essa é a órbita mais alta. Para voar livre, toque em "Sair da órbita".`);
+  }
+  orbita.alvo = novo;
+}
+
+function posicionarNaOrbita() {
+  const { corpo } = orbita;
+  orbita.elevacao = Math.max(-ELEVACAO_MAXIMA, Math.min(ELEVACAO_MAXIMA, orbita.elevacao));
+  const { azimute, elevacao, distancia } = orbita;
+  direcaoAuxiliar.set(Math.cos(elevacao) * Math.sin(azimute), Math.sin(elevacao), Math.cos(elevacao) * Math.cos(azimute));
+  camera.position.copy(corpo.posicao).addScaledVector(direcaoAuxiliar, distancia);
+  olharPara(corpo.posicao);
+}
+
+function moverEmOrbita(dt, giro) {
+  // Na Via Láctea girando, a órbita gira junto com o disco (a vista não muda).
+  if (giro && orbita.corpo.gira) orbita.azimute += giro;
+  const lado = (teclas.has("direita") ? 1 : 0) - (teclas.has("esquerda") ? 1 : 0);
+  const subir = (teclas.has("cima") ? 1 : 0) - (teclas.has("baixo") ? 1 : 0);
+  const aproximar = (teclas.has("frente") ? 1 : 0) - (teclas.has("tras") ? 1 : 0);
+  orbita.azimute += lado * GIRO_EM_ORBITA * dt;
+  orbita.elevacao += subir * GIRO_EM_ORBITA * dt;
+  if (aproximar) aproximarNaOrbita(Math.exp(-aproximar * APROXIMAR_POR_SEGUNDO * dt));
+  // A distância vai até o alvo suavemente (em escala logarítmica).
+  const k = movimentoReduzido ? 1 : 1 - Math.exp(-dt * 9);
+  orbita.distancia = Math.exp(Math.log(orbita.distancia) + (Math.log(orbita.alvo) - Math.log(orbita.distancia)) * k);
+  posicionarNaOrbita();
+}
+
+/** Sai da órbita: a nave fica parada no espaço, e o astro segue o caminho dele. */
+function sairDaOrbita() {
+  if (!orbita) return;
+  const { corpo } = orbita;
+  orbita = null;
+  const segue = nivel.temTempo && corpo !== nivel.sol ? ` ${maiuscula(com(corpo))} continua andando na órbita.` : "";
+  avisar(`🚀 Voo livre: a nave fica parada até você mandar ela andar.${segue}`);
+  atualizarEstadoNave();
+}
+
 function mover(dt) {
-  // Com a galáxia girando, a nave gira junto quando está dentro do disco ou
-  // parada num objeto do disco, como o Sol de verdade: a vizinhança fica
-  // parada e a nave não "escorrega" sozinha. De fora do disco dá para ver o giro.
   const giro = nivel.ultimoGiro || 0;
-  const corpoSeguido = estacionadoEm?.corpo;
-  if (giro && (corpoSeguido ? corpoSeguido.gira : dentroDoDisco())) {
+  if (orbita) {
+    moverEmOrbita(dt, giro);
+    return;
+  }
+  // Com a galáxia girando, a nave gira junto quando está dentro do disco,
+  // como o Sol de verdade: a vizinhança fica parada e a nave não "escorrega"
+  // sozinha. De fora do disco dá para ver o giro.
+  if (giro && dentroDoDisco()) {
     camera.position.applyAxisAngle(EIXO_Y, giro);
     olhar.yaw += giro;
     aplicarOrientacao();
-    if (estacionadoEm) estacionadoEm.ultima.copy(corpoSeguido.posicao);
-  } else if (estacionadoEm) {
-    // Parada perto de um astro: a nave anda junto com ele (na órbita).
-    const { corpo, ultima } = estacionadoEm;
-    camera.position.add(direcaoAuxiliar.copy(corpo.posicao).sub(ultima));
-    ultima.copy(corpo.posicao);
   }
 
   const v = velocidadeAtual().kmS / nivel.unidadeKm; // unidades da cena por segundo
@@ -387,10 +508,6 @@ function mover(dt) {
 
   if (percorrido > 0) progresso.somarVoo(km(percorrido), dt);
   evitarColisao();
-  if (estacionadoEm && camera.position.distanceTo(estacionadoEm.corpo.posicao) > estacionadoEm.corpo.raioDescoberta * 3) {
-    estacionadoEm = null;
-    atualizarEstadoNave();
-  }
 }
 
 function evitarColisao() {
@@ -439,7 +556,7 @@ function iniciarPiloto(corpo) {
     km: 0,
     olharLivre: false
   };
-  estacionadoEm = null;
+  orbita = null;
   atualizarPainelAlvo();
   atualizarEstadoNave();
 }
@@ -449,15 +566,6 @@ function pararPiloto() {
   piloto = null;
   avisar("⏹ Nave parada. Ela só volta a andar se você mandar.");
   atualizarPainelAlvo();
-  atualizarEstadoNave();
-}
-
-/** Deixa de acompanhar o astro: a nave fica parada no espaço. */
-function pararAqui() {
-  if (!estacionadoEm) return;
-  const { corpo } = estacionadoEm;
-  estacionadoEm = null;
-  avisar(`⏸ A nave ficou parada no espaço. ${maiuscula(com(corpo))} continua andando na órbita.`);
   atualizarEstadoNave();
 }
 
@@ -502,27 +610,43 @@ function chegar(corpo, { salto }) {
     km: piloto?.km || 0
   };
   piloto = null;
-  // Uma região (o Cinturão) não é um corpo: não dá para acompanhá-la.
-  estacionadoEm = corpo.regiao ? null : { corpo, ultima: corpo.posicao.clone() };
-  olharPara(corpo.pontoDeOlhar?.() || corpo.posicao);
+  // Num astro, a nave entra em órbita. Uma região (o Cinturão) não é um
+  // corpo: lá a nave só fica parada, olhando ao longo dela.
+  entrarEmOrbita(corpo);
+  if (!orbita) olharPara(corpo.pontoDeOlhar?.() || corpo.posicao);
   verificarDescobertas();
   if (!salto) {
     avisar(`📍 ${corpo.nome}: viagem de ${astro.formatarDuracao(viagem.segundos)} (${astro.formatarDistancia(viagem.km)})`);
+  }
+  if (orbita && avisosDeOrbita.primeiro) {
+    avisosDeOrbita.primeiro = false;
+    const toque = window.matchMedia("(pointer: coarse)").matches;
+    avisar(toque
+      ? "🛰️ Em órbita: arraste para girar em volta; use dois dedos ou ▲ ▼ para chegar mais perto."
+      : "🛰️ Em órbita: arraste para girar em volta; use a rodinha ou W/S para chegar mais perto.");
   }
   progresso.registrarChegada(viagem);
   atualizarPainelAlvo();
   atualizarEstadoNave();
 }
 
-// ---------- Estado da nave: piloto automático ou acompanhando um astro ----------
+// ---------- Estado da nave: piloto automático ou em órbita ----------
 
-const ARTIGOS = { terra: "a", lua: "a", voyager: "a", sol: "o" };
-const com = (corpo) => (ARTIGOS[corpo.id] ? `${ARTIGOS[corpo.id]} ${corpo.nome}` : corpo.nome);
+// Artigo de cada nome ("da Terra", "do Sol", "das Plêiades", "de Marte").
+const ARTIGOS = { terra: "a", lua: "a", voyager: "a", sol: "o", "sol-galaxia": "o", cinturao: "o", pleiades: "as" };
+const artigo = (corpo) => ARTIGOS[corpo.id] || (/^(Nebulosa|Galáxia|Grande|Pequena|Estrela|Nuvem)\b/.test(corpo.nome) ? "a" : "");
+const nomeCurto = (corpo) => corpo.nome.replace(/\s*\(.*\)$/, "");
+const com = (corpo) => (artigo(corpo) ? `${artigo(corpo)} ${nomeCurto(corpo)}` : nomeCurto(corpo));
 const maiuscula = (texto) => texto.charAt(0).toUpperCase() + texto.slice(1);
+const de = (corpo) => (artigo(corpo) ? `d${artigo(corpo)} ${nomeCurto(corpo)}` : `de ${nomeCurto(corpo)}`);
 
-/** No Sistema Solar os astros andam: parada perto de um, a nave vai junto. */
-function acompanhandoAstro() {
-  return Boolean(estacionadoEm && nivel.temTempo && estacionadoEm.corpo !== nivel.sol);
+/** Altitude (astros com superfície) ou distância ao centro (nebulosas, galáxias). */
+function detalheDaOrbita() {
+  const { superficie } = limitesDaOrbita(orbita.corpo);
+  const distanciaKm = km(Math.max(0, orbita.distancia - superficie));
+  return superficie > 0
+    ? `· ${astro.formatarDistancia(distanciaKm)} de altitude`
+    : `· a ${astro.formatarDistancia(distanciaKm)} do centro`;
 }
 
 let estadoAnterior = "";
@@ -535,11 +659,11 @@ function atualizarEstadoNave() {
     detalhe = `· faltam ${astro.formatarDuracao(restanteKm / velocidadeAtual().kmS)}`;
     acao = "⏹ Parar";
     dica = "Parar a nave aqui (tecla Espaço)";
-  } else if (acompanhandoAstro()) {
-    texto = `📍 Acompanhando ${com(estacionadoEm.corpo)}`;
-    detalhe = "· vai junto na órbita";
-    acao = "⏸ Parar aqui";
-    dica = "Parar de acompanhar e ficar parada no espaço";
+  } else if (orbita) {
+    texto = `🛰️ Em órbita ${de(orbita.corpo)}`;
+    detalhe = detalheDaOrbita();
+    acao = "Sair da órbita";
+    dica = "Voar livre: a nave fica parada no espaço até você mandar ela andar";
   }
   $("estado-detalhe").textContent = detalhe;
   if (texto === estadoAnterior) return;
@@ -551,7 +675,7 @@ function atualizarEstadoNave() {
   botao.title = dica;
 }
 
-$("estado-acao").addEventListener("click", () => (piloto ? pararPiloto() : pararAqui()));
+$("estado-acao").addEventListener("click", () => (piloto ? pararPiloto() : sairDaOrbita()));
 
 // ---------- Descobertas ----------
 
@@ -916,11 +1040,15 @@ function mudarTamanho(modo) {
     botao.setAttribute("aria-pressed", String(botao.dataset.tamanho === modo));
   });
   $("nota-tamanho").textContent = NOTAS_TAMANHO[modo];
-  if (estacionadoEm && nivel === solar) {
-    const { corpo } = estacionadoEm;
-    const distancia = Math.max(camera.position.distanceTo(corpo.posicao), corpo.distanciaChegada);
-    camera.position.sub(corpo.posicao).setLength(distancia).add(corpo.posicao);
-    olharPara(corpo.posicao);
+  if (orbita && nivel === solar) {
+    // O astro mudou de tamanho: a órbita volta para a distância de chegada.
+    if (orbita.corpo.oculto) {
+      orbita = null;
+      atualizarEstadoNave();
+    } else {
+      orbita.alvo = orbita.distancia = orbita.corpo.distanciaChegada * 1.25;
+      posicionarNaOrbita();
+    }
   }
   if (selecionado?.oculto) fecharAlvo();
   atualizarDestinos();
@@ -1087,7 +1215,9 @@ function iniciar() {
     navigator.serviceWorker.register("sw.js").catch(() => { /* sem modo offline */ });
   }
   // Para testes automatizados (testes/): expõe o estado só com ?depurar na URL.
-  if (parametros.has("depurar")) window.__explorador = { camera, niveis, get nivel() { return nivel; }, progresso };
+  if (parametros.has("depurar")) {
+    window.__explorador = { camera, niveis, get nivel() { return nivel; }, get orbita() { return orbita; }, progresso };
+  }
   requestAnimationFrame((agora) => {
     anterior = agora;
     quadro(agora);

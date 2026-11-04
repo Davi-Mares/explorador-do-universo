@@ -299,6 +299,12 @@ export function criarNivelSolar(dataInicial) {
     get modoTamanho() { return modoTamanho; },
     atualizar,
     inicio,
+    /** Órbita em volta do Sol (sem entrar no brilho) e da Voyager (um pontinho). */
+    limitesDaOrbita(corpo) {
+      if (corpo === sol) return { minimo: sol.raioExibido * 1.2, maximo: 0.75, superficie: sol.raioExibido };
+      if (corpo === voyager) return { minimo: 1e-6, maximo: 2, superficie: 0 };
+      return null;
+    },
     /**
      * De onde ver um astro ao saltar até ele: do lado iluminado, um pouco
      * acima do equador no hemisfério virado para o Sol (em Saturno, assim
@@ -392,6 +398,7 @@ export function criarNivelEstrelas() {
     sol: estrelas[0],
     atualizar,
     inicio,
+    limitesDaOrbita: () => ({ minimo: 0.004, maximo: 1.25, superficie: 0 }),
     pontoDeVista: () => null
   };
 }
@@ -592,6 +599,12 @@ export function criarNivelGalaxia() {
     descobrirAoEntrar: ["sol-galaxia"],
     atualizar,
     inicio,
+    /** Órbita: dá para entrar nas nebulosas e aglomerados; o buraco negro fica de fora. */
+    limitesDaOrbita: (corpo) => ({
+      minimo: corpo.id === "sgr-a" ? 0.03 : corpo.distanciaChegada * 0.3,
+      maximo: corpo.raioDescoberta * 2.5,
+      superficie: 0
+    }),
     /**
      * Ao saltar até um objeto, chega do lado do Sol (um pouco acima do disco):
      * é o lado que vemos da Terra, o das fotos dos telescópios.

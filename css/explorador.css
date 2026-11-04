@@ -766,6 +766,21 @@
   from { opacity: 0; transform: translate(-50%, 16px) scale(0.97); }
 }
 
+/* Em telas largas a descoberta aparece no canto, sem cobrir o astro. */
+@media (min-width: 1000px) {
+  .cartao-descoberta {
+    bottom: 18px;
+    left: 18px;
+    width: 340px;
+    transform: none;
+    animation-name: surgir-canto;
+  }
+}
+
+@keyframes surgir-canto {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+}
+
 /* ---------- Diálogos ---------- */
 
 .dialogo {
