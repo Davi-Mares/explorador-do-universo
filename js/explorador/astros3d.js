@@ -65,15 +65,15 @@ export function texturaDeBrilho() {
 
 const APARENCIAS = {
   sol: { mapa: "sol.webp" },
-  mercurio: { mapa: "mercurio.webp", relevo: 1.4 },
+  mercurio: { mapa: "mercurio.webp", mapaHD: "hd/mercurio.webp", relevo: 1.4 },
   venus: { mapa: "venus.webp", atmosfera: { cor: "#ffe2a6", espessura: 0.06, altura: 0.012, forca: 0.08 } },
   terra: {
-    mapa: "terra.webp", noite: "terra-noite.webp", nuvens: "terra-nuvens.webp", oceano: "terra-oceano.webp",
+    mapa: "terra.webp", mapaHD: "hd/terra.webp", noite: "terra-noite.webp", nuvens: "terra-nuvens.webp", nuvensHD: "hd/terra-nuvens.webp", oceano: "terra-oceano.webp",
     atmosfera: { cor: "#4f8dff", espessura: 0.045, altura: 0.0075, forca: 0.055, porDoSol: true }
   },
-  lua: { mapa: "lua.webp", relevo: 1.4 },
-  marte: { mapa: "marte.webp", relevo: 0.8, atmosfera: { cor: "#f2b48a", espessura: 0.025, altura: 0.005, forca: 0.018 } },
-  jupiter: { mapa: "jupiter.webp", atmosfera: { cor: "#f4e2c4", espessura: 0.025, altura: 0.005, forca: 0.025 } },
+  lua: { mapa: "lua.webp", mapaHD: "hd/lua.webp", relevo: 1.4 },
+  marte: { mapa: "marte.webp", mapaHD: "hd/marte.webp", relevo: 0.8, atmosfera: { cor: "#f2b48a", espessura: 0.025, altura: 0.005, forca: 0.018 } },
+  jupiter: { mapa: "jupiter.webp", mapaHD: "hd/jupiter.webp", atmosfera: { cor: "#f4e2c4", espessura: 0.025, altura: 0.005, forca: 0.025 } },
   saturno: { mapa: "saturno.webp", aneis: "saturno-aneis.png", atmosfera: { cor: "#f6e6c0", espessura: 0.025, altura: 0.005, forca: 0.025 } },
   urano: { mapa: "urano.webp", atmosfera: { cor: "#a6ecff", espessura: 0.03, altura: 0.007, forca: 0.07 } },
   netuno: { mapa: "netuno.webp", atmosfera: { cor: "#6f95ff", espessura: 0.03, altura: 0.007, forca: 0.07 } },
@@ -626,6 +626,26 @@ function criarPlaneta(objeto, segmentos) {
     return pedido;
   }
 
+  /** Mapas de 4096 px (Solar System Scope, CC BY 4.0), só bem de perto e no computador. */
+  let pedidoHD = null;
+  function carregarHD() {
+    if (pedidoHD || !(aparencia.mapaHD || aparencia.nuvensHD)) return pedidoHD;
+    pedidoHD = carregar().then(() => Promise.all([
+      aparencia.mapaHD && textura(aparencia.mapaHD).then((t) => {
+        if (!t) return;
+        material.map = t;
+        if (aparencia.relevo) material.bumpMap = t;
+        material.needsUpdate = true;
+      }),
+      aparencia.nuvensHD && nuvens && textura(aparencia.nuvensHD, { cor: false }).then((t) => {
+        if (!t) return;
+        nuvens.material.alphaMap = t;
+        nuvens.material.needsUpdate = true;
+      })
+    ]));
+    return pedidoHD;
+  }
+
   return {
     grupo,
     superficie,
@@ -635,6 +655,9 @@ function criarPlaneta(objeto, segmentos) {
     dirSol,
     raioVisual: aneis ? ANEIS_TEXTURA.externo : atmosfera ? 1 + aparencia.atmosfera.espessura : 1,
     carregar,
-    get pedido() { return Boolean(pedido); }
+    carregarHD,
+    temHD: Boolean(aparencia.mapaHD || aparencia.nuvensHD),
+    get pedido() { return Boolean(pedido); },
+    get pedidoHD() { return Boolean(pedidoHD); }
   };
 }

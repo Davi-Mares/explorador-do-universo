@@ -129,6 +129,10 @@ const AMPLIACAO = { planetas: 500, sol: 10 };
 const DERIVA_NUVENS_RAD_POR_DIA = (8 * Math.PI) / 180;
 /** Tamanho aparente (raio/distância) a partir do qual as texturas são carregadas. */
 const TAMANHO_PARA_TEXTURA = 0.0015;
+/** Bem de perto (o planeta ocupa boa parte da tela), os mapas de 4096 px — só no computador. */
+const TAMANHO_PARA_HD = 0.25;
+const PODE_HD = typeof window !== "undefined" && !window.matchMedia?.("(pointer: coarse)").matches
+  && (navigator.deviceMemory ?? 8) >= 4;
 
 export function criarNivelSolar(dataInicial) {
   const cena = new THREE.Scene();
@@ -293,10 +297,10 @@ export function criarNivelSolar(dataInicial) {
     for (const corpo of [...planetas, lua, ...luas, ...anoes]) {
       corpo.astro.dirSol.copy(corpo.posicao).negate().normalize();
       // Texturas só quando o astro aparece maior que um pontinho (economiza memória).
-      if (camera && !corpo.astro.pedido && !corpo.oculto
-        && corpo.raioExibido / Math.max(camera.position.distanceTo(corpo.posicao), 1e-12) > TAMANHO_PARA_TEXTURA) {
-        corpo.astro.carregar();
-      }
+      if (!camera || corpo.oculto) continue;
+      const tamanho = corpo.raioExibido / Math.max(camera.position.distanceTo(corpo.posicao), 1e-12);
+      if (!corpo.astro.pedido && tamanho > TAMANHO_PARA_TEXTURA) corpo.astro.carregar();
+      if (PODE_HD && corpo.astro.temHD && !corpo.astro.pedidoHD && tamanho > TAMANHO_PARA_HD) corpo.astro.carregarHD();
     }
     marcaVoyager.position.copy(voyager.posicao);
     if (camera) faixa.atualizar(camera);
