@@ -1,8 +1,8 @@
 # 🔭 Explorador do Universo
 
-**Astronomia em escala real.** Um ambiente para ensinar astronomia a crianças e adolescentes: você pilota uma nave do Sistema Solar até a Via Láctea, sempre com as **distâncias reais**, compara os astros lado a lado e guarda o que descobre no **Diário de bordo**.
+**Astronomia em escala real.** Você pilota uma nave do Sistema Solar até a Via Láctea, com distâncias, tamanhos e posições de verdade, e guarda o que descobre no **Diário de bordo**.
 
-> MVP do Trabalho de Conclusão de Curso de **Sistemas de Informação — UNEMAT, campus Sinop**. Autor: **Davi Alves Mares**.
+> MVP do Trabalho de Conclusão de Curso de **Sistemas de Informação — UNEMAT, campus Sinop** · **Davi Alves Mares**
 
 [![Validação dos dados](https://github.com/Davi-Mares/explorador-do-universo/actions/workflows/validar.yml/badge.svg)](https://github.com/Davi-Mares/explorador-do-universo/actions/workflows/validar.yml)
 
@@ -10,17 +10,18 @@
 
 ## O que tem
 
-| Página | O que faz |
-|---|---|
-| **Explorar** | A nave em 3D, em três níveis de escala: **Sistema Solar** (planetas onde estão hoje, com o lado de dia e de noite certos, Plutão, Ceres e o Cinturão de Asteroides), **Estrelas vizinhas** (30 estrelas nas posições reais) e **Via Láctea** (girando, bem acelerada, com nebulosas, aglomerados e galáxias vizinhas em 3D). |
-| **Comparar** | Dois astros lado a lado, na mesma escala, numa lista em ordem crescente: de Ceres até Andrômeda, passando por estrelas, pelo Sistema Solar inteiro (até Netuno) e pelos buracos negros Sagitário A* e TON 618, desenhados com o desvio da luz da relatividade geral. Tamanho, massa, gravidade, rotação, translação, distância, temperatura e quanto a balança marcaria lá. |
-| **Diário de bordo** | Cada descoberta libera um verbete com distância real, tempo-luz, ficha técnica, curiosidade e um desafio. |
+- **Explorar**, em três níveis de escala:
+  - **Sistema Solar** — os planetas onde estão hoje (com o dia e a noite certos), a Lua e mais 10 luas, Plutão, Ceres, o Cinturão de Asteroides e a Voyager 1, com o céu de verdade ao fundo.
+  - **Estrelas vizinhas** — 30 estrelas para visitar, as 9 mil visíveis a olho nu nas posições 3D reais e uma régua de distâncias.
+  - **Via Láctea** — os braços espirais medidos, a barra, nebulosas, aglomerados, Sagitário A* e as galáxias vizinhas.
 
-Sem cadastro: o progresso fica no navegador, e o site pode ser instalado como app e usado offline.
+  Ao chegar num astro, a nave entra em órbita: arrastar gira em volta e a rodinha (ou W/S, ou dois dedos) aproxima.
+- **Comparar** — dois astros lado a lado, na mesma escala: de luas e planetas até galáxias e buracos negros.
+- **Diário de bordo** — verbetes do que você descobriu, missões e desafios. Dá para **baixar em PDF**.
+
+Sem cadastro: o progresso fica no navegador, e o site funciona offline (PWA).
 
 ## Como rodar
-
-O site é estático, mas usa módulos JavaScript, então precisa de um servidor:
 
 ```bash
 python3 -m http.server 8080      # ou: npm run servir
@@ -34,37 +35,28 @@ Abra **http://localhost:8080**. Não há dependências para instalar.
 npm run validar     # ou: node testes/validar-dados.mjs
 ```
 
-Confere o modelo contra eventos reais e leis físicas: equinócios, solstícios e periélio de 2026, oposições de Marte a Netuno, periélios de Plutão (1989) e Ceres (2018), a ressonância 3:2 entre Plutão e Netuno, 3ª lei de Kepler, a rotação da Terra (Sol a pino no lugar certo), a inclinação dos eixos, a Lua, a Voyager 1, coordenadas galácticas, o raio dos buracos negros (2GM/c²), a sombra e o desvio da luz perto de um buraco negro (a mesma conta do desenho) e a coerência da base de conhecimento. O GitHub Actions roda tudo a cada envio.
+Confere o modelo contra eventos reais e leis físicas — equinócios, oposições, periélios, 3ª lei de Kepler para planetas e luas, rotação pela IAU, coordenadas galácticas, buracos negros — e a coerência da base de conhecimento. O GitHub Actions roda tudo a cada envio.
 
 ## Estrutura
 
 ```text
 ├── index.html · explorador.html · comparar.html · diario.html · sobre.html
-├── js/
-│   ├── explorador/
-│   │   ├── astronomia.js   # cálculos: Kepler, rotação (IAU), coordenadas, Lua
-│   │   ├── catalogo.js     # base de conhecimento: astros, fichas, missões, desafios
-│   │   ├── astros3d.js     # planetas, atmosferas, anéis, o Sol e buracos negros em 3D
-│   │   ├── galaxias3d.js   # galáxias, nebulosas e aglomerados (pontos de gás, poeira e estrelas)
-│   │   ├── cinturao3d.js   # Cinturão de Asteroides (órbitas de Kepler na placa de vídeo)
-│   │   ├── cenas.js        # as três cenas (níveis de escala)
-│   │   ├── progresso.js    # descobertas, missões e respostas (localStorage)
-│   │   └── main.js         # voo e interface do explorador
-│   ├── comparar.js · diario.js · site.js
-├── css/  ·  img/  ·  pwa/
-└── testes/validar-dados.mjs
+├── js/explorador/   # cálculos (astronomia.js), base de conhecimento (catalogo.js), cenas 3D e voo (main.js)
+├── js/              # comparador, diário e o PDF (pdf.js, diario-pdf.js)
+├── dados/           # estrelas do catálogo HYG (Hipparcos)
+├── ferramentas/     # scripts Python que refazem os dados e os mapas (opcional)
+├── testes/          # validação automática
+└── css/ · img/ · pwa/
 ```
 
-## Fontes
+## Dados e imagens
 
-- **Órbitas:** Standish e Williams (JPL/NASA), elementos keplerianos aproximados (1800–2050).
-- **Planetas, Lua, Sol, Plutão e Ceres:** NASA (fichas técnicas do NSSDC); polos e rotação: IAU (Archinal et al., 2018).
-- **Estrelas:** coordenadas J2000 (SIMBAD) e distâncias por paralaxe (Hipparcos/Gaia).
-- **Galáxia:** distância Sol–centro de 8,178 kpc (GRAVITY, 2019); Sagitário A*: ESO/EHT (2022); Andrômeda e Via Láctea: NASA; TON 618: Shemmer et al. (2004).
-- **Buracos negros:** cada raio de luz é seguido com a relatividade geral (buraco negro de Schwarzschild), como nas imagens de Luminet (1979), da NASA (2019) e do filme Interstellar (James et al., 2015). No explorador, Sagitário A* aparece ampliado mais de 1 milhão de vezes, como ilustração.
-- **Mapas das superfícies:** [Solar System Scope](https://www.solarsystemscope.com/textures/) (CC BY 4.0), feitos com dados da NASA; Terra: NASA Blue Marble e Earth at Night (domínio público); Plutão: mosaico da New Horizons (NASA/JHUAPL/SwRI), com o sul completado por código. Nuvens da Terra, Ceres, buracos negros, nebulosas e galáxias são ilustrações geradas por código.
-- A lista completa de referências fica num documento à parte, fora do repositório.
-- **Three.js** (MIT) para o 3D.
+- **Órbitas e fichas:** JPL/NASA (elementos orbitais, luas) e NASA NSSDC; eixos e rotação: IAU (Archinal et al., 2018).
+- **Estrelas:** catálogo HYG v4.0, a partir do Hipparcos (ESA) — `dados/estrelas.json` está sob CC BY-SA 4.0.
+- **Via Láctea:** braços medidos por Reid et al. (2019), barra de Wegg et al. (2015), disco de Bland-Hawthorn e Gerhard (2016), distância ao centro do GRAVITY (2019).
+- **Céu:** foto panorâmica da ESO/S. Brunier (CC BY 4.0).
+- **Mapas:** [Solar System Scope](https://www.solarsystemscope.com/textures/) (CC BY 4.0), NASA (Blue Marble, New Horizons) e [Celestia](https://github.com/CelestiaProject/CelestiaContent) (CC BY) para as luas. Nebulosas, galáxias, buracos negros e os mapas de Europa, Calisto, Encélado e Caronte são ilustrações feitas por código.
+- **Three.js** (MIT) para o 3D. As referências completas estão no documento do TCC.
 
 ---
 
