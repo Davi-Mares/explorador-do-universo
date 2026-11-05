@@ -217,7 +217,11 @@ export function materialDeEstrelas({ infinito = false } = {}) {
  * com a direção do catálogo; senão, na posição 3D real (anos-luz).
  * "pular(estrela)" tira as que a cena já desenha de outro jeito.
  */
-export function criarEstrelasDoCatalogo({ infinito = false, raio = 1, pular = () => false, paraCena }) {
+export function criarEstrelasDoCatalogo({
+  infinito = false, raio = 1, pular = () => false,
+  // Posição na cena de (ascensão reta, declinação, distância); por padrão, na eclíptica.
+  posicao = (ar, dec, distancia) => astro.paraCena(astro.equatorialParaEcliptica(ar, dec, distancia))
+}) {
   const material = materialDeEstrelas({ infinito });
   const geometria = new THREE.BufferGeometry();
   const objeto = new THREE.Points(geometria, material);
@@ -230,7 +234,7 @@ export function criarEstrelasDoCatalogo({ infinito = false, raio = 1, pular = ()
       if (pular(estrela)) continue;
       // Sem distância medida: fica bem longe (2 mil anos-luz), com o brilho visto daqui.
       const anosLuz = estrela.anosLuz > 0 ? estrela.anosLuz : 2000;
-      const p = paraCena(astro.equatorialParaEcliptica(estrela.ar, estrela.dec, infinito ? raio : anosLuz));
+      const p = posicao(estrela.ar, estrela.dec, infinito ? raio : anosLuz);
       posicoes.push(p.x, p.y, p.z);
       cores.push(...corPorIndiceBV(estrela.bv));
       magnitudes.push(infinito ? estrela.mag : astro.magnitudeAbsoluta(estrela.mag, anosLuz));

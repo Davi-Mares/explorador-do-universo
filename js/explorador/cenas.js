@@ -45,6 +45,57 @@ export function aparenciaPorMagnitude(m) {
   return [limitar(1.4 + x * 1.15, 1.2, 40), limitar(0.22 + x * 0.13, 0.07, 1.6)];
 }
 
+/**
+ * Linha de órbita que some aos poucos quando vista de lado (de dentro do
+ * plano das órbitas, todas virariam riscos atravessando o céu) e perto da
+ * nave (a órbita do planeta não corta o planeta na frente da câmera).
+ */
+function linhaDeOrbita(pontosDaOrbita, cor, opacidade) {
+  const geometria = new THREE.BufferGeometry().setFromPoints(pontosDaOrbita);
+  const normal = new THREE.Vector3().crossVectors(pontosDaOrbita[0], pontosDaOrbita[Math.floor(pontosDaOrbita.length / 4)]).normalize();
+  const raio = pontosDaOrbita.reduce((soma, p) => soma + p.length(), 0) / pontosDaOrbita.length;
+  const n = parseInt(cor.replace("#", ""), 16);
+  const material = new THREE.ShaderMaterial({
+    uniforms: {
+      cor: { value: new THREE.Vector3(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255) },
+      opacidade: { value: opacidade },
+      normalOrbita: { value: normal },
+      raio: { value: raio }
+    },
+    vertexShader: /* glsl */ `
+      uniform float opacidade;
+      uniform vec3 normalOrbita;
+      uniform float raio;
+      varying float vAlfa;
+      #include <common>
+      #include <logdepthbuf_pars_vertex>
+      void main() {
+        vec4 mundo = modelMatrix * vec4(position, 1.0);
+        vec3 paraPonto = mundo.xyz - cameraPosition;
+        float d = length(paraPonto);
+        float deLado = smoothstep(0.01, 0.14, abs(dot(paraPonto / max(d, 1e-12), normalOrbita)));
+        float perto = smoothstep(0.004 * raio, 0.06 * raio, d);
+        vAlfa = opacidade * mix(0.16, 1.0, deLado) * perto;
+        gl_Position = projectionMatrix * viewMatrix * mundo;
+        #include <logdepthbuf_vertex>
+      }`,
+    fragmentShader: /* glsl */ `
+      uniform vec3 cor;
+      varying float vAlfa;
+      #include <common>
+      #include <logdepthbuf_pars_fragment>
+      void main() {
+        #include <logdepthbuf_fragment>
+        gl_FragColor = vec4(cor, vAlfa);
+      }`,
+    transparent: true,
+    depthWrite: false
+  });
+  const linha = new THREE.LineLoop(geometria, material);
+  linha.frustumCulled = false;
+  return linha;
+}
+
 function brilhoSprite(cor, escala, { atenuar = true, opacidade = 1 } = {}) {
   const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
     map: texturaDeBrilho(), color: cor, transparent: true, opacity: opacidade,
@@ -107,12 +158,7 @@ export function criarNivelSolar(dataInicial) {
   const planetas = PLANETAS.map((planeta) => {
     const corpo = montar(criarCorpo(planeta, { raioReal: planeta.raioKm / ua }));
     // Órbita (elipse real calculada pelos elementos keplerianos).
-    const pontosDaOrbita = astro.pontosDaOrbita(planeta, dataInicial, 360).map(vetor);
-    const orbita = new THREE.LineLoop(
-      new THREE.BufferGeometry().setFromPoints(pontosDaOrbita),
-      new THREE.LineBasicMaterial({ color: planeta.cor, transparent: true, opacity: 0.38, depthWrite: false })
-    );
-    cena.add(orbita);
+    cena.add(linhaDeOrbita(astro.pontosDaOrbita(planeta, dataInicial, 360).map(vetor), planeta.cor, 0.42));
     return corpo;
   });
   const terra = planetas.find((p) => p.id === "terra");
@@ -125,11 +171,7 @@ export function criarNivelSolar(dataInicial) {
   // --- Planetas anões (Ceres e Plutão), com órbita ---
   const anoes = PLANETAS_ANOES.map((planeta) => {
     const corpo = montar(criarCorpo(planeta, { raioReal: planeta.raioKm / ua }), 64);
-    const orbita = new THREE.LineLoop(
-      new THREE.BufferGeometry().setFromPoints(astro.pontosDaOrbita(planeta, dataInicial, 360).map(vetor)),
-      new THREE.LineBasicMaterial({ color: planeta.cor, transparent: true, opacity: 0.28, depthWrite: false })
-    );
-    cena.add(orbita);
+    cena.add(linhaDeOrbita(astro.pontosDaOrbita(planeta, dataInicial, 360).map(vetor), planeta.cor, 0.3));
     return corpo;
   });
 
@@ -155,7 +197,7 @@ export function criarNivelSolar(dataInicial) {
   // estrelas visíveis a olho nu (catálogo Hipparcos), vistas daqui. ---
   const faixa = criarFaixaDaViaLactea({ raio: 5e8, matriz: matrizCenaEclipticaParaGalactica(), intensidade: 0.85 });
   cena.add(faixa.objeto);
-  const estrelasDoCeu = criarEstrelasDoCatalogo({ infinito: true, raio: 4e8, paraCena: astro.paraCena });
+  const estrelasDoCeu = criarEstrelasDoCatalogo({ infinito: true, raio: 4e8 });
   materiaisDePontos.push(estrelasDoCeu.material);
   cena.add(estrelasDoCeu.objeto);
 
@@ -271,6 +313,73 @@ export function criarNivelSolar(dataInicial) {
 // Nível 2 — Estrelas vizinhas (unidade: ano-luz)
 // ===========================================================================
 
+/** Texto numa textura (para os rótulos da régua). */
+function spriteDeTexto(texto, { cor = "#9fbfff", altura = 1 } = {}) {
+  const canvas = document.createElement("canvas");
+  const contexto = canvas.getContext("2d");
+  const fonte = "600 44px system-ui, -apple-system, Segoe UI, sans-serif";
+  contexto.font = fonte;
+  canvas.width = Math.ceil(contexto.measureText(texto).width) + 24;
+  canvas.height = 64;
+  contexto.font = fonte;
+  contexto.fillStyle = cor;
+  contexto.textBaseline = "middle";
+  contexto.fillText(texto, 12, 33);
+  const textura = new THREE.CanvasTexture(canvas);
+  textura.colorSpace = THREE.SRGBColorSpace;
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: textura, transparent: true, opacity: 0.75, depthWrite: false }));
+  sprite.scale.set(altura * (canvas.width / canvas.height), altura, 1);
+  return sprite;
+}
+
+/**
+ * Posição na cena das Estrelas vizinhas, em coordenadas galácticas: o plano
+ * da galáxia fica "deitado" (a faixa da Via Láctea na horizontal) e o eixo
+ * para cima aponta o polo norte galáctico.
+ */
+function naGalaxia(arGraus, decGraus, distancia) {
+  const { l, b } = astro.equatorialParaGalactica(arGraus, decGraus);
+  const lr = (l * Math.PI) / 180, br = (b * Math.PI) / 180;
+  return vetor({ x: distancia * Math.cos(br) * Math.cos(lr), y: distancia * Math.cos(br) * Math.sin(lr), z: distancia * Math.sin(br) });
+}
+
+/** Círculos de distância em volta do Sol, no plano da galáxia, com rótulos. */
+function criarReguaDeDistancias(raios) {
+  const grupo = new THREE.Group();
+  // Polo norte galáctico (para cima), centro da galáxia (x) e longitude 90° (−z).
+  const polo = new THREE.Vector3(0, 1, 0);
+  const eixoX = new THREE.Vector3(1, 0, 0);
+  const eixoY = new THREE.Vector3(0, 0, -1);
+  // Os rótulos ficam na direção de longitude galáctica 60° (entre Águia e Cisne).
+  const lRotulo = (60 * Math.PI) / 180;
+  const direcaoRotulo = eixoX.clone().multiplyScalar(Math.cos(lRotulo)).addScaledVector(eixoY, Math.sin(lRotulo));
+  const partes = [];
+  for (const raio of raios) {
+    const pontosDoCirculo = [];
+    for (let i = 0; i < 256; i++) {
+      const a = (i / 256) * Math.PI * 2;
+      pontosDoCirculo.push(eixoX.clone().multiplyScalar(Math.cos(a) * raio).addScaledVector(eixoY, Math.sin(a) * raio));
+    }
+    const circulo = new THREE.LineLoop(
+      new THREE.BufferGeometry().setFromPoints(pontosDoCirculo),
+      new THREE.LineBasicMaterial({ color: "#6f93d8", transparent: true, opacity: 0, depthWrite: false })
+    );
+    const rotulo = spriteDeTexto(`${raio} anos-luz`, { altura: 0.26 + raio * 0.02 });
+    rotulo.position.copy(direcaoRotulo).multiplyScalar(raio);
+    grupo.add(circulo, rotulo);
+    partes.push([circulo.material, raio % 10 === 0 ? 0.24 : 0.15], [rotulo.material, 0.75]);
+  }
+  /** Vistos de lado (a nave perto do plano), os círculos viram riscos: somem aos poucos. */
+  grupo.userData.atualizar = (camera) => {
+    const distancia = camera.position.length();
+    const elevacao = distancia > 1e-9 ? Math.abs(camera.position.dot(polo)) / distancia : 1;
+    const fator = THREE.MathUtils.smoothstep(elevacao, 0.12, 0.4) * THREE.MathUtils.smoothstep(distancia, 2, 6);
+    for (const [material, base] of partes) material.opacity = base * fator;
+    grupo.visible = fator > 0.01;
+  };
+  return grupo;
+}
+
 export function criarNivelEstrelas() {
   const cena = new THREE.Scene();
   const materiaisDePontos = [];
@@ -280,7 +389,7 @@ export function criarNivelEstrelas() {
     const ehSol = estrela.id === "sol";
     const posicao = ehSol
       ? new THREE.Vector3()
-      : vetor(astro.equatorialParaEcliptica(astro.arParaGraus(estrela.ar), astro.decParaGraus(estrela.dec), estrela.anosLuz));
+      : naGalaxia(astro.arParaGraus(estrela.ar), astro.decParaGraus(estrela.dec), estrela.anosLuz);
     const corpo = criarCorpo(estrela, {
       raioExibido: 1e-7,
       raioDescoberta: 0.5,
@@ -307,28 +416,34 @@ export function criarNivelEstrelas() {
   // Céu: a faixa da Via Láctea (bem mais longe que tudo aqui) e as estrelas
   // do catálogo Hipparcos nas posições 3D reais. As 30 estrelas do nível já
   // estão desenhadas acima, então ficam de fora da nuvem do catálogo.
-  const faixa = criarFaixaDaViaLactea({ raio: 5e4, matriz: matrizCenaEclipticaParaGalactica(), intensidade: 0.85 });
+  const faixa = criarFaixaDaViaLactea({ raio: 5e4, matriz: matrizCenaGalacticaParaGalactica(), intensidade: 0.85 });
   cena.add(faixa.objeto);
   const conhecidas = ESTRELAS.map((e) => ({
-    direcao: vetor(astro.equatorialParaEcliptica(astro.arParaGraus(e.ar), astro.decParaGraus(e.dec), 1)),
+    direcao: naGalaxia(astro.arParaGraus(e.ar), astro.decParaGraus(e.dec), 1),
     anosLuz: e.anosLuz
   }));
   const LIMITE_MESMA = Math.cos((0.6 * Math.PI) / 180);
   const catalogo = criarEstrelasDoCatalogo({
-    paraCena: astro.paraCena,
+    posicao: naGalaxia,
     pular: (estrela) => {
-      const d = vetor(astro.equatorialParaEcliptica(estrela.ar, estrela.dec, 1));
+      const d = naGalaxia(estrela.ar, estrela.dec, 1);
       return conhecidas.some((c) => c.direcao.dot(d) > LIMITE_MESMA && (!estrela.anosLuz || Math.abs(estrela.anosLuz / c.anosLuz - 1) < 0.3));
     }
   });
   materiaisDePontos.push(catalogo.material);
   cena.add(catalogo.objeto);
 
+  // Régua: círculos de 5, 10, 15 e 20 anos-luz em volta do Sol, no plano da
+  // galáxia (o mesmo da faixa da Via Láctea ao fundo).
+  const regua = criarReguaDeDistancias([5, 10, 15, 20]);
+  cena.add(regua);
+
   const atributoTamanho = nuvem.geometry.attributes.tamanho;
   const atributoBrilho = nuvem.geometry.attributes.brilho;
 
   function atualizar(_data, camera) {
     faixa.atualizar(camera);
+    regua.userData.atualizar(camera);
     estrelas.forEach((e, i) => {
       const distancia = camera.position.distanceTo(e.posicao);
       e.magnitudeVista = astro.magnitudeAparente(e.magnitudeAbsoluta, distancia);
@@ -343,9 +458,17 @@ export function criarNivelEstrelas() {
     atributoBrilho.needsUpdate = true;
   }
 
+  /**
+   * Começa a 9 anos-luz do Sol, um pouco acima do plano da galáxia, do lado
+   * oposto ao de Alfa Centauri: o Sol no meio, a vizinha logo atrás, a régua
+   * de distâncias em volta e a faixa da Via Láctea ao fundo.
+   */
   function inicio() {
     const alfa = estrelas.find((e) => e.id === "alfa-centauri").posicao.clone().normalize();
-    const posicao = alfa.clone().multiplyScalar(-1.1).add(new THREE.Vector3(0, 0.45, 0)).applyAxisAngle(EIXO_Y, 0.12);
+    const polo = new THREE.Vector3(0, 1, 0);
+    const noPlano = alfa.sub(polo.clone().multiplyScalar(alfa.dot(polo))).normalize();
+    const elevacao = (24 * Math.PI) / 180;
+    const posicao = noPlano.multiplyScalar(-Math.cos(elevacao)).addScaledVector(polo, Math.sin(elevacao)).multiplyScalar(9);
     return { posicao, olharPara: new THREE.Vector3() };
   }
 

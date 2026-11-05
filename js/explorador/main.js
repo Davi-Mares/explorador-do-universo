@@ -640,13 +640,20 @@ const com = (corpo) => (artigo(corpo) ? `${artigo(corpo)} ${nomeCurto(corpo)}` :
 const maiuscula = (texto) => texto.charAt(0).toUpperCase() + texto.slice(1);
 const de = (corpo) => (artigo(corpo) ? `d${artigo(corpo)} ${nomeCurto(corpo)}` : `de ${nomeCurto(corpo)}`);
 
+/** Distância curta para o painel: em km de perto; em UA ou anos-luz de longe. */
+function distanciaCurta(quilometros) {
+  const texto = astro.formatarDistancia(quilometros);
+  const entreParenteses = texto.match(/\(([^)]+)\)$/);
+  return quilometros > 5e9 && entreParenteses ? entreParenteses[1] : texto.replace(/\s*\(.*\)$/, "");
+}
+
 /** Altitude (astros com superfície) ou distância ao centro (nebulosas, galáxias). */
 function detalheDaOrbita() {
   const { superficie } = limitesDaOrbita(orbita.corpo);
   const distanciaKm = km(Math.max(0, orbita.distancia - superficie));
   return superficie > 0
-    ? `· ${astro.formatarDistancia(distanciaKm)} de altitude`
-    : `· a ${astro.formatarDistancia(distanciaKm)} do centro`;
+    ? `· ${distanciaCurta(distanciaKm)} de altitude`
+    : `· a ${distanciaCurta(distanciaKm)}`;
 }
 
 let estadoAnterior = "";
