@@ -183,7 +183,3 @@ export function zerarProgresso() {
   salvar(true);
   avisar({ tipo: "zerado" });
 }
-
-export function exportarJson() {
-  return JSON.stringify({ ...estado, exportadoEm: new Date().toISOString() }, null, 2);
-}

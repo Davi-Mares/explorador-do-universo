@@ -10,6 +10,7 @@ import {
   TODOS_OS_OBJETOS, perguntaDoObjeto, corDaEstrela
 } from "./explorador/catalogo.js";
 import * as progresso from "./explorador/progresso.js";
+import { gerarPdfDoDiario, nomeDoArquivo } from "./diario-pdf.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -200,15 +201,38 @@ document.addEventListener("click", (evento) => {
 
 // ---------- Exportar e recomeçar ----------
 
-$("botao-exportar").addEventListener("click", () => {
-  const blob = new Blob([progresso.exportarJson()], { type: "application/json" });
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = `diario-de-bordo-${new Date().toISOString().slice(0, 10)}.json`;
-  document.body.append(link);
-  link.click();
-  link.remove();
-  setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+// O diário vira um PDF de verdade, montado aqui mesmo no navegador.
+const CHAVE_NOME = "exploradorDoUniverso:nomeNoPdf";
+
+$("botao-pdf").addEventListener("click", () => {
+  try { $("nome-pdf").value = localStorage.getItem(CHAVE_NOME) || ""; } catch { /* sem armazenamento */ }
+  $("pdf-estado").textContent = "";
+  $("dialogo-pdf").showModal();
+});
+
+$("confirmar-pdf").addEventListener("click", async () => {
+  const botao = $("confirmar-pdf");
+  const nome = $("nome-pdf").value.trim().replace(/\s+/g, " ").slice(0, 40);
+  try { localStorage.setItem(CHAVE_NOME, nome); } catch { /* sem armazenamento */ }
+  botao.disabled = true;
+  $("pdf-estado").textContent = "Montando o PDF…";
+  try {
+    const pdf = await gerarPdfDoDiario({ grupos: GRUPOS, distanciaDoObjeto, nome });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(pdf);
+    link.download = nomeDoArquivo(nome);
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(link.href), 60_000);
+    $("pdf-estado").textContent = "Pronto! O PDF foi baixado.";
+    setTimeout(() => $("dialogo-pdf").close(), 1200);
+  } catch (erro) {
+    console.error(erro);
+    $("pdf-estado").textContent = "Não deu para montar o PDF neste navegador. Tente de novo ou use outro navegador.";
+  } finally {
+    botao.disabled = false;
+  }
 });
 
 $("botao-zerar").addEventListener("click", () => {

@@ -34,7 +34,10 @@
         <h1>📔 Diário de bordo</h1>
         <p class="subtitulo" id="resumo" aria-live="polite"></p>
       </div>
-      <a class="botao botao-principal" href="explorador.html">🚀 Continuar explorando</a>
+      <div class="diario-botoes">
+        <button type="button" class="botao" id="botao-pdf" aria-haspopup="dialog">📄 Baixar em PDF</button>
+        <a class="botao botao-principal" href="explorador.html">🚀 Continuar explorando</a>
+      </div>
     </div>
 
     <div id="verbetes"></div>
@@ -45,11 +48,27 @@
     </details>
 
     <div class="acoes-dados">
-      <button type="button" class="botao botao-pequeno" id="botao-exportar">⬇️ Baixar meu diário</button>
       <button type="button" class="botao botao-pequeno botao-perigo" id="botao-zerar">Recomeçar do zero</button>
       <p>O progresso fica só neste navegador.</p>
     </div>
   </main>
+
+  <dialog class="dialogo-quiz dialogo-pdf" id="dialogo-pdf" aria-labelledby="pdf-titulo">
+    <form method="dialog">
+      <p class="quiz-selo">📄 Diário em PDF</p>
+      <h2 id="pdf-titulo">Baixar o diário</h2>
+      <p>O PDF traz os astros que você já descobriu, com as fichas, os desafios e as missões. Dá para abrir no celular, guardar ou imprimir.</p>
+      <label class="campo-nome">
+        <span>Seu nome na capa <small>(opcional)</small></span>
+        <input type="text" id="nome-pdf" maxlength="40" autocomplete="off" spellcheck="false">
+      </label>
+      <p class="pdf-estado" id="pdf-estado" role="status"></p>
+      <div class="acoes-dialogo">
+        <button type="submit" class="botao botao-pequeno" value="cancelar">Cancelar</button>
+        <button type="button" class="botao botao-pequeno botao-principal" id="confirmar-pdf">📄 Baixar PDF</button>
+      </div>
+    </form>
+  </dialog>
 
   <dialog class="dialogo-quiz" id="dialogo-quiz" aria-labelledby="quiz-pergunta">
     <form method="dialog">
