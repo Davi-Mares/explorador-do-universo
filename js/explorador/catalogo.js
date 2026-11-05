@@ -734,15 +734,28 @@ export const CORES_ESPECTRAIS = {
 export const GALAXIA = {
   distanciaSolCentroKly: 26.67,     // 8,178 kpc (GRAVITY, 2019)
   raioDiscoKly: 50,                  // disco com ~100 mil anos-luz de diâmetro
-  inclinacaoEspiralGraus: 12,        // ângulo dos braços espirais
-  // Raio de cada braço no azimute do Sol (de dentro para fora), mil anos-luz.
+  /**
+   * Braços espirais medidos pelas paralaxes de masers em regiões de formação
+   * de estrelas (Reid et al., 2019, ApJ 885, 131, Tabela 2):
+   *   ln(R / R_kink) = −(β − β_kink) · tan ψ
+   * β = azimute visto do centro da galáxia (0° = direção do Sol, crescendo no
+   * sentido da rotação); ψ = inclinação do braço antes/depois da "dobra"
+   * (kink). "desenho" é o trecho desenhado: onde não há medidas (o outro lado
+   * da galáxia), o braço continua com a mesma inclinação.
+   */
   bracos: [
-    { nome: "Braço Escudo–Centauro", raioNoSol: 16.1 },
-    { nome: "Braço Sagitário–Carina", raioNoSol: 22.5 },
-    { nome: "Braço de Perseu", raioNoSol: 31.4 },
-    { nome: "Braço Externo", raioNoSol: 43.9 }
+    { nome: "Braço de 3 kpc", betaKink: 15, rKinkKpc: 3.52, psiAntes: -4.2, psiDepois: -4.2, larguraKpc: 0.18, desenho: [-25, 60], forca: 0.35 },
+    { nome: "Braço de Norma", betaKink: 18, rKinkKpc: 4.46, psiAntes: -1.0, psiDepois: 19.5, larguraKpc: 0.14, desenho: [-45, 70], forca: 0.7 },
+    { nome: "Braço Escudo–Centauro", betaKink: 23, rKinkKpc: 4.91, psiAntes: 14.1, psiDepois: 12.1, larguraKpc: 0.23, desenho: [-195, 108], forca: 1 },
+    { nome: "Braço Sagitário–Carina", betaKink: 24, rKinkKpc: 6.04, psiAntes: 17.1, psiDepois: 1.0, larguraKpc: 0.27, desenho: [-118, 96], forca: 0.9 },
+    { nome: "Braço Local (de Órion)", betaKink: 9, rKinkKpc: 8.26, psiAntes: 11.4, psiDepois: 11.4, larguraKpc: 0.31, desenho: [-28, 58], forca: 0.6 },
+    { nome: "Braço de Perseu", betaKink: 40, rKinkKpc: 8.87, psiAntes: 10.3, psiDepois: 8.7, larguraKpc: 0.35, desenho: [-115, 235], forca: 1 },
+    { nome: "Braço Externo", betaKink: 18, rKinkKpc: 12.24, psiAntes: 3.0, psiDepois: 9.4, larguraKpc: 0.65, desenho: [-60, 120], forca: 0.6 }
   ],
-  barra: { meioComprimentoKly: 14, anguloGraus: 27 }
+  /** Barra longa: meio comprimento de 5,0 kpc, a 28° da linha Sol–centro (Wegg, Gerhard e Portail, 2015). */
+  barra: { meioComprimentoKly: 16.3, anguloGraus: 28 },
+  /** Disco fino: comprimento de escala de 2,6 kpc e altura de 300 pc (Bland-Hawthorn e Gerhard, 2016). */
+  disco: { escalaKly: 8.5, alturaKly: 0.98 }
 };
 
 export const OBJETOS_GALAXIA = [

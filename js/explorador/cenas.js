@@ -15,15 +15,18 @@ import * as THREE from "three";
 import * as astro from "./astronomia.js";
 import {
   SOL, PLANETAS, LUA, VOYAGER, PLANETAS_ANOES, CINTURAO, ESTRELAS, SOL_MAGNITUDE_ABSOLUTA,
-  DIRECAO_CENTRO_GALAXIA, GALAXIA, OBJETOS_GALAXIA, corDaEstrela
+  GALAXIA, OBJETOS_GALAXIA, corDaEstrela
 } from "./catalogo.js";
 import { criarAstro, orientarPelaIau, texturaDeBrilho } from "./astros3d.js";
 import {
-  aleatorioComSemente, gaussiana, corRgb, materialDePontos, pontos, criarViaLactea, criarGalaxiaEspiral,
+  corRgb, materialDePontos, pontos, criarViaLactea, criarGalaxiaEspiral,
   criarGalaxiaIrregular, criarNebulosaDeOrion, criarNebulosaDaAguia, criarNebulosaDeCarina,
   criarNebulosaDoCaranguejo, criarPleiades, criarAglomeradoGlobular, criarNucleoGalactico
 } from "./galaxias3d.js";
 import { criarCinturao } from "./cinturao3d.js";
+import {
+  criarFaixaDaViaLactea, criarEstrelasDoCatalogo, matrizCenaEclipticaParaGalactica, matrizCenaGalacticaParaGalactica
+} from "./ceu3d.js";
 
 export { materialDePontos };
 
@@ -40,52 +43,6 @@ const limitar = (v, min, max) => Math.min(max, Math.max(min, v));
 export function aparenciaPorMagnitude(m) {
   const x = 6.5 - m; // > 0: visível a olho nu
   return [limitar(1.4 + x * 1.15, 1.2, 40), limitar(0.22 + x * 0.13, 0.07, 1.6)];
-}
-
-// ---------- Céu de fundo com a faixa da Via Láctea ----------
-
-/**
- * Estrelas de fundo ilustrativas, numa esfera de raio fixo. Metade delas se
- * concentra no plano da galáxia, formando a faixa da Via Láctea no lugar
- * certo do céu (calculado a partir do polo e do centro galácticos).
- */
-function criarCeuDeFundo(raio, quantidade, semente) {
-  const aleatorio = aleatorioComSemente(semente);
-  const eq = (ar, dec) => astro.equatorialParaEcliptica(ar, dec, 1);
-  const centro = vetor(eq(astro.arParaGraus(DIRECAO_CENTRO_GALAXIA.ar), astro.decParaGraus(DIRECAO_CENTRO_GALAXIA.dec)));
-  const poloNorte = vetor(eq(192.85948, 27.12825));
-  const eixoX = centro.clone().sub(poloNorte.clone().multiplyScalar(centro.dot(poloNorte))).normalize();
-  const eixoY = new THREE.Vector3().crossVectors(poloNorte, eixoX);
-
-  const cores = ["#9bb0ff", "#cad7ff", "#f8f7ff", "#fff4ea", "#ffd2a1", "#ffcc6f"].map(corRgb);
-  const posicoes = [], rgb = [], tamanhos = [], brilhos = [];
-  const direcao = new THREE.Vector3();
-
-  for (let i = 0; i < quantidade; i++) {
-    const naFaixa = i % 2 === 0;
-    let magnitude;
-    if (naFaixa) {
-      // Longitude galáctica com mais estrelas perto do centro; latitude estreita.
-      const l = (aleatorio() < 0.45 ? gaussiana(aleatorio) * 0.6 : (aleatorio() * 2 - 1) * Math.PI);
-      const b = gaussiana(aleatorio) * (0.07 + 0.05 * aleatorio());
-      direcao.copy(eixoX).multiplyScalar(Math.cos(b) * Math.cos(l))
-        .addScaledVector(eixoY, Math.cos(b) * Math.sin(l))
-        .addScaledVector(poloNorte, Math.sin(b));
-      magnitude = 6.3 + aleatorio() * 1.6;
-    } else {
-      const z = aleatorio() * 2 - 1, fi = aleatorio() * Math.PI * 2, r = Math.sqrt(1 - z * z);
-      direcao.set(r * Math.cos(fi), z, r * Math.sin(fi));
-      magnitude = 7 - 3.4 * Math.pow(aleatorio(), 2.5);
-    }
-    direcao.normalize().multiplyScalar(raio);
-    posicoes.push(direcao.x, direcao.y, direcao.z);
-    rgb.push(...cores[Math.floor(aleatorio() * cores.length)]);
-    const [tamanho, brilho] = aparenciaPorMagnitude(magnitude);
-    tamanhos.push(tamanho);
-    brilhos.push(brilho * (naFaixa ? 0.75 : 1));
-  }
-  const material = materialDePontos();
-  return { objeto: pontos(posicoes, rgb, tamanhos, brilhos, material), material };
 }
 
 function brilhoSprite(cor, escala, { atenuar = true, opacidade = 1 } = {}) {
@@ -194,24 +151,13 @@ export function criarNivelSolar(dataInicial) {
   const voyager = criarCorpo(VOYAGER, { raioReal: 0, raioExibido: 1e-9, raioDescoberta: 2, distanciaChegada: 0.01 });
   const marcaVoyager = brilhoSprite("#f4f1e8", 0.008, { atenuar: false, opacidade: 0.9 });
   cena.add(marcaVoyager);
-  // --- Estrelas (posições reais em UA, bem longe) e céu de fundo ---
-  {
-    const posicoes = [], rgb = [], tamanhos = [], brilhos = [];
-    for (const estrela of ESTRELAS) {
-      const p = vetor(astro.equatorialParaEcliptica(astro.arParaGraus(estrela.ar), astro.decParaGraus(estrela.dec), estrela.anosLuz * astro.UA_POR_ANO_LUZ));
-      posicoes.push(p.x, p.y, p.z);
-      rgb.push(...corRgb(corDaEstrela(estrela)));
-      const [tamanho, brilho] = aparenciaPorMagnitude(estrela.mag);
-      tamanhos.push(tamanho);
-      brilhos.push(brilho);
-    }
-    const material = materialDePontos();
-    materiaisDePontos.push(material);
-    cena.add(pontos(posicoes, rgb, tamanhos, brilhos, material));
-    const ceu = criarCeuDeFundo(4e7, 9000, 7);
-    materiaisDePontos.push(ceu.material);
-    cena.add(ceu.objeto);
-  }
+  // --- Céu de verdade: a faixa da Via Láctea (foto da ESO) e as 9 mil
+  // estrelas visíveis a olho nu (catálogo Hipparcos), vistas daqui. ---
+  const faixa = criarFaixaDaViaLactea({ raio: 5e8, matriz: matrizCenaEclipticaParaGalactica(), intensidade: 0.85 });
+  cena.add(faixa.objeto);
+  const estrelasDoCeu = criarEstrelasDoCatalogo({ infinito: true, raio: 4e8, paraCena: astro.paraCena });
+  materiaisDePontos.push(estrelasDoCeu.material);
+  cena.add(estrelasDoCeu.objeto);
 
   const corpos = [sol, ...planetas, lua, ...anoes, cinturao, voyager];
 
@@ -272,6 +218,7 @@ export function criarNivelSolar(dataInicial) {
       }
     }
     marcaVoyager.position.copy(voyager.posicao);
+    if (camera) faixa.atualizar(camera);
   }
   atualizar(dataInicial);
 
@@ -357,14 +304,31 @@ export function criarNivelEstrelas() {
   );
   cena.add(nuvem);
 
-  const ceu = criarCeuDeFundo(9000, 9000, 9);
-  materiaisDePontos.push(ceu.material);
-  cena.add(ceu.objeto);
+  // Céu: a faixa da Via Láctea (bem mais longe que tudo aqui) e as estrelas
+  // do catálogo Hipparcos nas posições 3D reais. As 30 estrelas do nível já
+  // estão desenhadas acima, então ficam de fora da nuvem do catálogo.
+  const faixa = criarFaixaDaViaLactea({ raio: 5e4, matriz: matrizCenaEclipticaParaGalactica(), intensidade: 0.85 });
+  cena.add(faixa.objeto);
+  const conhecidas = ESTRELAS.map((e) => ({
+    direcao: vetor(astro.equatorialParaEcliptica(astro.arParaGraus(e.ar), astro.decParaGraus(e.dec), 1)),
+    anosLuz: e.anosLuz
+  }));
+  const LIMITE_MESMA = Math.cos((0.6 * Math.PI) / 180);
+  const catalogo = criarEstrelasDoCatalogo({
+    paraCena: astro.paraCena,
+    pular: (estrela) => {
+      const d = vetor(astro.equatorialParaEcliptica(estrela.ar, estrela.dec, 1));
+      return conhecidas.some((c) => c.direcao.dot(d) > LIMITE_MESMA && (!estrela.anosLuz || Math.abs(estrela.anosLuz / c.anosLuz - 1) < 0.3));
+    }
+  });
+  materiaisDePontos.push(catalogo.material);
+  cena.add(catalogo.objeto);
 
   const atributoTamanho = nuvem.geometry.attributes.tamanho;
   const atributoBrilho = nuvem.geometry.attributes.brilho;
 
   function atualizar(_data, camera) {
+    faixa.atualizar(camera);
     estrelas.forEach((e, i) => {
       const distancia = camera.position.distanceTo(e.posicao);
       e.magnitudeVista = astro.magnitudeAparente(e.magnitudeAbsoluta, distancia);
@@ -468,6 +432,13 @@ export function criarNivelGalaxia() {
 
   const viaLactea = criarViaLactea({ materiais: materiaisDePontos });
   disco.add(viaLactea);
+  // Perto do Sol, o céu é o de casa: a foto da Via Láctea vista daqui (ESO).
+  const faixa = criarFaixaDaViaLactea({ raio: 1e5, matriz: matrizCenaGalacticaParaGalactica(), intensidade: 0.85 });
+  cena.add(faixa.objeto);
+  const baseDaFaixa = matrizCenaGalacticaParaGalactica();
+  const giroDaFaixa = new THREE.Matrix4();
+  const matrizDaFaixa = new THREE.Matrix3();
+  const matrizDoGiro = new THREE.Matrix3();
 
   const corpos = OBJETOS_GALAXIA.map((objeto) => {
     const posicao = objeto.centro
@@ -564,7 +535,17 @@ export function criarNivelGalaxia() {
       // de brilho e as nebulosas aparecem. De fora do disco, sem poeira.
       const { x, y, z } = camera.position;
       const noDisco = (1 - suave(1.5, 7, Math.abs(y))) * (1 - suave(55, 70, Math.hypot(x, z)));
-      viaLactea.material.uniforms.extincao.value = noDisco / 7;
+      viaLactea.userData.definirExtincao(noDisco / 7);
+      viaLactea.userData.definirOpacidadeDoBrilho(1 - noDisco);
+      // Perto do Sol, e dentro do disco na vizinhança dele, o céu é a foto de
+      // verdade da Via Láctea (vista daqui, girando com o disco); de longe e
+      // perto do centro da galáxia, o modelo.
+      giroDaFaixa.makeRotationY(-angulo);
+      faixa.definirMatriz(matrizDaFaixa.multiplyMatrices(baseDaFaixa, matrizDoGiro.setFromMatrix4(giroDaFaixa)));
+      const distanciaDoSol = camera.position.distanceTo(porId("sol-galaxia").posicao);
+      const ceuDeCasa = Math.max(1 - suave(2.5, 8, distanciaDoSol), noDisco * (1 - suave(9, 18, distanciaDoSol)));
+      faixa.atualizar(camera, ceuDeCasa);
+      viaLactea.userData.definirIntensidade(1 - ceuDeCasa);
       // O buraco negro só é desenhado de perto (de longe ele some num pixel).
       buracoNegro.grupo.visible = camera.position.distanceTo(sgr.posicao) < 2.5;
       for (const { corpo, sprite, opacidade, tamanho } of marcas) {

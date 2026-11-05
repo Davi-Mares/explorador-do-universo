@@ -90,7 +90,8 @@ export function materialDePontos({ atenuar = false } = {}) {
       escalaProjecao: { value: 800 },
       escalaTamanho: { value: 1 },
       atenuar: { value: atenuar ? 1 : 0 },
-      extincao: { value: 0 }
+      extincao: { value: 0 },
+      intensidade: { value: 1 }
     },
     vertexShader: /* glsl */ `
       attribute float tamanho;
@@ -101,6 +102,7 @@ export function materialDePontos({ atenuar = false } = {}) {
       uniform float escalaTamanho;
       uniform float atenuar;
       uniform float extincao;   // poeira: a luz de longe se apaga (1 / distância)
+      uniform float intensidade;
       varying vec3 vCor;
       varying float vBrilho;
       ${TRECHO_PROFUNDIDADE_V}
@@ -117,7 +119,7 @@ export function materialDePontos({ atenuar = false } = {}) {
           float dentro = smoothstep(1.5, 6.0, -mv.z / max(tamanho * escalaTamanho, 1e-12));
           fator = min(1.0, px) * pow(min(1.0, 18.0 / limitado), 1.3) * dentro;
         }
-        fator *= exp(-extincao * length(mv.xyz));
+        fator *= exp(-extincao * length(mv.xyz)) * intensidade;
         vBrilho = brilho * fator;
         vCor = cor;
         gl_PointSize = limitado * escalaPixel;
@@ -153,7 +155,9 @@ export function materialDeGas({ escuro = false } = {}) {
       escalaPixel: { value: 1 },
       escalaProjecao: { value: 800 },
       escalaTamanho: { value: 1 },
-      atenuar: { value: 1 }
+      atenuar: { value: 1 },
+      extincao: { value: 0 },
+      intensidade: { value: 1 }
     },
     vertexShader: /* glsl */ `
       attribute float tamanho;
@@ -162,6 +166,8 @@ export function materialDeGas({ escuro = false } = {}) {
       uniform float escalaPixel;
       uniform float escalaProjecao;
       uniform float escalaTamanho;
+      uniform float extincao;
+      uniform float intensidade;
       varying vec3 vCor;
       varying float vBrilho;
       ${TRECHO_PROFUNDIDADE_V}
@@ -170,7 +176,10 @@ export function materialDeGas({ escuro = false } = {}) {
         gl_Position = projectionMatrix * mv;
         float px = tamanho * escalaTamanho * escalaProjecao / max(-mv.z, 1e-9);
         float limitado = clamp(px, 1.0, 200.0);
-        vBrilho = brilho * min(1.0, px * 0.5) * min(1.0, pow(36.0 / limitado, 0.75));
+        // Uma mancha some quando a nave entra nela (não vira um borrão na tela).
+        float dentro = smoothstep(0.6, 2.5, -mv.z / max(tamanho * escalaTamanho, 1e-12));
+        vBrilho = brilho * min(1.0, px * 0.5) * min(1.0, pow(36.0 / limitado, 0.75)) * dentro
+          * exp(-extincao * length(mv.xyz)) * intensidade;
         vCor = cor;
         gl_PointSize = limitado * escalaPixel;
         #include <logdepthbuf_vertex>
@@ -239,64 +248,271 @@ function raioPlummer(aleatorio, escala, maximo) {
 
 // ===========================================================================
 // Via Láctea (unidade: mil anos-luz; "escala" muda o tamanho todo)
-// Os braços são uma representação esquemática (espiral logarítmica com
-// inclinação de 12°, ajustada aos raios medidos dos braços na direção do Sol).
+// Braços espirais medidos (Reid et al., 2019), barra longa (Wegg et al., 2015)
+// e disco exponencial (Bland-Hawthorn e Gerhard, 2016). Três camadas:
+//   1. o brilho do disco visto de frente: uma imagem calculada aqui mesmo,
+//      a partir do mesmo modelo (some quando o disco é visto de lado);
+//   2. estrelas, aglomerados jovens e nebulosas cor-de-rosa (pontos);
+//   3. faixas de poeira escura do lado de dentro dos braços.
 // ===========================================================================
+
+const KLY_POR_KPC = 3.26156;
+const RAD = Math.PI / 180;
+
+/** Raio do braço (mil anos-luz) no azimute β (graus): ln(R/R_kink) = −(β − β_kink)·tan ψ. */
+export function raioDoBraco(braco, beta) {
+  const psi = (beta < braco.betaKink ? braco.psiAntes : braco.psiDepois) * RAD;
+  return braco.rKinkKpc * KLY_POR_KPC * Math.exp(-(beta - braco.betaKink) * RAD * Math.tan(psi));
+}
+
+/** Largura (1σ) do braço: cresce 42 pc a cada kpc para fora (Reid et al., 2014). */
+function larguraDoBraco(braco, raio) {
+  return Math.max(0.3, (braco.larguraKpc + 0.042 * (raio / KLY_POR_KPC - braco.rKinkKpc)) * KLY_POR_KPC);
+}
+
+/** Do azimute β (0° = direção do Sol, no sentido da rotação) para x, y galactocêntricos. */
+function noPlano(raio, beta) {
+  const fi = Math.PI - beta * RAD;
+  return [raio * Math.cos(fi), raio * Math.sin(fi)];
+}
+
+/** Suaviza as pontas do trecho desenhado de cada braço (15°). */
+function pontas(braco, beta) {
+  const [a, b] = braco.desenho;
+  return degrau(a, a + 15, beta) * (1 - degrau(b - 15, b, beta));
+}
+
+/**
+ * Imagem do disco visto de frente (RGB), calculada pelo modelo: disco velho
+ * amarelado, barra e bojo dourados, braços azulados (estrelas jovens) e a
+ * poeira escurecendo o lado de dentro dos braços.
+ */
+function imagemDoDisco(lado, extensao) {
+  const { bracos, barra, disco } = GALAXIA;
+  const ruido = criarRuido(77);
+  const anguloBarra = Math.PI - barra.anguloGraus * RAD; // a ponta mais próxima do Sol, no 1º quadrante
+  const cb = Math.cos(anguloBarra), sb = Math.sin(anguloBarra);
+  const dados = new Uint8Array(lado * lado * 4);
+  const passo = (2 * extensao) / lado;
+  const tom = (v) => Math.round(255 * (1 - Math.exp(-v * 1.2)));
+  for (let j = 0; j < lado; j++) {
+    const y = -extensao + (j + 0.5) * passo;
+    for (let i = 0; i < lado; i++) {
+      const x = -extensao + (i + 0.5) * passo;
+      const r = Math.hypot(x, y);
+      let beta0 = 180 - Math.atan2(y, x) / RAD;          // φ = π − β
+      beta0 = ((beta0 + 180) % 360 + 360) % 360 - 180;
+      let somaBracos = 0, somaPoeira = 0;
+      for (const braco of bracos) {
+        for (let volta = -1; volta <= 1; volta++) {
+          const beta = beta0 + 360 * volta;
+          if (beta < braco.desenho[0] || beta > braco.desenho[1]) continue;
+          const rb = raioDoBraco(braco, beta);
+          const w = larguraDoBraco(braco, rb);
+          const peso = pontas(braco, beta) * braco.forca;
+          const dr = r - rb;
+          somaBracos += peso * Math.exp(-(dr * dr) / (2 * w * w));
+          const dp = r - (rb - 0.95 * w);
+          somaPoeira += peso * Math.exp(-(dp * dp) / (2 * 0.2 * w * w));
+        }
+      }
+      const borda = r < 50 ? 1 : Math.exp(-(r - 50) / 3);
+      const velho = Math.exp(-r / disco.escalaKly) * borda;
+      const xb = x * cb + y * sb, yb = -x * sb + y * cb;
+      const naBarra = Math.exp(-Math.pow(Math.abs(xb) / 13.8, 3) - (yb / 2.4) ** 2);
+      const bojo = Math.exp(-((xb / 3.4) ** 2 + (yb / 2.2) ** 2));
+      const textura = 0.2 + 1.25 * degrau(0.3, 0.8, ruido(x * 0.22 + 3, y * 0.22, 0.5, 4));
+      const jovens = somaBracos * textura * borda;
+      const poeira = 1 - 0.55 * Math.min(1, somaPoeira * (0.6 + 0.6 * textura));
+      // Luz das estrelas velhas (entre os braços também), da barra e do bojo,
+      // mais a das estrelas jovens dos braços.
+      const vr = velho * 1.05 + naBarra * 0.85 + bojo * 2.1 + jovens * 0.4;
+      const vg = velho * 0.9 + naBarra * 0.7 + bojo * 1.62 + jovens * 0.5;
+      const vb = velho * 0.72 + naBarra * 0.5 + bojo * 1.05 + jovens * 0.72;
+      const k = (j * lado + i) * 4;
+      dados[k] = tom(vr * poeira);
+      dados[k + 1] = tom(vg * poeira);
+      dados[k + 2] = tom(vb * poeira);
+      dados[k + 3] = 255;
+    }
+  }
+  return dados;
+}
+
+/** Plano com a imagem do disco; some quando visto de lado ou de dentro do disco. */
+function brilhoDoDisco(escala) {
+  const lado = 640, extensao = 58;
+  const textura = new THREE.DataTexture(imagemDoDisco(lado, extensao), lado, lado, THREE.RGBAFormat);
+  textura.magFilter = THREE.LinearFilter;
+  textura.minFilter = THREE.LinearMipmapLinearFilter;
+  textura.generateMipmaps = true;
+  textura.needsUpdate = true;
+  const material = new THREE.ShaderMaterial({
+    uniforms: { mapa: { value: textura }, opacidade: { value: 1 } },
+    vertexShader: /* glsl */ `
+      varying vec2 vUv;
+      varying vec3 vMundo;
+      #include <common>
+      #include <logdepthbuf_pars_vertex>
+      void main() {
+        vUv = uv;
+        vec4 mundo = modelMatrix * vec4(position, 1.0);
+        vMundo = mundo.xyz;
+        gl_Position = projectionMatrix * viewMatrix * mundo;
+        #include <logdepthbuf_vertex>
+      }`,
+    fragmentShader: /* glsl */ `
+      uniform sampler2D mapa;
+      uniform float opacidade;
+      varying vec2 vUv;
+      varying vec3 vMundo;
+      #include <common>
+      #include <logdepthbuf_pars_fragment>
+      void main() {
+        #include <logdepthbuf_fragment>
+        vec3 olhar = normalize(vMundo - cameraPosition);
+        // De lado (raso) ou com a câmera dentro do disco, o plano some aos poucos.
+        float raso = smoothstep(0.06, 0.32, abs(olhar.y));
+        gl_FragColor = vec4(texture2D(mapa, vUv).rgb * raso * opacidade, 1.0);
+      }`,
+    transparent: true,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+    // Soma a luz sem mexer na transparência da tela (o Comparador tem fundo próprio).
+    blending: THREE.CustomBlending,
+    blendSrc: THREE.OneFactor,
+    blendDst: THREE.OneFactor,
+    blendSrcAlpha: THREE.ZeroFactor,
+    blendDstAlpha: THREE.OneFactor
+  });
+  const plano = new THREE.Mesh(new THREE.PlaneGeometry(2 * extensao * escala, 2 * extensao * escala), material);
+  // Plano XY local → disco da cena (XZ): x galactocêntrico = x; y galactocêntrico = −z da cena.
+  plano.rotation.x = -Math.PI / 2;
+  plano.renderOrder = -10;
+  plano.frustumCulled = false;
+  return plano;
+}
 
 export function criarViaLactea({ escala = 1, materiais } = {}) {
   const aleatorio = aleatorioComSemente(2026);
-  const { distanciaSolCentroKly: r0, bracos, barra, inclinacaoEspiralGraus } = GALAXIA;
-  const k = Math.tan((inclinacaoEspiralGraus * Math.PI) / 180);
-  const lote = new Lote();
-  const braco = corRgb("#cfe0ff"), quente = corRgb("#ffd7a0"), rosa = corRgb("#ff8fb8"), disco = corRgb("#dfe6ff");
-  const adicionar = (x, y, z, cor, tamanho, brilho) => {
+  const ruido = criarRuido(2027);
+  const { bracos, barra, disco } = GALAXIA;
+  const estrelas = new Lote(), gas = new Lote(), poeira = new Lote();
+  const azul = corRgb("#cfdcff"), branca = corRgb("#f2f0ff"), rosa = corRgb("#ff7aa6"), dourada = corRgb("#ffd9a3");
+  const velha = corRgb("#ffe6c7"), escura = corRgb("#140b06");
+  const adicionar = (lote, x, y, z, cor, tamanho, brilho) => {
     const p = astro.paraCena({ x, y, z });
     lote.add(p.x * escala, p.y * escala, p.z * escala, cor, tamanho * escala, brilho);
   };
 
-  // Braços espirais: r = r_sol · e^{k(θ − π)} (o Sol está no azimute π).
-  for (const { raioNoSol } of bracos) {
-    const thetaMin = Math.PI + Math.log(12 / raioNoSol) / k;
-    const thetaMax = Math.PI + Math.log(52 / raioNoSol) / k;
-    for (let i = 0; i < 11000; i++) {
-      const theta = thetaMin + aleatorio() * (thetaMax - thetaMin);
-      const r = raioNoSol * Math.exp(k * (theta - Math.PI));
-      const largura = 0.9 + r * 0.035;
-      const rr = r + gaussiana(aleatorio) * largura;
-      const t = theta + gaussiana(aleatorio) * 0.02;
-      const z = gaussiana(aleatorio) * 0.25;
-      const regiaoHii = aleatorio() < 0.035;
-      adicionar(rr * Math.cos(t), rr * Math.sin(t), z, regiaoHii ? rosa : braco,
-        regiaoHii ? 0.5 : 0.32 + aleatorio() * 0.3, (regiaoHii ? 0.5 : 0.22) * (1.15 - r / 60));
+  // Braços: metade das estrelas jovens fica em "complexos" (aglomerados e
+  // associações de estrelas recém-nascidas, com nebulosas cor-de-rosa no
+  // meio e poeira do lado de dentro); a outra metade, espalhada pelo braço.
+  bracos.forEach((braco, indice) => {
+    const [inicio, fim] = braco.desenho;
+    const fator = braco.forca * (fim - inicio) / 200;
+    const sortearNoBraco = () => {
+      for (;;) {
+        const beta = inicio + aleatorio() * (fim - inicio);
+        const rb = raioDoBraco(braco, beta);
+        if (rb < 7 || rb > 56) continue;
+        const peso = pontas(braco, beta) * Math.min(1, rb / 30 + 0.3);
+        if (aleatorio() < peso) return { beta, rb, w: larguraDoBraco(braco, rb) };
+      }
+    };
+    // Complexos de formação de estrelas.
+    const complexos = Math.round(70 * fator);
+    for (let c = 0; c < complexos; c++) {
+      const { beta, rb, w } = sortearNoBraco();
+      const [cx, cy] = noPlano(rb + gaussiana(aleatorio) * w * 0.5, beta);
+      const raioComplexo = 0.35 + aleatorio() * 0.75;
+      const quantidade = 30 + Math.floor(aleatorio() * 90);
+      for (let i = 0; i < quantidade; i++) {
+        const [dx, dy, dz] = direcao(aleatorio);
+        const r = Math.abs(gaussiana(aleatorio)) * raioComplexo;
+        adicionar(estrelas, cx + dx * r, cy + dy * r, dz * r * 0.35, aleatorio() < 0.7 ? azul : branca, 0.2 + aleatorio() * 0.22, 0.1 + 0.1 * aleatorio());
+      }
+      for (let i = 0; i < 3 + aleatorio() * 6; i++) {
+        adicionar(gas, cx + gaussiana(aleatorio) * raioComplexo * 0.5, cy + gaussiana(aleatorio) * raioComplexo * 0.5,
+          gaussiana(aleatorio) * 0.1, rosa, 0.3 + aleatorio() * 0.4, 0.14 + aleatorio() * 0.12);
+      }
+      const [px, py] = noPlano(rb - 0.95 * w, beta);
+      for (let i = 0; i < 6 + aleatorio() * 10; i++) {
+        adicionar(poeira, px + gaussiana(aleatorio) * raioComplexo, py + gaussiana(aleatorio) * raioComplexo,
+          gaussiana(aleatorio) * 0.1, escura, 0.7 + aleatorio() * 0.9, 0.14);
+      }
     }
-  }
-  // Esporão (braço) de Órion, onde o Sol está.
-  for (let i = 0; i < 2000; i++) {
-    const theta = Math.PI + (aleatorio() * 2 - 1) * 0.24;
-    const r = r0 * Math.exp(0.176 * (theta - Math.PI)) + gaussiana(aleatorio) * 1.0;
-    adicionar(r * Math.cos(theta), r * Math.sin(theta), gaussiana(aleatorio) * 0.2, braco, 0.3, 0.11);
-  }
-  // Disco difuso (estrelas fora dos braços).
-  for (let i = 0; i < 16000; i++) {
-    const r = -10 * Math.log(1 - aleatorio() * 0.99);
-    if (r > 55) continue;
+    // Estrelas espalhadas e a faixa de poeira contínua do lado de dentro.
+    const espalhadas = Math.round(2600 * fator);
+    for (let n = 0; n < espalhadas; n++) {
+      const { beta, rb, w } = sortearNoBraco();
+      const textura = degrau(0.3, 0.75, ruido(beta * 0.11, indice * 7.3, 0.5, 3));
+      if (aleatorio() > 0.35 + 0.65 * textura) continue;
+      const r = rb + gaussiana(aleatorio) * w;
+      const b = beta + (gaussiana(aleatorio) * w * 0.6 / rb) / RAD;
+      const [x, y] = noPlano(r, b);
+      if (aleatorio() < 0.22) {
+        const [xd, yd] = noPlano(rb - 0.95 * w + gaussiana(aleatorio) * w * 0.3, b);
+        adicionar(poeira, xd, yd, gaussiana(aleatorio) * 0.1, escura, 0.7 + aleatorio() * 0.8, 0.12);
+      } else {
+        adicionar(estrelas, x, y, gaussiana(aleatorio) * 0.28, aleatorio() < 0.5 ? azul : branca, 0.22 + aleatorio() * 0.25, 0.07 + 0.07 * aleatorio());
+      }
+    }
+  });
+
+  // Disco velho: exponencial (2,6 kpc), mais grosso (300 pc).
+  for (let i = 0; i < 14000; i++) {
+    const r = -disco.escalaKly * Math.log(1 - aleatorio() * 0.998);
+    if (r > 54) continue;
     const t = aleatorio() * DOIS_PI;
-    adicionar(r * Math.cos(t), r * Math.sin(t), gaussiana(aleatorio) * 0.5, disco, 0.4, 0.07);
+    adicionar(estrelas, r * Math.cos(t), r * Math.sin(t), gaussiana(aleatorio) * disco.alturaKly, velha, 0.35, 0.06);
   }
-  // Barra central (≈ 27° da linha Sol–centro) e bojo.
-  const angulo = Math.PI - (barra.anguloGraus * Math.PI) / 180;
+
+  // Barra longa e bojo em forma de amendoim, de estrelas velhas.
+  const angulo = Math.PI - barra.anguloGraus * RAD;
   const ux = Math.cos(angulo), uy = Math.sin(angulo);
-  for (let i = 0; i < 9000; i++) {
-    const s = gaussiana(aleatorio) * barra.meioComprimentoKly * 0.45;
-    const lateral = gaussiana(aleatorio) * 2.6;
-    adicionar(s * ux - lateral * uy, s * uy + lateral * ux, gaussiana(aleatorio) * 1.1, quente, 0.45, 0.13);
+  for (let i = 0; i < 7000; i++) {
+    const s = (aleatorio() * 2 - 1) * barra.meioComprimentoKly * Math.pow(aleatorio(), 0.35);
+    const lateral = gaussiana(aleatorio) * 1.9;
+    adicionar(estrelas, s * ux - lateral * uy, s * uy + lateral * ux, gaussiana(aleatorio) * 0.7, dourada, 0.42, 0.1);
   }
-  for (let i = 0; i < 9000; i++) {
-    const r = Math.abs(gaussiana(aleatorio)) * 3.2;
+  for (let i = 0; i < 7000; i++) {
+    const r = Math.abs(gaussiana(aleatorio)) * 3.1;
     const [dx, dy, dz] = direcao(aleatorio);
-    adicionar(r * dx, r * dz, r * dy * 0.6, quente, 0.5, 0.16);
+    const ao = r * dx * 1.35, lado = r * dz * 0.85;
+    adicionar(estrelas, ao * ux - lado * uy, ao * uy + lado * ux, r * dy * 0.7, dourada, 0.48, 0.13);
   }
-  return lote.criar(materialDePontos({ atenuar: true }), materiais);
+
+  const grupo = new THREE.Group();
+  const brilho = brilhoDoDisco(escala);
+  grupo.add(brilho);
+  const pontosEstrelas = estrelas.criar(materialDePontos({ atenuar: true }), materiais);
+  const pontosPoeira = poeira.criar(materialDeGas({ escuro: true }), materiais);
+  const pontosGas = gas.criar(materialDeGas(), materiais);
+  pontosPoeira.renderOrder = 1;
+  pontosGas.renderOrder = 2;
+  grupo.add(pontosEstrelas, pontosPoeira, pontosGas);
+  grupo.userData = {
+    estrelas: pontosEstrelas,
+    brilho,
+    /** Dentro do disco a poeira apaga a luz de longe (extinção, por unidade de distância). */
+    definirExtincao(valor) {
+      for (const pontos of [pontosEstrelas, pontosGas, pontosPoeira]) pontos.material.uniforms.extincao.value = valor;
+    },
+    /** 0 a 1: o modelo todo some aos poucos (perto do Sol, o céu de verdade aparece no lugar). */
+    definirIntensidade(valor) {
+      for (const pontos of [pontosEstrelas, pontosGas, pontosPoeira]) {
+        pontos.material.uniforms.intensidade.value = valor;
+        pontos.visible = valor > 0.002;
+      }
+    },
+    /** 0 a 1: o brilho de frente some quando a nave está dentro do disco. */
+    definirOpacidadeDoBrilho(valor) {
+      brilho.material.uniforms.opacidade.value = valor;
+      brilho.visible = valor > 0.002;
+    }
+  };
+  return grupo;
 }
 
 // ===========================================================================
