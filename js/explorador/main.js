@@ -938,9 +938,30 @@ function selecionar(corpo) {
   // Quando o astro aparece fora de escala (ilustração), o painel avisa.
   $("alvo-nota").textContent = corpo.objeto.notaEscala || "";
   $("alvo-nota").hidden = !corpo.objeto.notaEscala;
+  const ficha = fichaRapida(corpo.objeto);
+  $("alvo-ficha").hidden = !ficha.length;
+  $("alvo-ficha-lista").innerHTML = ficha.map(([campo, valor]) => `<dt>${escapar(campo)}</dt><dd>${escapar(valor)}</dd>`).join("");
   atualizarMarcadoresDescobertos();
   atualizarPainelAlvo();
   atualizarDestinos();
+}
+
+/** Até cinco dados da ficha técnica (ou, nas estrelas, os dados de catálogo). */
+const CAMPOS_RAPIDOS = ["Diâmetro", "Tamanho", "Gravidade", "Rotação", "Ano", "Volta", "Temperatura", "Luas"];
+const numeroBr = (valor, casas = 0) => valor.toLocaleString("pt-BR", { maximumFractionDigits: casas });
+
+function fichaRapida(objeto) {
+  if (objeto.ficha) {
+    return objeto.ficha.filter(([campo]) => CAMPOS_RAPIDOS.some((c) => campo.startsWith(c))).slice(0, 5);
+  }
+  if (objeto.espectro) {
+    const itens = [["Tipo espectral", objeto.espectro]];
+    if (objeto.raioSolar) itens.push(["Tamanho", `${numeroBr(objeto.raioSolar, objeto.raioSolar < 10 ? 2 : 0)} × o raio do Sol`]);
+    if (objeto.temperaturaK) itens.push(["Temperatura", `${numeroBr(objeto.temperaturaK)} K na superfície`]);
+    if (objeto.anosLuz) itens.push(["Distância do Sol", `${numeroBr(objeto.anosLuz, 2)} anos-luz`]);
+    return itens;
+  }
+  return [];
 }
 
 function fecharAlvo() {

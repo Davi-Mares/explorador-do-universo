@@ -404,6 +404,33 @@
   font-size: 0.82rem;
 }
 
+/* Ficha rápida: fechada por padrão, para o painel continuar pequeno. */
+.alvo-ficha {
+  margin: 2px 0 10px;
+  font-size: 0.84rem;
+}
+
+.alvo-ficha summary {
+  width: fit-content;
+  color: var(--cor-destaque-claro, #9be8ff);
+  cursor: pointer;
+}
+
+.alvo-ficha dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 8px 0 0;
+}
+
+.alvo-ficha dt {
+  color: var(--cor-texto-apagado);
+}
+
+.alvo-ficha dd {
+  margin: 0;
+}
+
 .alvo-nota {
   margin: -4px 0 10px !important;
   color: var(--cor-ouro);
@@ -668,7 +695,7 @@
 @media (pointer: coarse) {
   .controles-toque {
     position: fixed;
-    top: 30%;
+    top: clamp(130px, 24%, 220px);
     right: 14px;
     z-index: 4;
     display: flex;
