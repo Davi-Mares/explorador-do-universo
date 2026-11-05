@@ -6,8 +6,8 @@
 
 import * as astro from "./explorador/astronomia.js";
 import {
-  NIVEIS, SOL, PLANETAS, LUA, PLANETAS_ANOES, CINTURAO, VOYAGER, ESTRELAS, OBJETOS_GALAXIA, MISSOES, PERGUNTAS, GALAXIA,
-  TODOS_OS_OBJETOS, perguntaDoObjeto, corDaEstrela
+  NIVEIS, SOL, PLANETAS, LUA, LUAS, PLANETAS_ANOES, CINTURAO, VOYAGER, ESTRELAS, OBJETOS_GALAXIA, MISSOES, PERGUNTAS, GALAXIA,
+  TODOS_OS_OBJETOS, COMPARAVEIS, perguntaDoObjeto, corDaEstrela
 } from "./explorador/catalogo.js";
 import * as progresso from "./explorador/progresso.js";
 import { gerarPdfDoDiario, nomeDoArquivo } from "./diario-pdf.js";
@@ -29,6 +29,7 @@ function distanciaDoObjeto(objeto) {
     const p = astro.posicaoSondaHeliocentrica(VOYAGER, new Date());
     return { km: Math.hypot(p.x, p.y, p.z) * astro.KM_POR_UA, rotulo: "do Sol, hoje" };
   }
+  if (objeto.pai) return { km: objeto.distanciaMediaKm, rotulo: `de ${objeto.nomePai}` };
   if (objeto.orbita) return { km: objeto.orbita.elementos.a * astro.KM_POR_UA, rotulo: "do Sol" };
   if (objeto.id === "cinturao") {
     return { km: ((CINTURAO.raioInternoUA + CINTURAO.raioExternoUA) / 2) * astro.KM_POR_UA, rotulo: "do Sol (no meio dele)" };
@@ -40,8 +41,18 @@ function distanciaDoObjeto(objeto) {
   return null;
 }
 
+// Sistema Solar: cada lua logo depois do seu planeta.
+const luasDe = (id) => LUAS.filter((l) => l.pai === id);
 const GRUPOS = [
-  { nivel: "solar", objetos: [SOL, ...PLANETAS, LUA, ...PLANETAS_ANOES, CINTURAO, VOYAGER] },
+  {
+    nivel: "solar",
+    objetos: [
+      SOL,
+      ...PLANETAS.flatMap((p) => [p, ...(p.id === "terra" ? [LUA] : []), ...luasDe(p.id)]),
+      ...PLANETAS_ANOES.flatMap((a) => [a, ...luasDe(a.id)]),
+      CINTURAO, VOYAGER
+    ]
+  },
   { nivel: "estrelas", objetos: ESTRELAS },
   { nivel: "galaxia", objetos: OBJETOS_GALAXIA }
 ];
@@ -55,6 +66,14 @@ function imagem(objeto) {
 /** Com quem comparar cada verbete (o par mais interessante para ele). */
 const PARES = {
   terra: ["lua", "a Lua"],
+  ganimedes: ["mercurio", "Mercúrio"],
+  tita: ["mercurio", "Mercúrio"],
+  calisto: ["mercurio", "Mercúrio"],
+  io: ["lua", "a Lua"],
+  europa: ["lua", "a Lua"],
+  tritao: ["lua", "a Lua"],
+  caronte: ["plutao", "Plutão"],
+  encelado: ["lua", "a Lua"],
   plutao: ["lua", "a Lua"],
   ceres: ["lua", "a Lua"],
   "sgr-a": ["ton-618", "TON 618"],
@@ -62,7 +81,10 @@ const PARES = {
 };
 
 /** Link para o comparador: com a Terra (planetas, Lua, Sol), com o Sol (estrelas) ou com um par especial. */
+const NO_COMPARADOR = new Set(COMPARAVEIS.map((o) => o.id));
+
 function linkComparar(objeto) {
+  if (!NO_COMPARADOR.has(objeto.id)) return "";
   if (PARES[objeto.id]) {
     const [outro, nome] = PARES[objeto.id];
     return `<a href="comparar.html?a=${objeto.id}&b=${outro}">⚖️ Comparar com ${nome}</a>`;

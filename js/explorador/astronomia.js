@@ -238,6 +238,37 @@ export function orientacaoIau(rotacao, data) {
 }
 
 /**
+ * Posição de uma lua em relação ao planeta (km, eclíptica J2000), pelos
+ * elementos médios em relação ao equador do planeta (lua.orbitaDaLua): o
+ * nodo é medido a partir do nó do equador do planeta no equador celeste, como
+ * o meridiano da IAU. Com "acompanhaRotacao" (Caronte), a lua fica sempre
+ * sobre o meridiano zero do planeta, que a IAU define virado para ela.
+ */
+export function posicaoDaLua(lua, rotacaoDoPai, data) {
+  const o = lua.orbitaDaLua;
+  if (o.acompanhaRotacao) {
+    const { meridiano } = orientacaoIau(rotacaoDoPai, data);
+    return { x: meridiano.x * o.aKm, y: meridiano.y * o.aKm, z: meridiano.z * o.aKm };
+  }
+  const dias = dataJuliana(data) - 2_451_545.0;
+  const anomalia = resolverKepler(o.M0 + (360 * dias) / lua.periodoDias, o.e);
+  const xo = o.aKm * (Math.cos(anomalia) - o.e);
+  const yo = o.aKm * Math.sqrt(1 - o.e * o.e) * Math.sin(anomalia);
+  const no = o.no * RAD, w = o.peri * RAD, i = o.i * RAD;
+  const x = (Math.cos(no) * Math.cos(w) - Math.sin(no) * Math.sin(w) * Math.cos(i)) * xo
+    + (-Math.cos(no) * Math.sin(w) - Math.sin(no) * Math.cos(w) * Math.cos(i)) * yo;
+  const y = (Math.sin(no) * Math.cos(w) + Math.cos(no) * Math.sin(w) * Math.cos(i)) * xo
+    + (-Math.sin(no) * Math.sin(w) + Math.cos(no) * Math.cos(w) * Math.cos(i)) * yo;
+  const z = Math.sin(w) * Math.sin(i) * xo + Math.cos(w) * Math.sin(i) * yo;
+  // Base do equador do planeta (coordenadas equatoriais J2000).
+  const a = rotacaoDoPai.poloAr * RAD, d = rotacaoDoPai.poloDec * RAD;
+  const polo = [Math.cos(d) * Math.cos(a), Math.cos(d) * Math.sin(a), Math.sin(d)];
+  const nodo = [-Math.sin(a), Math.cos(a), 0];
+  const lado = vetorial(polo, nodo);
+  return equatorialParaEclipticoVetor([0, 1, 2].map((k) => nodo[k] * x + lado[k] * y + polo[k] * z));
+}
+
+/**
  * Inclinação do eixo em relação à órbita (graus), pelo polo da IAU e pelos
  * elementos orbitais. Para quem gira ao contrário, usa o polo "da mão
  * direita" (oposto ao da IAU), como nas tabelas da NASA.

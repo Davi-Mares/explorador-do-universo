@@ -535,6 +535,8 @@ function corpoOndeEstou() {
   return melhor;
 }
 
+const AVISO_LUA_ESCONDIDA = "No modo ampliado as luas ficam escondidas (estariam dentro dos planetas). Volte para tamanhos reais.";
+
 function cancelarPilotoPorMovimento() {
   if (piloto) {
     piloto = null;
@@ -545,7 +547,7 @@ function cancelarPilotoPorMovimento() {
 }
 
 function iniciarPiloto(corpo) {
-  if (corpo.oculto) return avisar("No modo ampliado a Lua fica escondida (estaria dentro da Terra). Volte para tamanhos reais.");
+  if (corpo.oculto) return avisar(AVISO_LUA_ESCONDIDA);
   const origem = corpoOndeEstou();
   piloto = {
     corpo,
@@ -591,7 +593,7 @@ function passoDoPiloto(dt, v) {
 }
 
 function saltar(corpo) {
-  if (corpo.oculto) return avisar("No modo ampliado a Lua fica escondida (estaria dentro da Terra). Volte para tamanhos reais.");
+  if (corpo.oculto) return avisar(AVISO_LUA_ESCONDIDA);
   const vista = nivel.pontoDeVista(corpo) || camera.position.clone().sub(corpo.posicao).normalize();
   if (!Number.isFinite(vista.x) || vista.lengthSq() < 1e-12) vista.set(0, 0.3, 1).normalize();
   camera.position.copy(corpo.posicao).addScaledVector(vista, corpo.distanciaChegada * 1.25);
@@ -873,7 +875,7 @@ function montarDestinos() {
     const item = document.createElement("li");
     const botao = document.createElement("button");
     botao.type = "button";
-    botao.className = "destino";
+    botao.className = corpo.pai ? "destino destino-lua" : "destino";
     botao.style.setProperty("--cor", corpo.cor);
     botao.dataset.id = corpo.id;
     botao.innerHTML = `
@@ -900,7 +902,7 @@ function atualizarDestinos() {
     botao.querySelector(".destino-marca").textContent = descoberto ? "✓" : "";
     botao.querySelector(".destino-distancia").textContent = corpo.oculto
       ? "escondida no modo ampliado"
-      : astro.formatarDistancia(km(Math.max(0, camera.position.distanceTo(corpo.posicao) - corpo.raioExibido)));
+      : distanciaCurta(km(Math.max(0, camera.position.distanceTo(corpo.posicao) - corpo.raioExibido)));
     botao.title = descoberto ? "Já descoberto" : "Ainda não descoberto";
   });
 }
@@ -1037,7 +1039,7 @@ document.querySelectorAll("#controle-tempo [data-tempo]").forEach((botao) => {
 
 const NOTAS_TAMANHO = {
   real: "Tamanhos e distâncias reais: os planetas parecem pontinhos porque são minúsculos perto das distâncias entre eles.",
-  ampliado: "Planetas 500× maiores e Sol 10× maior; as distâncias continuam reais. A Lua some porque ficaria dentro da Terra ampliada!"
+  ampliado: "Planetas 500× maiores e Sol 10× maior; as distâncias continuam reais. As luas somem porque ficariam dentro dos planetas ampliados!"
 };
 
 function mudarTamanho(modo) {

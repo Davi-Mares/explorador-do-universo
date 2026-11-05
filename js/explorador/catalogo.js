@@ -459,6 +459,193 @@ export const PLANETAS_ANOES = [
 ].map((objeto) => ({ ...objeto, nivel: "solar" }));
 
 /**
+ * Luas principais. Tamanho (raio médio) e massa: JPL/NASA (parâmetros físicos
+ * dos satélites); órbitas: elementos médios do JPL (Solar System Dynamics) e
+ * períodos siderais da NASA (NSSDC). aKm = semieixo maior; i, no, peri e M0 em
+ * graus (inclinação em relação ao equador do planeta, nodo ascendente,
+ * argumento do periastro e anomalia média em J2000). Tamanho da órbita e
+ * período são os reais; a posição exata ao longo da órbita é aproximada
+ * (elementos médios não servem para efemérides precisas). Todas giram
+ * sincronizadas: mostram sempre a mesma face para o planeta.
+ */
+export const LUAS = [
+  {
+    id: "fobos", nome: "Fobos", pai: "marte", nomePai: "Marte", tipo: "Lua de Marte", cor: "#8f8172",
+    raioKm: 11.08, gravidade: 0.0057, periodoDias: 0.31891, distanciaMediaKm: 9_375,
+    orbitaDaLua: { aKm: 9_375, e: 0.015, i: 1.1, no: 169.2, peri: 216.3, M0: 189.7 },
+    resumo: "A maior das duas luas de Marte: uma rocha escura e irregular, com uns 22 km, cheia de crateras.",
+    curiosidade: "Está chegando mais perto de Marte, cerca de 1,8 metro a cada século: daqui a uns 50 milhões de anos ela vai cair no planeta ou se desfazer num anel.",
+    fonte: "https://science.nasa.gov/mars/moons/phobos/",
+    saibaMais: "Fobos dá a volta em Marte mais rápido do que Marte gira: visto do chão marciano, ele nasce no oeste e se põe no leste, duas vezes por dia. Fobos e Deimos podem ser asteroides capturados ou restos de uma grande colisão com Marte.",
+    ficha: [
+      ["Tipo", "Lua de Marte"],
+      ["Tamanho", "27 × 22 × 18 km (formato de batata)"],
+      ["Distância de Marte", "9.375 km do centro (6.000 km acima do chão)"],
+      ["Volta em Marte", "7 h 39 min"],
+      ["Gravidade", "0,006 m/s² (0,06% da Terra)"],
+      ["Descoberta", "1877, por Asaph Hall"]
+    ]
+  },
+  {
+    id: "deimos", nome: "Deimos", pai: "marte", nomePai: "Marte", tipo: "Lua de Marte", cor: "#9b8e7f",
+    raioKm: 6.2, gravidade: 0.0025, periodoDias: 1.26244, distanciaMediaKm: 23_457,
+    orbitaDaLua: { aKm: 23_457, e: 0.0, i: 1.8, no: 54.3, peri: 0, M0: 205.0 },
+    resumo: "A menor e mais distante das luas de Marte, com uns 12 km.",
+    curiosidade: "Fobos e Deimos têm os nomes dos filhos do deus grego da guerra: Medo e Pavor.",
+    fonte: "https://science.nasa.gov/mars/moons/deimos/",
+    saibaMais: "Deimos tem a superfície lisa, coberta por uma camada de poeira fina que esconde a maioria das crateras. Do chão de Marte, ela parece uma estrela brilhante.",
+    ficha: [
+      ["Tipo", "Lua de Marte"],
+      ["Tamanho", "15 × 12 × 11 km"],
+      ["Distância de Marte", "23.460 km"],
+      ["Volta em Marte", "30 h 18 min"],
+      ["Gravidade", "0,0025 m/s² (0,03% da Terra)"],
+      ["Descoberta", "1877, por Asaph Hall"]
+    ]
+  },
+  {
+    id: "io", nome: "Io", pai: "jupiter", nomePai: "Júpiter", tipo: "Lua de Júpiter (de Galileu)", cor: "#e3d26e",
+    raioKm: 1_821.49, gravidade: 1.80, periodoDias: 1.769138, distanciaMediaKm: 421_800,
+    orbitaDaLua: { aKm: 421_800, e: 0.004, i: 0.04, no: 0, peri: 49.1, M0: 330.9 },
+    resumo: "O lugar com mais vulcões ativos de todo o Sistema Solar.",
+    curiosidade: "Tem cerca de 400 vulcões ativos; alguns jogam lava a dezenas de quilômetros de altura.",
+    fonte: "https://science.nasa.gov/jupiter/moons/io/",
+    saibaMais: "Os vulcões de Io são aquecidos pelo 'aperta e solta' da gravidade de Júpiter e das outras luas, que deforma Io o tempo todo. O enxofre dos vulcões deixa a superfície amarela, laranja e vermelha.",
+    ficha: [
+      ["Tipo", "Lua de Júpiter (uma das quatro de Galileu)"],
+      ["Diâmetro", "3.643 km (um pouco maior que a nossa Lua)"],
+      ["Distância de Júpiter", "421.800 km"],
+      ["Volta em Júpiter", "1 dia e 18 h"],
+      ["Gravidade", "1,8 m/s² (18% da Terra)"],
+      ["Descoberta", "1610, por Galileu Galilei"]
+    ]
+  },
+  {
+    id: "europa", nome: "Europa", pai: "jupiter", nomePai: "Júpiter", tipo: "Lua de Júpiter (de Galileu)", cor: "#d9c9ad",
+    raioKm: 1_560.8, gravidade: 1.31, periodoDias: 3.551181, distanciaMediaKm: 671_100,
+    orbitaDaLua: { aKm: 671_100, e: 0.009, i: 0.47, no: 184.0, peri: 45.0, M0: 345.4 },
+    resumo: "Coberta por uma casca de gelo, com um oceano de água salgada embaixo.",
+    curiosidade: "O oceano de Europa pode ter o dobro da água de todos os oceanos da Terra — um dos melhores lugares para procurar vida fora daqui.",
+    fonte: "https://science.nasa.gov/jupiter/moons/europa/",
+    saibaMais: "As listras avermelhadas são rachaduras no gelo. A sonda Europa Clipper, da NASA, lançada em 2024, vai passar dezenas de vezes por Europa para estudar o gelo e o oceano.",
+    ficha: [
+      ["Tipo", "Lua de Júpiter (uma das quatro de Galileu)"],
+      ["Diâmetro", "3.122 km (um pouco menor que a nossa Lua)"],
+      ["Distância de Júpiter", "671.100 km"],
+      ["Volta em Júpiter", "3 dias e 13 h"],
+      ["Gravidade", "1,3 m/s² (13% da Terra)"],
+      ["Descoberta", "1610, por Galileu Galilei"]
+    ]
+  },
+  {
+    id: "ganimedes", nome: "Ganimedes", pai: "jupiter", nomePai: "Júpiter", tipo: "Lua de Júpiter (de Galileu)", cor: "#b7ada0",
+    raioKm: 2_631.2, gravidade: 1.43, periodoDias: 7.154553, distanciaMediaKm: 1_070_400,
+    orbitaDaLua: { aKm: 1_070_400, e: 0.001, i: 0.2, no: 58.5, peri: 198.3, M0: 324.8 },
+    resumo: "A maior lua do Sistema Solar: é maior até que o planeta Mercúrio.",
+    curiosidade: "É a única lua conhecida com campo magnético próprio, que até faz auroras nela.",
+    fonte: "https://science.nasa.gov/jupiter/moons/ganymede/",
+    saibaMais: "Ganimedes tem regiões escuras e antigas e faixas mais claras cheias de sulcos. Por baixo do gelo deve haver um oceano. A sonda JUICE, da Agência Espacial Europeia, vai entrar em órbita dela na década de 2030.",
+    ficha: [
+      ["Tipo", "Lua de Júpiter (uma das quatro de Galileu)"],
+      ["Diâmetro", "5.262 km (maior que Mercúrio)"],
+      ["Distância de Júpiter", "1,07 milhão de km"],
+      ["Volta em Júpiter", "7 dias e 4 h"],
+      ["Gravidade", "1,4 m/s² (15% da Terra)"],
+      ["Descoberta", "1610, por Galileu Galilei"]
+    ]
+  },
+  {
+    id: "calisto", nome: "Calisto", pai: "jupiter", nomePai: "Júpiter", tipo: "Lua de Júpiter (de Galileu)", cor: "#6a5e50",
+    raioKm: 2_410.3, gravidade: 1.24, periodoDias: 16.689017, distanciaMediaKm: 1_882_700,
+    orbitaDaLua: { aKm: 1_882_700, e: 0.007, i: 0.3, no: 309.1, peri: 43.8, M0: 87.4 },
+    resumo: "Uma das superfícies com mais crateras de todo o Sistema Solar.",
+    curiosidade: "Sua superfície tem cerca de 4 bilhões de anos e quase não mudou desde então.",
+    fonte: "https://science.nasa.gov/jupiter/moons/callisto/",
+    saibaMais: "Calisto é escura, coberta de crateras de todos os tamanhos. A maior marca é Valhalla, uma cratera rodeada de anéis que se estendem por quase 4 mil km.",
+    ficha: [
+      ["Tipo", "Lua de Júpiter (uma das quatro de Galileu)"],
+      ["Diâmetro", "4.821 km (quase do tamanho de Mercúrio)"],
+      ["Distância de Júpiter", "1,88 milhão de km"],
+      ["Volta em Júpiter", "16 dias e 17 h"],
+      ["Gravidade", "1,2 m/s² (13% da Terra)"],
+      ["Descoberta", "1610, por Galileu Galilei"]
+    ]
+  },
+  {
+    id: "tita", nome: "Titã", pai: "saturno", nomePai: "Saturno", tipo: "Lua de Saturno", cor: "#d9a05b",
+    raioKm: 2_574.76, gravidade: 1.35, periodoDias: 15.945, distanciaMediaKm: 1_221_870,
+    orbitaDaLua: { aKm: 1_221_870, e: 0.029, i: 0.3, no: 78.6, peri: 78.3, M0: 11.7 },
+    resumo: "A maior lua de Saturno, envolta numa atmosfera alaranjada mais densa que a da Terra.",
+    curiosidade: "Tem rios, lagos e mares — mas de metano e etano líquidos, não de água.",
+    fonte: "https://science.nasa.gov/saturn/moons/titan/",
+    saibaMais: "A névoa de Titã esconde a superfície; a sonda Cassini viu o chão com radar e a sonda Huygens pousou lá em 2005. A pressão do ar na superfície é cerca de 50% maior que a da Terra.",
+    ficha: [
+      ["Tipo", "Lua de Saturno"],
+      ["Diâmetro", "5.150 km (maior que Mercúrio)"],
+      ["Distância de Saturno", "1,22 milhão de km"],
+      ["Volta em Saturno", "15 dias e 23 h"],
+      ["Temperatura", "−179 °C na superfície"],
+      ["Gravidade", "1,35 m/s² (14% da Terra)"],
+      ["Descoberta", "1655, por Christiaan Huygens"]
+    ]
+  },
+  {
+    id: "encelado", nome: "Encélado", pai: "saturno", nomePai: "Saturno", tipo: "Lua de Saturno", cor: "#eef2f4",
+    raioKm: 252.1, gravidade: 0.113, periodoDias: 1.370218, distanciaMediaKm: 238_040,
+    orbitaDaLua: { aKm: 238_040, e: 0.005, i: 0.0, no: 0, peri: 119.5, M0: 57.0 },
+    resumo: "Uma lua pequena e branquinha: reflete quase toda a luz do Sol que chega nela.",
+    curiosidade: "Jatos de água saem de rachaduras perto do polo sul, as 'listras de tigre', e formam um dos anéis de Saturno.",
+    fonte: "https://science.nasa.gov/saturn/moons/enceladus/",
+    saibaMais: "Embaixo do gelo de Encélado há um oceano de água salgada. A sonda Cassini atravessou os jatos e encontrou água, sal e moléculas orgânicas.",
+    ficha: [
+      ["Tipo", "Lua de Saturno"],
+      ["Diâmetro", "504 km"],
+      ["Distância de Saturno", "238.000 km"],
+      ["Volta em Saturno", "1 dia e 9 h"],
+      ["Gravidade", "0,11 m/s² (1% da Terra)"],
+      ["Descoberta", "1789, por William Herschel"]
+    ]
+  },
+  {
+    id: "tritao", nome: "Tritão", pai: "netuno", nomePai: "Netuno", tipo: "Lua de Netuno", cor: "#c9c1b6",
+    raioKm: 1_352.6, gravidade: 0.78, periodoDias: 5.876854, distanciaMediaKm: 354_760,
+    // Órbita retrógrada: inclinação de 157° (gira ao contrário da rotação de Netuno).
+    orbitaDaLua: { aKm: 354_760, e: 0.000016, i: 157.345, no: 0, peri: 0, M0: 0 },
+    resumo: "A maior lua de Netuno e a única grande lua que gira em volta do planeta ao contrário.",
+    curiosidade: "Provavelmente foi capturada do Cinturão de Kuiper. Tem gêiseres de nitrogênio e é um dos lugares mais frios já medidos: −235 °C.",
+    fonte: "https://science.nasa.gov/neptune/moons/triton/",
+    saibaMais: "Tritão foi visto de perto uma vez só, pela Voyager 2, em 1989. Por girar ao contrário, ele está se aproximando de Netuno e um dia deve se despedaçar e virar um anel.",
+    ficha: [
+      ["Tipo", "Lua de Netuno"],
+      ["Diâmetro", "2.705 km"],
+      ["Distância de Netuno", "354.760 km"],
+      ["Volta em Netuno", "5 dias e 21 h (ao contrário)"],
+      ["Temperatura", "−235 °C"],
+      ["Gravidade", "0,78 m/s² (8% da Terra)"],
+      ["Descoberta", "1846, por William Lassell"]
+    ]
+  },
+  {
+    id: "caronte", nome: "Caronte", pai: "plutao", nomePai: "Plutão", tipo: "Lua de Plutão", cor: "#a29c94",
+    raioKm: 606, gravidade: 0.29, periodoDias: 6.3872, distanciaMediaKm: 19_596,
+    // Sempre em cima do mesmo ponto de Plutão (o meridiano zero dele aponta para Caronte).
+    orbitaDaLua: { aKm: 19_596, e: 0, i: 0, no: 0, peri: 0, M0: 0, acompanhaRotacao: true },
+    resumo: "A maior lua de Plutão: tem metade do tamanho dele.",
+    curiosidade: "Plutão e Caronte estão sempre virados um para o outro e giram em volta de um ponto entre os dois, fora de Plutão.",
+    fonte: "https://science.nasa.gov/dwarf-planets/pluto/moons/charon/",
+    saibaMais: "Caronte tem uma grande mancha avermelhada no polo norte e um cinturão de cânions maiores que o Grand Canyon. Ela e Plutão foram fotografados de perto pela New Horizons em 2015.",
+    ficha: [
+      ["Tipo", "Lua de Plutão"],
+      ["Diâmetro", "1.212 km (metade de Plutão)"],
+      ["Distância de Plutão", "19.596 km"],
+      ["Volta em Plutão", "6 dias e 9 h (o mesmo tempo que Plutão leva para girar)"],
+      ["Gravidade", "0,29 m/s² (3% da Terra)"],
+      ["Descoberta", "1978, por James Christy"]
+    ]
+  }
+].map((objeto) => ({ ...objeto, nivel: "solar", categoria: "lua" }));
+
+/**
  * O Cinturão de Asteroides é uma região, não um corpo: no explorador ele é
  * desenhado como milhares de pontos com órbitas de Kepler, e o "destino" é o
  * ponto do cinturão mais perto da nave.
@@ -858,6 +1045,12 @@ export const MISSOES = [
     condicao: { tipo: "descobrir", ids: ["mercurio", "venus", "terra", "marte", "jupiter", "saturno", "urano", "netuno"] }
   },
   {
+    id: "galileu", nome: "As luas de Galileu", nivel: "solar",
+    objetivo: "Descubra Io, Europa, Ganimedes e Calisto, as quatro luas que Galileu viu em 1610.",
+    dica: "Viaje até Júpiter: em órbita, afaste-se com a rodinha ou S para ver as quatro luas em volta dele.",
+    condicao: { tipo: "descobrir", ids: ["io", "europa", "ganimedes", "calisto"] }
+  },
+  {
     id: "voyager", nome: "Até onde já fomos", nivel: "solar",
     objetivo: "Alcance a Voyager 1, o objeto humano mais distante.",
     dica: "Ela está bem além de Netuno, a mais de 170 UA do Sol.",
@@ -976,6 +1169,27 @@ export const PERGUNTAS = [
     opcoes: ["8 minutos", "Cerca de 4 horas", "Cerca de 2 dias"],
     certa: 1,
     explicacao: "Netuno está a 30 UA. Se a luz leva 8 min 20 s por UA, são ≈ 4 horas e 10 minutos."
+  },
+  {
+    id: "q-io", objeto: "io",
+    pergunta: "O que deixa a superfície de Io amarela e alaranjada?",
+    opcoes: ["Ferrugem, como em Marte", "Enxofre dos vulcões", "Gelo sujo de poeira", "A luz de Júpiter"],
+    certa: 1,
+    explicacao: "Io é o lugar com mais vulcões ativos do Sistema Solar, e o enxofre que eles soltam pinta o chão de amarelo, laranja e vermelho."
+  },
+  {
+    id: "q-europa", objeto: "europa",
+    pergunta: "Por que Europa é um dos melhores lugares para procurar vida fora da Terra?",
+    opcoes: ["Tem florestas", "Tem um oceano de água salgada embaixo do gelo", "É a lua mais quente", "Tem ar igual ao da Terra"],
+    certa: 1,
+    explicacao: "Embaixo da casca de gelo há um oceano de água salgada, que pode ter o dobro da água dos oceanos da Terra (NASA)."
+  },
+  {
+    id: "q-tita", objeto: "tita",
+    pergunta: "Do que são feitos os lagos e mares de Titã?",
+    opcoes: ["Água", "Lava", "Metano e etano líquidos", "Areia"],
+    certa: 2,
+    explicacao: "Titã é tão frio (−179 °C) que o metano e o etano, que na Terra são gases, ficam líquidos e formam rios, lagos e mares."
   },
   {
     id: "q-ceres", objeto: "ceres",
@@ -1103,7 +1317,7 @@ export const PERGUNTAS = [
 // ---------------------------------------------------------------------------
 
 /** Todos os objetos que podem ser descobertos, com o nível de cada um. */
-export const TODOS_OS_OBJETOS = [SOL, ...PLANETAS, LUA, ...PLANETAS_ANOES, CINTURAO, VOYAGER, ...ESTRELAS, ...OBJETOS_GALAXIA];
+export const TODOS_OS_OBJETOS = [SOL, ...PLANETAS, LUA, ...LUAS, ...PLANETAS_ANOES, CINTURAO, VOYAGER, ...ESTRELAS, ...OBJETOS_GALAXIA];
 
 const PORID = new Map(TODOS_OS_OBJETOS.map((objeto) => [objeto.id, objeto]));
 
@@ -1170,7 +1384,7 @@ export function raioParaComparar(objeto) {
 
 /** Todos os astros do comparador, numa lista só, em ordem crescente (do menor para o maior). */
 export const COMPARAVEIS = [
-  SOL, ...PLANETAS, LUA, ...PLANETAS_ANOES,
+  SOL, ...PLANETAS, LUA, ...LUAS.filter((l) => l.raioKm > 200), ...PLANETAS_ANOES,
   ...ESTRELAS.filter((e) => e.raioSolar),
   SISTEMA_SOLAR,
   ...GIGANTES,

@@ -190,6 +190,47 @@ for (const p of cat.PLANETAS_ANOES) {
   verdadeiro("Planetas anões", "Plutão é menor que a Lua (o quiz e o comparador dizem isso)", anao("plutao").raioKm < cat.LUA.raioKm);
 }
 
+// ---------- 3b2. Luas: 3ª lei de Kepler com a massa dos planetas ----------
+// Período calculado P = 2π·√(a³ / G(M+m)) contra o período sideral da NASA.
+// GM (km³/s²): planetas, NASA NSSDC; luas, JPL (parâmetros físicos dos satélites).
+{
+  const GM_PLANETA = { marte: 42_828.37, jupiter: 126_686_534, saturno: 37_931_187, netuno: 6_836_529, plutao: 869.6 };
+  const GM_LUA = { fobos: 0.0007087, deimos: 0.0000962, io: 5_959.92, europa: 3_202.71, ganimedes: 9_887.83, calisto: 7_179.28,
+    tita: 8_978.14, encelado: 7.21, tritao: 1_428.5, caronte: 106.1 };
+  for (const lua of cat.LUAS) {
+    const a = lua.orbitaDaLua.aKm;
+    const periodo = (2 * Math.PI * Math.sqrt(a ** 3 / (GM_PLANETA[lua.pai] + GM_LUA[lua.id]))) / 86_400;
+    teste("Luas", `${lua.nome}: período pela 3ª lei de Kepler × NASA (${lua.periodoDias} dias)`, periodo / lua.periodoDias, 1, 0.01);
+    teste("Luas", `${lua.nome}: gravidade na superfície (GM/R²) × catálogo`, (GM_LUA[lua.id] / lua.raioKm ** 2) * 1000 / lua.gravidade, 1, 0.05);
+  }
+  const data = new Date(Date.UTC(2026, 10, 4));
+  for (const lua of cat.LUAS) {
+    const pai = [...cat.PLANETAS, ...cat.PLANETAS_ANOES].find((p) => p.id === lua.pai);
+    const p = astro.posicaoDaLua(lua, pai.rotacao, data);
+    const d = Math.hypot(p.x, p.y, p.z), { aKm, e } = lua.orbitaDaLua;
+    verdadeiro("Luas", `${lua.nome}: distância ao planeta entre o periastro e o apoastro`, d >= aKm * (1 - e) * 0.999 && d <= aKm * (1 + e) * 1.001);
+  }
+  // Caronte fica sempre sobre o meridiano zero de Plutão (que a IAU define virado para ele).
+  const caronte = cat.LUAS.find((l) => l.id === "caronte");
+  const plutao = cat.PLANETAS_ANOES.find((p) => p.id === "plutao");
+  for (const horas of [0, 40, 100]) {
+    const quando = new Date(data.getTime() + horas * 3_600_000);
+    const p = astro.posicaoDaLua(caronte, plutao.rotacao, quando);
+    const { meridiano } = astro.orientacaoIau(plutao.rotacao, quando);
+    const cosseno = (p.x * meridiano.x + p.y * meridiano.y + p.z * meridiano.z) / Math.hypot(p.x, p.y, p.z);
+    teste("Luas", `Caronte sobre o meridiano zero de Plutão (+${horas} h)`, Math.acos(Math.min(1, cosseno)) * 180 / Math.PI, 0, 0.01, "°");
+  }
+  // Tritão gira ao contrário: o momento angular aponta contra o polo de Netuno.
+  const tritao = cat.LUAS.find((l) => l.id === "tritao");
+  const netuno = planeta("netuno");
+  const p1 = astro.posicaoDaLua(tritao, netuno.rotacao, data);
+  const p2 = astro.posicaoDaLua(tritao, netuno.rotacao, new Date(data.getTime() + 3_600_000));
+  const momento = [p1.y * p2.z - p1.z * p2.y, p1.z * p2.x - p1.x * p2.z, p1.x * p2.y - p1.y * p2.x];
+  const { polo } = astro.orientacaoIau(netuno.rotacao, data);
+  verdadeiro("Luas", "Tritão: órbita retrógrada (gira ao contrário da rotação de Netuno)", momento[0] * polo.x + momento[1] * polo.y + momento[2] * polo.z < 0);
+  verdadeiro("Luas", "Ganimedes é maior que Mercúrio (a ficha diz isso)", cat.LUAS.find((l) => l.id === "ganimedes").raioKm > planeta("mercurio").raioKm);
+}
+
 // ---------- 3c. Comparador e texturas ----------
 {
   const estrelas = cat.ESTRELAS.filter((e) => e.raioSolar);

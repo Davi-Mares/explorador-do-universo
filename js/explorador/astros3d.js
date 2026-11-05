@@ -80,7 +80,20 @@ const APARENCIAS = {
   // Ceres: textura ilustrativa (gerada por código), com as manchas claras da cratera Occator.
   ceres: { mapa: "ceres.webp", relevo: 1.2 },
   // Plutão: mapa da New Horizons (NASA/JHUAPL/SwRI); névoa azulada como nas fotos de 2015.
-  plutao: { mapa: "plutao.webp", relevo: 0.6, atmosfera: { cor: "#a9c6ff", espessura: 0.02, altura: 0.004, forca: 0.025 } }
+  plutao: { mapa: "plutao.webp", relevo: 0.6, atmosfera: { cor: "#a9c6ff", espessura: 0.02, altura: 0.004, forca: 0.025 } },
+  // Luas: mapas do Celestia a partir de dados NASA/JPL/USGS (Io, Ganimedes,
+  // Titã, Tritão, Fobos, Deimos); Europa, Calisto, Encélado e Caronte com
+  // mapas ilustrativos (as cores e as marcas principais das fotos).
+  fobos: { mapa: "fobos.webp", relevo: 2 },
+  deimos: { mapa: "deimos.webp", relevo: 2 },
+  io: { mapa: "io.webp", relevo: 0.5 },
+  europa: { mapa: "europa.webp", relevo: 0.3 },
+  ganimedes: { mapa: "ganimedes.webp", relevo: 0.6 },
+  calisto: { mapa: "calisto.webp", relevo: 0.8 },
+  tita: { mapa: "tita.webp", atmosfera: { cor: "#e7a85c", espessura: 0.12, altura: 0.03, forca: 0.3 } },
+  encelado: { mapa: "encelado.webp", relevo: 0.3 },
+  tritao: { mapa: "tritao.webp", relevo: 0.5 },
+  caronte: { mapa: "caronte.webp", relevo: 0.6 }
 };
 
 /** A textura dos anéis vai do raio 1,168 ao 2,346 de Saturno (anel C até depois do anel A). */

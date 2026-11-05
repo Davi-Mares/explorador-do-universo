@@ -136,10 +136,21 @@ function rotacao(o) {
   return texto;
 }
 
+/** Luas (menos a nossa): giram sincronizadas, no mesmo tempo da volta no planeta. */
+function rotacaoOuSincrona(o) {
+  if (o.pai) return `${duracaoEmDias(o.periodoDias)} (sempre a mesma face para ${o.nomePai})`;
+  return rotacao(o);
+}
+
+function duracaoEmDias(dias) {
+  return dias < 2 ? astro.formatarDuracao(dias * 86_400) : `${numero(dias, 1)} dias`;
+}
+
 function translacao(o) {
   if (o.id === "sol") return "≈ 230 milhões de anos (em volta da galáxia)";
   if (o.id === "sistema-solar") return "≈ 230 milhões de anos (o Sistema Solar inteiro gira em volta da galáxia)";
   if (o.id === "lua") return `${numero(o.periodoDias, 1)} dias (em volta da Terra)`;
+  if (o.pai) return `${duracaoEmDias(o.periodoDias)} (em volta de ${o.nomePai})${o.id === "tritao" ? ", ao contrário" : ""}`;
   if (!o.periodoAnos) return "—";
   if (o.periodoAnos < 1.5) return `${numero(o.periodoAnos * 365.25)} dias`;
   return `${numero(o.periodoAnos, o.periodoAnos < 100 ? 1 : 0)} anos`;
@@ -149,6 +160,7 @@ function translacao(o) {
 function distancia(o) {
   if (o.id === "sol") return { km: astro.KM_POR_UA, de: "da Terra" };
   if (o.id === "lua") return { km: o.distanciaMediaKm, de: "da Terra" };
+  if (o.pai) return { km: o.distanciaMediaKm, de: `de ${o.nomePai}`, pai: o.nomePai };
   if (o.orbita) return { km: o.orbita.elementos.a * astro.KM_POR_UA, de: "do Sol" };
   if (o.anosLuz) return { anosLuz: o.anosLuz, de: "do Sol" };
   if (o.id === "sgr-a") return { anosLuz: GALAXIA.distanciaSolCentroKly * 1000, de: "do Sol, no centro da Via Láctea", aprox: true };
@@ -173,7 +185,7 @@ function textoLuz(o) {
   const d = distancia(o);
   if (!d) return "—";
   if (d.anosLuz) return `${d.aprox ? "≈ " : ""}${textoAnosLuz(d.anosLuz).replace("anos-luz", "anos")} até nós`;
-  const quem = o.id === "sol" || o.id === "lua" ? "até a Terra" : "vindo do Sol";
+  const quem = o.id === "sol" || o.id === "lua" ? "até a Terra" : d.pai ? `até ${d.pai}` : "vindo do Sol";
   return `${astro.formatarDuracao(d.km / astro.VELOCIDADE_LUZ_KM_S)} ${quem}`;
 }
 
@@ -196,7 +208,7 @@ const LINHAS = [
   ["Diâmetro", diametro],
   ["Massa", massa],
   ["Gravidade", gravidade],
-  ["Rotação (volta em si)", rotacao],
+  ["Rotação (volta em si)", rotacaoOuSincrona],
   ["Translação (volta em órbita)", translacao],
   ["Distância", textoDistancia],
   ["A luz leva", textoLuz],

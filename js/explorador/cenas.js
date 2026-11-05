@@ -14,7 +14,7 @@
 import * as THREE from "three";
 import * as astro from "./astronomia.js";
 import {
-  SOL, PLANETAS, LUA, VOYAGER, PLANETAS_ANOES, CINTURAO, ESTRELAS, SOL_MAGNITUDE_ABSOLUTA,
+  SOL, PLANETAS, LUA, LUAS, VOYAGER, PLANETAS_ANOES, CINTURAO, ESTRELAS, SOL_MAGNITUDE_ABSOLUTA,
   GALAXIA, OBJETOS_GALAXIA, corDaEstrela
 } from "./catalogo.js";
 import { criarAstro, orientarPelaIau, texturaDeBrilho } from "./astros3d.js";
@@ -201,14 +201,33 @@ export function criarNivelSolar(dataInicial) {
   materiaisDePontos.push(estrelasDoCeu.material);
   cena.add(estrelasDoCeu.objeto);
 
-  const corpos = [sol, ...planetas, lua, ...anoes, cinturao, voyager];
+  // --- Luas principais: órbitas médias do JPL, sempre a mesma face para o planeta ---
+  const luas = LUAS.map((objeto) => {
+    const corpo = montar(criarCorpo(objeto, { raioReal: objeto.raioKm / ua, pai: objeto.pai }), 48);
+    // Longitude 0° em +Z: o lookAt deixa essa face virada para o planeta.
+    corpo.astro.superficie.rotation.y = -Math.PI / 2;
+    return corpo;
+  });
+  const porId = new Map([...planetas, ...anoes].map((corpo) => [corpo.id, corpo]));
+  const caronte = luas.find((l) => l.id === "caronte");
+  const plutao = porId.get("plutao");
+  /** Plutão e Caronte giram em volta do centro de massa (fora de Plutão): massa de Caronte / Plutão = 0,122 (JPL). */
+  const FRACAO_PLUTAO = 0.122 / 1.122;
+  const poloAux = new THREE.Vector3();
+
+  // Ordem dos destinos: cada lua logo depois do seu planeta.
+  const luasDe = (id) => luas.filter((l) => l.pai === id);
+  const corpos = [sol];
+  for (const planeta of planetas) corpos.push(planeta, ...(planeta === terra ? [lua] : []), ...luasDe(planeta.id));
+  for (const anao of anoes) corpos.push(anao, ...luasDe(anao.id));
+  corpos.push(cinturao, voyager);
 
   let modoTamanho = "real";
   function aplicarTamanho(modo) {
     modoTamanho = modo;
     const fatorPlanetas = modo === "ampliado" ? AMPLIACAO.planetas : 1;
     const fatorSol = modo === "ampliado" ? AMPLIACAO.sol : 1;
-    for (const corpo of [sol, ...planetas, lua, ...anoes]) {
+    for (const corpo of [sol, ...planetas, lua, ...luas, ...anoes]) {
       const fator = corpo === sol ? fatorSol : fatorPlanetas;
       corpo.raioExibido = corpo.raioReal * fator;
       corpo.malha.scale.setScalar(corpo.raioExibido);
@@ -216,9 +235,11 @@ export function criarNivelSolar(dataInicial) {
       corpo.distanciaChegada = Math.max(corpo.raioExibido * 5, 2e-6);
     }
     sol.raioDescoberta = 0.25;
-    // No modo ampliado a Lua ficaria dentro da Terra ampliada: ela some.
-    lua.malha.visible = modo !== "ampliado";
-    lua.oculto = modo === "ampliado";
+    // No modo ampliado as luas ficariam dentro dos planetas ampliados: somem.
+    for (const corpo of [lua, ...luas]) {
+      corpo.malha.visible = modo !== "ampliado";
+      corpo.oculto = modo === "ampliado";
+    }
     brilhoPerto.scale.setScalar(sol.raioExibido * 6);
   }
   aplicarTamanho("real");
@@ -230,6 +251,17 @@ export function criarNivelSolar(dataInicial) {
     const geo = astro.posicaoLuaGeocentrica(data);
     lua.posicao.copy(terra.posicao).add(vetor({ x: geo.x / ua, y: geo.y / ua, z: geo.z / ua }));
     voyager.posicao.copy(vetor(astro.posicaoSondaHeliocentrica(VOYAGER, data)));
+    for (const corpo of luas) {
+      const pai = porId.get(corpo.pai);
+      const p = astro.posicaoDaLua(corpo.objeto, pai.objeto.rotacao, data);
+      corpo.posicao.copy(pai.posicao).add(vetor({ x: p.x / ua, y: p.y / ua, z: p.z / ua }));
+    }
+    // A posição calculada de Plutão é a do centro de massa do par Plutão–Caronte.
+    if (caronte && plutao) {
+      const relativa = caronte.posicao.clone().sub(plutao.posicao);
+      plutao.posicao.addScaledVector(relativa, -FRACAO_PLUTAO);
+      caronte.posicao.addScaledVector(relativa, -FRACAO_PLUTAO);
+    }
 
     // Eixos e rotação pelo modelo da IAU: o lado da Terra virado para o Sol
     // é o que está de dia agora (na data simulada).
@@ -240,6 +272,13 @@ export function criarNivelSolar(dataInicial) {
     lua.malha.position.copy(lua.posicao);
     // A Lua mostra sempre a mesma face para a Terra.
     lua.malha.lookAt(terra.posicao);
+    for (const corpo of luas) {
+      const pai = porId.get(corpo.pai);
+      corpo.malha.position.copy(corpo.posicao);
+      // O polo da lua acompanha o do planeta (a órbita fica no equador dele).
+      corpo.malha.up.copy(poloAux.set(0, 1, 0).applyQuaternion(pai.malha.quaternion));
+      corpo.malha.lookAt(pai.posicao);
+    }
     const dias = (data.getTime() - J2000) / 86_400_000;
     if (terra.astro.nuvens) terra.astro.nuvens.rotation.y = (dias * DERIVA_NUVENS_RAD_POR_DIA) % (Math.PI * 2);
 
@@ -251,7 +290,7 @@ export function criarNivelSolar(dataInicial) {
       if (r > 1e-9) cinturao.posicao.set((x / r) * raioMedioCinturao, 0, (z / r) * raioMedioCinturao);
     }
 
-    for (const corpo of [...planetas, lua, ...anoes]) {
+    for (const corpo of [...planetas, lua, ...luas, ...anoes]) {
       corpo.astro.dirSol.copy(corpo.posicao).negate().normalize();
       // Texturas só quando o astro aparece maior que um pontinho (economiza memória).
       if (camera && !corpo.astro.pedido && !corpo.oculto
