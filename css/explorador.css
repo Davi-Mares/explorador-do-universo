@@ -955,3 +955,86 @@ kbd {
     white-space: normal;
   }
 }
+
+/* Em telas pequenas a descoberta ocupa o lugar do painel do alvo: um de cada vez. */
+@media (max-width: 760px), (max-height: 520px) {
+  .com-descoberta .painel-alvo {
+    display: none;
+  }
+}
+
+/* ---------- Telas baixas (celular deitado) ----------
+   Pouca altura: o painel da nave vai para o canto de baixo, à esquerda, o
+   alvo fica à direita (com rolagem própria) e os botões de toque, embaixo
+   dele. Assim nada passa da tela nem cobre os botões Ir e Saltar. */
+
+@media (max-height: 520px) {
+  .hud {
+    left: 14px;
+    gap: 6px;
+    width: min(400px, calc(100vw - 350px));
+    transform: none;
+  }
+
+  .missao-atual {
+    display: none;
+  }
+
+  .estado-textos {
+    font-size: 0.8rem;
+    white-space: normal;
+  }
+
+  .painel-velocidades {
+    left: 14px;
+    max-height: calc(100dvh - var(--altura-hud, 100px) - 36px);
+    transform: none;
+  }
+
+  .painel-destinos {
+    z-index: 6;
+    max-height: calc(100dvh - var(--altura-topo) - 64px);
+  }
+
+  .painel-alvo {
+    top: calc(var(--altura-topo) + 4px);
+    right: 14px;
+    bottom: auto;
+    left: auto;
+    width: 300px;
+    max-height: calc(100dvh - var(--altura-topo) - 90px);
+    overflow-y: auto;
+  }
+
+  /* Ir e Saltar ficam sempre à vista, mesmo com a ficha rápida aberta. */
+  .painel-alvo .alvo-acoes {
+    position: sticky;
+    bottom: -12px;
+    margin: 0 -14px -12px;
+    padding: 8px 14px 12px;
+    background: rgb(5, 11, 24);   /* opaco: a ficha rola por baixo sem aparecer */
+  }
+
+  .painel-opcoes {
+    max-height: calc(100dvh - var(--altura-topo) - 18px);
+    overflow-y: auto;
+  }
+
+  .controles-toque {
+    top: auto;
+    bottom: 14px;
+    flex-direction: row;
+  }
+
+  .cartao-descoberta {
+    top: calc(var(--altura-topo) + 4px);
+    bottom: auto;
+    left: 14px;
+    width: min(360px, calc(100vw - 350px));
+    max-height: calc(100dvh - var(--altura-topo) - var(--altura-hud, 100px) - 30px);
+    padding: 12px 14px;
+    overflow-y: auto;
+    transform: none;
+    animation-name: surgir-canto;
+  }
+}

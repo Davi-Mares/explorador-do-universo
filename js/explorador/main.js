@@ -28,7 +28,8 @@ try {
   document.body.classList.add("sem-3d");
   throw erro;
 }
-renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+const PIXELS_MAXIMO = Math.min(window.devicePixelRatio || 1, 2);
+renderer.setPixelRatio(PIXELS_MAXIMO);
 renderer.setClearColor(0x02040b, 1);
 definirAnisotropia(renderer.capabilities.getMaxAnisotropy());
 
@@ -51,9 +52,14 @@ let piloto = null;             // viagem em andamento
 // direção (ângulos em volta do eixo Y da cena).
 let orbita = null;
 let marcadores = [];
+let modoTamanho = "real";      // tamanhos do Sistema Solar: "real" ou "ampliado"
 
 const BUILDERS = {
-  solar: () => criarNivelSolar(dataSimulada),
+  solar: () => {
+    const solar = criarNivelSolar(dataSimulada);
+    solar.aplicarTamanho(modoTamanho);
+    return solar;
+  },
   estrelas: () => criarNivelEstrelas(),
   galaxia: () => {
     const galaxia = criarNivelGalaxia();
@@ -85,9 +91,22 @@ const matrizAuxiliar = new THREE.Matrix4();
 const quaternionAuxiliar = new THREE.Quaternion();
 const eulerAuxiliar = new THREE.Euler(0, 0, 0, "YXZ");
 
+/**
+ * Em telas em pé (celular) os painéis de baixo cobrem quase metade da tela:
+ * a nave olha um pouco abaixo do alvo, e ele aparece na metade de cima.
+ */
+const INCLINACAO_EM_PE = 0.19; // radianos (≈ 11°)
+
 function quaternionOlhandoPara(ponto) {
   matrizAuxiliar.lookAt(camera.position, ponto, EIXO_Y);
-  return quaternionAuxiliar.setFromRotationMatrix(matrizAuxiliar);
+  quaternionAuxiliar.setFromRotationMatrix(matrizAuxiliar);
+  if (camera.aspect < 1) {
+    eulerAuxiliar.setFromQuaternion(quaternionAuxiliar, "YXZ");
+    eulerAuxiliar.x = Math.max(-1.55, eulerAuxiliar.x - INCLINACAO_EM_PE);
+    eulerAuxiliar.z = 0;
+    quaternionAuxiliar.setFromEuler(eulerAuxiliar);
+  }
+  return quaternionAuxiliar;
 }
 
 function sincronizarOlhar() {
@@ -120,6 +139,7 @@ function entrarNoNivel(id, { alvo = null } = {}) {
     };
   }
   nivel = obterNivel(id);
+  pausarMedidaDeQualidade();
   piloto = null;
   orbita = null;
   fecharAlvo();
@@ -142,7 +162,7 @@ function entrarNoNivel(id, { alvo = null } = {}) {
       posicionarNaOrbita();
     }
   } else {
-    const { posicao, olharPara: ponto } = nivel.inicio();
+    const { posicao, olharPara: ponto } = nivel.inicio(camera.aspect);
     camera.position.copy(posicao);
     olharPara(ponto);
     indiceVelocidade = Math.max(0, velocidades().findIndex((v) => v.padrao));
@@ -448,6 +468,19 @@ function posicionarNaOrbita() {
   olharPara(corpo.posicao);
 }
 
+/**
+ * Em telas em pé (celular) o campo de visão horizontal é estreito: um astro
+ * largo, como Saturno com os anéis, não cabe na distância de chegada normal.
+ * A órbita vai então, suavemente, até a distância em que ele cabe inteiro.
+ */
+function afastarParaCaberNaTela() {
+  const raioVisual = orbita?.corpo.astro?.raioVisual;
+  if (!raioVisual || camera.aspect >= 1) return;
+  const meiaLargura = Math.atan(Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2) * camera.aspect);
+  const necessario = (orbita.corpo.raioExibido * raioVisual) / Math.tan(meiaLargura * 0.8);
+  orbita.alvo = Math.min(Math.max(orbita.alvo, necessario), limitesDaOrbita(orbita.corpo).maximo);
+}
+
 function moverEmOrbita(dt, giro) {
   // Na Via Láctea girando, a órbita gira junto com o disco (a vista não muda).
   if (giro && orbita.corpo.gira) orbita.azimute += giro;
@@ -616,6 +649,7 @@ function chegar(corpo, { salto }) {
   // corpo: lá a nave só fica parada, olhando ao longo dela.
   entrarEmOrbita(corpo);
   if (!orbita) olharPara(corpo.pontoDeOlhar?.() || corpo.posicao);
+  afastarParaCaberNaTela();
   verificarDescobertas();
   if (!salto) {
     avisar(`📍 ${corpo.nome}: viagem de ${astro.formatarDuracao(viagem.segundos)} (${astro.formatarDistancia(viagem.km)})`);
@@ -641,6 +675,13 @@ const nomeCurto = (corpo) => corpo.nome.replace(/\s*\(.*\)$/, "");
 const com = (corpo) => (artigo(corpo) ? `${artigo(corpo)} ${nomeCurto(corpo)}` : nomeCurto(corpo));
 const maiuscula = (texto) => texto.charAt(0).toUpperCase() + texto.slice(1);
 const de = (corpo) => (artigo(corpo) ? `d${artigo(corpo)} ${nomeCurto(corpo)}` : `de ${nomeCurto(corpo)}`);
+
+/**
+ * Distância de um astro ao Sol (unidades da cena). Na Via Láctea é o nível que
+ * informa a distância medida: lá o disco gira e as galáxias vizinhas não, então
+ * a distância entre os dois pontos da cena muda sem que a de verdade mude.
+ */
+const distanciaAoSol = (corpo) => nivel.distanciaAoSol?.(corpo) ?? corpo.posicao.distanceTo(nivel.sol.posicao);
 
 /** Distância curta para o painel: em km de perto; em UA ou anos-luz de longe. */
 function distanciaCurta(quilometros) {
@@ -669,9 +710,10 @@ function atualizarEstadoNave() {
     acao = "⏹ Parar";
     dica = "Parar a nave aqui (tecla Espaço)";
   } else if (orbita) {
-    texto = `🛰️ Em órbita ${de(orbita.corpo)}`;
+    // Uma sonda não tem gravidade para segurar a nave: ela só voa ao lado.
+    texto = orbita.corpo.sonda ? `🛰️ Voando ao lado ${de(orbita.corpo)}` : `🛰️ Em órbita ${de(orbita.corpo)}`;
     detalhe = detalheDaOrbita();
-    acao = "Sair da órbita";
+    acao = orbita.corpo.sonda ? "Voar livre" : "Sair da órbita";
     dica = "Voar livre: a nave fica parada no espaço até você mandar ela andar";
   }
   $("estado-detalhe").textContent = detalhe;
@@ -711,6 +753,8 @@ let temporizadorDescoberta = null;
 function mostrarDescoberta() {
   const corpo = filaDeDescobertas[0];
   const cartao = $("cartao-descoberta");
+  // Em telas pequenas o cartão ocupa o lugar do painel do alvo (explorador.css).
+  document.body.classList.toggle("com-descoberta", Boolean(corpo));
   if (!corpo) {
     cartao.hidden = true;
     return;
@@ -778,6 +822,7 @@ function abrirQuiz(pergunta, nomeDoObjeto) {
   });
   if (anterior) mostrarResultado(anterior.escolha);
   dialogo.showModal();
+  dialogo.scrollTop = 0;
 }
 
 $("dialogo-quiz").addEventListener("close", () => {
@@ -984,7 +1029,7 @@ function atualizarPainelAlvo() {
     $("alvo-linha").textContent = "Você está aqui";
   } else {
     // Já chegou: mostra quanto a luz do Sol leva para chegar até este astro.
-    $("alvo-linha").textContent = `Você está aqui · a luz do Sol leva ${luz(km(corpo.posicao.distanceTo(nivel.sol.posicao)))} até aqui`;
+    $("alvo-linha").textContent = `Você está aqui · a luz do Sol leva ${luz(km(distanciaAoSol(corpo)))} até aqui`;
   }
   $("alvo-eta").textContent = jaChegou ? "" : `Nesta velocidade: ${astro.formatarDuracao(restanteKm / velocidade.kmS)}`;
 
@@ -1064,13 +1109,16 @@ const NOTAS_TAMANHO = {
 };
 
 function mudarTamanho(modo) {
-  const solar = obterNivel("solar");
-  solar.aplicarTamanho(modo);
+  modoTamanho = modo;
+  // O Sistema Solar só é montado quando alguém entra nele (quem abre direto
+  // nas Estrelas ou na Via Láctea não baixa os planetas à toa).
+  const solar = niveis.solar;
+  solar?.aplicarTamanho(modo);
   document.querySelectorAll("#controle-tamanho [data-tamanho]").forEach((botao) => {
     botao.setAttribute("aria-pressed", String(botao.dataset.tamanho === modo));
   });
   $("nota-tamanho").textContent = NOTAS_TAMANHO[modo];
-  if (orbita && nivel === solar) {
+  if (orbita && solar && nivel === solar) {
     // O astro mudou de tamanho: a órbita volta para a distância de chegada.
     if (orbita.corpo.oculto) {
       orbita = null;
@@ -1156,6 +1204,8 @@ function avisar(texto, tipo = "") {
 function abrirAjuda() {
   const dialogo = $("dialogo-ajuda");
   if (!dialogo.open) dialogo.showModal();
+  // Em telas baixas o foco vai para o botão do fim e o texto abriria já rolado.
+  dialogo.scrollTop = 0;
 }
 $("botao-ajuda").addEventListener("click", abrirAjuda);
 $("dialogo-ajuda").addEventListener("close", () => {
@@ -1190,12 +1240,62 @@ function redimensionar() {
 }
 window.addEventListener("resize", redimensionar);
 
+// ---------- Qualidade adaptável ----------
+// Num aparelho mais fraco (ou perto do buraco negro, que é pesado de
+// desenhar) a cena passa a ser desenhada com menos pixels, para o voo
+// continuar fluido; quando sobra folga, a resolução volta. Com ?depurar na
+// URL a qualidade fica fixa, e as capturas automáticas saem sempre iguais.
+
+const QUALIDADES = [1, 0.75, 0.5];          // fração da resolução máxima
+const JANELA_DE_MEDIDA = 1.5;                // segundos de cada medida
+const qualidade = { nivel: 0, fixa: false, tempo: 0, quadros: 0, ruins: 0, boas: 0, espera: 20, liberaEm: 0, ignorarAte: 0, avisou: false };
+
+/** Recomeça a medida (ao trocar de nível ou voltar para a aba, os primeiros quadros são lentos mesmo). */
+function pausarMedidaDeQualidade(milissegundos = 2500) {
+  qualidade.ignorarAte = performance.now() + milissegundos;
+  qualidade.tempo = qualidade.quadros = qualidade.ruins = qualidade.boas = 0;
+}
+document.addEventListener("visibilitychange", () => pausarMedidaDeQualidade());
+
+function definirQualidade(novo) {
+  qualidade.nivel = novo;
+  renderer.setPixelRatio(PIXELS_MAXIMO * QUALIDADES[novo]);
+  Object.values(niveis).forEach(atualizarMateriais);
+}
+
+function medirQualidade(segundos, agora) {
+  if (qualidade.fixa || agora < qualidade.ignorarAte) return;
+  qualidade.tempo += segundos;
+  qualidade.quadros++;
+  if (qualidade.tempo < JANELA_DE_MEDIDA) return;
+  const quadrosPorSegundo = qualidade.quadros / qualidade.tempo;
+  qualidade.tempo = qualidade.quadros = 0;
+  qualidade.ruins = quadrosPorSegundo < 22 ? qualidade.ruins + 1 : 0;
+  qualidade.boas = quadrosPorSegundo > 50 ? qualidade.boas + 1 : 0;
+  // Duas medidas ruins seguidas: baixa um degrau. Só tenta subir de novo
+  // depois de uma espera, que dobra a cada queda (para não ficar oscilando).
+  if (qualidade.ruins >= 2 && qualidade.nivel < QUALIDADES.length - 1) {
+    definirQualidade(qualidade.nivel + 1);
+    qualidade.ruins = 0;
+    qualidade.liberaEm = agora + qualidade.espera * 1000;
+    qualidade.espera = Math.min(qualidade.espera * 2, 240);
+    if (!qualidade.avisou) {
+      qualidade.avisou = true;
+      avisar("⚙️ Imagem um pouco mais simples, para o voo ficar fluido neste aparelho.");
+    }
+  } else if (qualidade.boas >= 2 && qualidade.nivel > 0 && agora > qualidade.liberaEm) {
+    definirQualidade(qualidade.nivel - 1);
+    qualidade.boas = 0;
+  }
+}
+
 // ---------- Laço principal ----------
 
 let anterior = performance.now();
 let acumuladoInterface = 0;
 
 function quadro(agora) {
+  medirQualidade((agora - anterior) / 1000, agora);
   const dt = Math.min((agora - anterior) / 1000, 0.1);
   anterior = agora;
 
@@ -1244,9 +1344,11 @@ function iniciar() {
   if ("serviceWorker" in navigator && window.location.protocol.startsWith("http")) {
     navigator.serviceWorker.register("sw.js").catch(() => { /* sem modo offline */ });
   }
-  // Para testes automatizados (testes/): expõe o estado só com ?depurar na URL.
+  // Para testes automatizados: com ?depurar na URL o estado fica exposto e a
+  // qualidade não muda sozinha (as capturas saem sempre iguais).
   if (parametros.has("depurar")) {
-    window.__explorador = { camera, niveis, get nivel() { return nivel; }, get orbita() { return orbita; }, progresso };
+    qualidade.fixa = !parametros.has("qualidade");
+    window.__explorador = { camera, niveis, qualidade, get nivel() { return nivel; }, get orbita() { return orbita; }, progresso };
   }
   requestAnimationFrame((agora) => {
     anterior = agora;

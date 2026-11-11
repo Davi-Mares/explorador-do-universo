@@ -39,6 +39,13 @@ function vetor(objeto) {
 
 const limitar = (v, min, max) => Math.min(max, Math.max(min, v));
 
+/**
+ * Quanto afastar a posição inicial da nave conforme o formato da tela. Numa
+ * tela larga (16:9 ou mais) é 1; numa tela em pé o campo de visão horizontal
+ * encolhe, então a nave começa mais longe (até "maximo" vezes).
+ */
+const afastamentoPelaTela = (aspecto, maximo) => limitar(1.5 / Math.max(aspecto, 0.1), 1, maximo);
+
 /** Tamanho (px) e brilho de um ponto a partir da magnitude aparente. */
 export function aparenciaPorMagnitude(m) {
   const x = 6.5 - m; // > 0: visível a olho nu
@@ -194,7 +201,7 @@ export function criarNivelSolar(dataInicial) {
   cinturao.pontoDeOlhar = () => cinturao.posicao.clone().applyAxisAngle(EIXO_Y, (25 * Math.PI) / 180);
 
   // --- Voyager 1 e a fronteira do vento solar ---
-  const voyager = criarCorpo(VOYAGER, { raioReal: 0, raioExibido: 1e-9, raioDescoberta: 2, distanciaChegada: 0.01 });
+  const voyager = criarCorpo(VOYAGER, { raioReal: 0, raioExibido: 1e-9, raioDescoberta: 2, distanciaChegada: 0.01, sonda: true });
   const marcaVoyager = brilhoSprite("#f4f1e8", 0.008, { atenuar: false, opacidade: 0.9 });
   cena.add(marcaVoyager);
   // --- Céu de verdade: a faixa da Via Láctea (foto da ESO) e as 9 mil
@@ -506,12 +513,14 @@ export function criarNivelEstrelas() {
    * oposto ao de Alfa Centauri: o Sol no meio, a vizinha logo atrás, a régua
    * de distâncias em volta e a faixa da Via Láctea ao fundo.
    */
-  function inicio() {
+  function inicio(aspecto = 16 / 9) {
     const alfa = estrelas.find((e) => e.id === "alfa-centauri").posicao.clone().normalize();
     const polo = new THREE.Vector3(0, 1, 0);
     const noPlano = alfa.sub(polo.clone().multiplyScalar(alfa.dot(polo))).normalize();
     const elevacao = (24 * Math.PI) / 180;
-    const posicao = noPlano.multiplyScalar(-Math.cos(elevacao)).addScaledVector(polo, Math.sin(elevacao)).multiplyScalar(9);
+    // Em telas em pé (celular) a nave começa mais longe: a régua cabe na largura.
+    const distancia = 9 * afastamentoPelaTela(aspecto, 2.2);
+    const posicao = noPlano.multiplyScalar(-Math.cos(elevacao)).addScaledVector(polo, Math.sin(elevacao)).multiplyScalar(distancia);
     return { posicao, olharPara: new THREE.Vector3() };
   }
 
@@ -750,8 +759,11 @@ export function criarNivelGalaxia() {
     }
   }
 
-  function inicio() {
-    return { posicao: new THREE.Vector3(-44, 46, 52), olharPara: new THREE.Vector3(-10, -2, 0) };
+  function inicio(aspecto = 16 / 9) {
+    // Em telas em pé (celular) a nave começa mais longe: a galáxia cabe inteira na largura.
+    const olharPara = new THREE.Vector3(-10, -2, 0);
+    const posicao = new THREE.Vector3(-44, 46, 52).sub(olharPara).multiplyScalar(afastamentoPelaTela(aspecto, 2.8)).add(olharPara);
+    return { posicao, olharPara };
   }
 
   return {
@@ -771,6 +783,12 @@ export function criarNivelGalaxia() {
     get ultimoGiro() { return ultimoGiro; },
     unidadeKm: astro.KM_POR_ANO_LUZ * 1000,
     sol: porId("sol-galaxia"),
+    /**
+     * Distância medida de cada objeto ao Sol. Não é a da cena: o giro do disco
+     * é uma ilustração (tudo gira junto) e as galáxias vizinhas ficam paradas,
+     * então a distância entre os dois pontos da cena muda com o giro.
+     */
+    distanciaAoSol: (corpo) => corpo.posicaoNoDisco.distanceTo(posicaoDoSol),
     descobrirAoEntrar: ["sol-galaxia"],
     atualizar,
     inicio,
