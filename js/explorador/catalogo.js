@@ -20,8 +20,9 @@
 //   Nebulosa de Órion: 414 pc (Menten et al., 2007); Sagitário A*: ESO (2022);
 //   galáxias vizinhas: artigos citados em cada uma, NASA, ESA e ESO.
 // - Plutão e Ceres: NASA (NSSDC e NASA Science); Cinturão: NASA e equipe Lucy (SwRI).
-// - Voyager 1 e 2: trajetórias publicadas pelo JPL (elementos hiperbólicos,
-//   1989) e páginas da missão na NASA.
+// - Voyager 1 e 2: posição e velocidade do JPL Horizons (novembro de 2026),
+//   conferidas com os elementos publicados pelo JPL em 1989; páginas da
+//   missão na NASA.
 // ---------------------------------------------------------------------------
 
 /** Níveis de escala do explorador. "unidadeKm" converte a unidade da cena. */
@@ -462,15 +463,31 @@ export const LUA = {
 };
 
 // ---------------------------------------------------------------------------
-// Sondas Voyager. Cada uma segue a hipérbole que o JPL publicou para o trecho
-// depois do último planeta visitado ("Voyager 1 and 2 Hyperbolic Orbital
-// Elements", S. Matousek, JPL, novembro de 1989): semieixo em km e ângulos em
-// graus, com o Sol no foco, na eclíptica de 1950,0; M é a anomalia média na
-// época (1º/jan/1991). A conta está em astronomia.posicaoSondaHeliocentrica.
-// Conferido com a NASA (testes/): Voyager 1 a 121,6 UA do Sol em 25/ago/2012 e
-// Voyager 2 a 119 UA em 5/nov/2018 (saída da heliosfera); Voyager 1 a 173,2 UA
-// da Terra no instante em que a NASA marca 1 dia-luz (173,1 UA): 0,03% a mais.
+// Sondas Voyager. A trajetória de cada uma parte da posição e da velocidade
+// que o JPL Horizons dá para 18/nov/2026, 10h16min10,56s TDB (soluções
+// "Voyager_1_ST+refit2022_m" e a correspondente da Voyager 2): vetores em
+// relação ao Sol, na eclíptica de J2000, em UA e UA/dia. A partir deles a
+// sonda segue a sua hipérbole (astronomia.posicaoSondaHeliocentrica).
+// Conferência (testes/): a Voyager 1 fica a exatamente 1 dia-luz da Terra
+// nesse instante, como anuncia a NASA; voltando no tempo, ela aparece a
+// 121,6 UA do Sol em 25/ago/2012 e a Voyager 2 a 119 UA em 5/nov/2018 (a saída
+// da heliosfera de cada uma); e os elementos que o JPL publicou em 1989
+// (logo abaixo), levados até 2026, caem a menos de 0,1 UA: 0,05% de diferença.
 // ---------------------------------------------------------------------------
+
+/**
+ * "Voyager 1 and 2 Hyperbolic Orbital Elements" (S. Matousek, JPL, novembro de
+ * 1989): o trecho depois do último planeta visitado. Semieixo em km e ângulos
+ * em graus, com o Sol no foco, na eclíptica de 1950,0; M é a anomalia média
+ * na época. Uma segunda fonte, independente, usada só na validação.
+ */
+export const ELEMENTOS_JPL_1989 = {
+  voyager: { epoca: "1991-01-01T00:00:00Z", aKm: -480_926_000, e: 3.724716, i: 35.762854, O: 178.197845, w: -21.671355, M: 688.967795 },
+  "voyager-2": { epoca: "1991-01-01T00:00:00Z", aKm: -601_124_000, e: 6.284578, i: 78.810177, O: 100.934989, w: 130.043962, M: 342.970736 }
+};
+
+/** O instante dos vetores do Horizons: 10h16min10,56s TDB são 10h15min01,4s UTC. */
+const EPOCA_DO_HORIZONS = "2026-11-18T10:15:01.376Z";
 
 /**
  * Em 18/nov/2026, às 10h16 UTC, a Voyager 1 chega a 1 dia-luz da Terra
@@ -487,8 +504,12 @@ export const VOYAGER = {
   tipo: "Sonda espacial (NASA, lançada em 1977)",
   raioKm: 0.002,
   cor: "#f4f1e8",
-  // Depois de Saturno (nov/1980): sobe 35° para o norte do plano dos planetas, rumo a Ofiúco.
-  trajetoria: { epoca: "1991-01-01T00:00:00Z", aKm: -480_926_000, e: 3.724716, i: 35.762854, O: 178.197845, w: -21.671355, M: 688.967795 },
+  // Desde Saturno (nov/1980) sobe 35° para o norte do plano dos planetas, rumo a Ofiúco.
+  trajetoria: {
+    epoca: EPOCA_DO_HORIZONS,
+    posicao: [-3.222091057924273e1, -1.372052992240796e2, 9.927022029356392e1],
+    velocidade: [-1.195193788966836e-3, -7.861218446231628e-3, 5.678156184013960e-3]
+  },
   resumo: "O objeto feito por humanos mais distante da Terra. Já saiu da bolha do vento solar e está no espaço interestelar.",
   /** O texto acompanha a data: antes e depois de a sonda chegar a 1 dia-luz. */
   get curiosidade() {
@@ -498,7 +519,8 @@ export const VOYAGER = {
   },
   fontes: [
     ["NASA (onde estão as Voyager)", "https://science.nasa.gov/mission/voyager/where-are-voyager-1-and-voyager-2-now/"],
-    ["NASA (ficha da missão)", "https://science.nasa.gov/mission/voyager/fact-sheet"]
+    ["NASA (ficha da missão)", "https://science.nasa.gov/mission/voyager/fact-sheet"],
+    ["JPL Horizons (posição)", "https://ssd.jpl.nasa.gov/horizons/"]
   ],
   saibaMais: "Lançada em 1977, a Voyager 1 passou por Júpiter em 1979 e por Saturno em 1980. Desde então se afasta a cerca de 17 km/s, subindo 35° para o norte do plano dos planetas. Em agosto de 2012 ela saiu da heliosfera, a bolha de vento solar que envolve os planetas. Em 2026, quase 50 anos depois do lançamento, dois dos seus dez instrumentos científicos continuavam ligados.",
   ficha: [
@@ -519,14 +541,19 @@ export const VOYAGER_2 = {
   tipo: "Sonda espacial (NASA, lançada em 1977)",
   raioKm: 0.002,
   cor: "#f4f1e8",
-  // Depois de Netuno (ago/1989): desce 48° para o sul do plano dos planetas, rumo ao Pavão.
-  trajetoria: { epoca: "1991-01-01T00:00:00Z", aKm: -601_124_000, e: 6.284578, i: 78.810177, O: 100.934989, w: 130.043962, M: 342.970736 },
+  // Desde Netuno (ago/1989) desce 48° para o sul do plano dos planetas, rumo ao Pavão.
+  trajetoria: {
+    epoca: EPOCA_DO_HORIZONS,
+    posicao: [4.000783882444694e1, -1.057255895087481e2, -9.001982674350664e1],
+    velocidade: [2.427664636875017e-3, -5.394402849062609e-3, -6.535568179046815e-3]
+  },
   resumo: "A única sonda que já visitou Urano e Netuno. Depois dos quatro planetas gigantes, também saiu da bolha do vento solar e viaja pelo espaço interestelar.",
   curiosidade: "Foi lançada 16 dias antes da Voyager 1, mas a irmã pegou um caminho mais curto e mais rápido e chegou primeiro a Júpiter e a Saturno.",
   fontes: [
     ["NASA (Voyager 2)", "https://science.nasa.gov/mission/voyager/voyager-2/"],
     ["NASA (2018)", "https://science.nasa.gov/missions/voyager/nasas-voyager-2-probe-enters-interstellar-space/"],
-    ["NASA (ficha da missão)", "https://science.nasa.gov/mission/voyager/fact-sheet"]
+    ["NASA (ficha da missão)", "https://science.nasa.gov/mission/voyager/fact-sheet"],
+    ["JPL Horizons (posição)", "https://ssd.jpl.nasa.gov/horizons/"]
   ],
   saibaMais: "A Voyager 2 aproveitou um alinhamento de Júpiter, Saturno, Urano e Netuno que só acontece a cada 175 anos, mais ou menos: a gravidade de cada planeta jogou a sonda para o seguinte, e a viagem até Netuno caiu de 30 para 12 anos. Em Urano ela descobriu 10 luas. Em 5 de novembro de 2018 saiu da heliosfera, seis anos depois da irmã. Hoje se afasta a cerca de 15 km/s, descendo 48° para o sul do plano dos planetas. Em 2026, três dos seus dez instrumentos científicos continuavam ligados.",
   ficha: [

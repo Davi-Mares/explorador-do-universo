@@ -265,9 +265,11 @@ for (const p of cat.PLANETAS_ANOES) {
 }
 
 // ---------- 5. Voyager 1 e 2 ----------
-// As sondas seguem as hipérboles que o JPL publicou em 1989 (catalogo.js). A
-// conta, levada até hoje, é conferida com marcos da NASA: a saída da
-// heliosfera de cada uma, a marca de 1 dia-luz e o rumo com que elas escapam.
+// As sondas partem da posição e da velocidade do JPL Horizons em novembro de
+// 2026 (catalogo.js) e seguem as suas hipérboles. A conta é conferida com
+// marcos da NASA (a marca de 1 dia-luz, a saída da heliosfera de cada uma e o
+// rumo com que escapam) e com uma segunda fonte: os elementos orbitais que o
+// JPL publicou em 1989, levados até hoje.
 {
   const G = "Voyager";
   const modulo = (p) => Math.hypot(p.x, p.y, p.z);
@@ -280,7 +282,7 @@ for (const p of cat.PLANETAS_ANOES) {
   const [v1, v2] = cat.SONDAS;
 
   teste(G, "Voyager 1 a 1 dia-luz da Terra em 18/nov/2026, 10h16 UTC (NASA: 25,902 bilhões de km)",
-    modulo(vistaDaTerra(v1, new Date(cat.VOYAGER_A_UM_DIA_LUZ).toISOString())) / UA_POR_DIA_LUZ, 1, 0.001, " dia-luz");
+    modulo(vistaDaTerra(v1, new Date(cat.VOYAGER_A_UM_DIA_LUZ).toISOString())) / UA_POR_DIA_LUZ, 1, 0.0001, " dia-luz");
   teste(G, "Voyager 1 a 121,6 UA do Sol ao sair da heliosfera, em 25/ago/2012 (NASA)", doSol(v1, "2012-08-25T00:00:00Z"), 121.6, 0.15, " UA");
   teste(G, "Voyager 2 a ≈ 119 UA do Sol ao sair da heliosfera, em 5/nov/2018 (NASA)", doSol(v2, "2018-11-05T00:00:00Z"), 119, 0.3, " UA");
   const v2Em2018 = modulo(vistaDaTerra(v2, "2018-12-10T00:00:00Z")) * astro.KM_POR_UA;
@@ -311,6 +313,16 @@ for (const p of cat.PLANETAS_ANOES) {
   };
   teste(G, "Voyager 1 em Ofiúco (AR 17h13m03s, Dec +11°58′) em dez/2018", separacao(v1, (17 + 13 / 60 + 3 / 3600) * 15, 11 + 58 / 60 + 19 / 3600), 0, 0.25, "°");
   teste(G, "Voyager 2 no Pavão (AR 20h02m57s, Dec −57°37′) em dez/2018", separacao(v2, (20 + 2 / 60 + 57 / 3600) * 15, -(57 + 37 / 60 + 12 / 3600)), 0, 0.25, "°");
+
+  // Segunda fonte: os elementos de 1989, levados por 36 anos, caem quase no mesmo lugar.
+  for (const sonda of [v1, v2]) {
+    const data = new Date("2026-11-18T10:15:01Z");
+    const hoje = astro.posicaoSondaHeliocentrica(sonda, data);
+    const em1989 = astro.posicaoSondaHeliocentrica({ trajetoria: cat.ELEMENTOS_JPL_1989[sonda.id] }, data);
+    const diferenca = modulo({ x: hoje.x - em1989.x, y: hoje.y - em1989.y, z: hoje.z - em1989.z });
+    teste(G, `${sonda.nome}: Horizons (2026) × elementos do JPL de 1989, diferença em nov/2026`, diferenca, 0, 0.15, " UA");
+    teste(G, `${sonda.nome}: a mesma diferença em relação à distância do Sol`, (diferenca / modulo(hoje)) * 100, 0, 0.1, "%");
+  }
 
   const equinocio = astro.eclipticaB1950ParaJ2000({ x: 1, y: 0, z: 0 });
   teste(G, "Precessão de 1950 a 2000: o equinócio anda 0,698° (50,3″ por ano)", (Math.atan2(equinocio.y, equinocio.x) * 180) / Math.PI, (50.29 * 50) / 3600, 0.001, "°");

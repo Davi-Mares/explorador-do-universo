@@ -186,40 +186,79 @@ export function eclipticaB1950ParaJ2000({ x, y, z }) {
   return { x: x1 * Math.cos(giro) - y2 * Math.sin(giro), y: x1 * Math.sin(giro) + y2 * Math.cos(giro), z: z2 };
 }
 
+/** GM do Sol em UA³/dia² (o quadrado da constante de Gauss). */
+const GM_SOL_UA3_DIA2 = (GM_SOL_KM3_S2 * 86_400 ** 2) / KM_POR_UA ** 3;
+const UA_POR_DIA_EM_KM_S = KM_POR_UA / 86_400;
+
+/**
+ * Deixa pronta a hipérbole de uma sonda que está saindo do Sistema Solar, com
+ * o Sol no foco. "trajetoria" pode vir de dois jeitos:
+ * - vetores de estado (o que o JPL Horizons entrega): epoca, posicao (UA) e
+ *   velocidade (UA/dia), heliocêntricas, na eclíptica de J2000;
+ * - elementos orbitais (como o JPL publicou os das Voyager em 1989): aKm
+ *   (negativo na hipérbole), e, i, O (nodo), w (periélio) e M (anomalia média
+ *   na época), em graus, na eclíptica de B1950,0.
+ * Devolve o semieixo |a| (UA), a excentricidade, o movimento médio (rad/dia),
+ * a anomalia média na época e os eixos P (rumo ao periélio) e Q do plano da órbita.
+ */
+const trajetoriasProntas = new WeakMap();
+function prepararTrajetoria(trajetoria) {
+  let pronta = trajetoriasProntas.get(trajetoria);
+  if (pronta) return pronta;
+  const epoca = Date.parse(trajetoria.epoca);
+  if (trajetoria.posicao) {
+    const [x, y, z] = trajetoria.posicao, [vx, vy, vz] = trajetoria.velocidade;
+    const raio = Math.hypot(x, y, z), v2 = vx * vx + vy * vy + vz * vz, rv = x * vx + y * vy + z * vz;
+    const a = 1 / (v2 / GM_SOL_UA3_DIA2 - 2 / raio);                 // energia da órbita
+    const momento = [y * vz - z * vy, z * vx - x * vz, x * vy - y * vx];
+    const k = v2 - GM_SOL_UA3_DIA2 / raio;                            // vetor excentricidade: aponta para o periélio
+    const vetorE = [(k * x - rv * vx) / GM_SOL_UA3_DIA2, (k * y - rv * vy) / GM_SOL_UA3_DIA2, (k * z - rv * vz) / GM_SOL_UA3_DIA2];
+    const e = Math.hypot(...vetorE), h = Math.hypot(...momento);
+    const P = vetorE.map((c) => c / e), W = momento.map((c) => c / h);
+    const Q = [W[1] * P[2] - W[2] * P[1], W[2] * P[0] - W[0] * P[2], W[0] * P[1] - W[1] * P[0]];
+    const anomalia = Math.sign(rv) * Math.acosh((raio / a + 1) / e);  // positiva: a sonda está se afastando
+    pronta = { a, e, P, Q, epoca, movimentoMedio: Math.sqrt(GM_SOL_UA3_DIA2 / a ** 3), anomaliaMedia: e * Math.sinh(anomalia) - anomalia };
+  } else {
+    const a = Math.abs(trajetoria.aKm) / KM_POR_UA;
+    const nodo = trajetoria.O * RAD, inclinacao = trajetoria.i * RAD;
+    const eixo = (u) => {
+      const v = eclipticaB1950ParaJ2000({
+        x: Math.cos(nodo) * Math.cos(u) - Math.sin(nodo) * Math.sin(u) * Math.cos(inclinacao),
+        y: Math.sin(nodo) * Math.cos(u) + Math.cos(nodo) * Math.sin(u) * Math.cos(inclinacao),
+        z: Math.sin(u) * Math.sin(inclinacao)
+      });
+      return [v.x, v.y, v.z];
+    };
+    pronta = {
+      a, e: trajetoria.e, P: eixo(trajetoria.w * RAD), Q: eixo(trajetoria.w * RAD + Math.PI / 2), epoca,
+      movimentoMedio: Math.sqrt(GM_SOL_UA3_DIA2 / a ** 3), anomaliaMedia: trajetoria.M * RAD
+    };
+  }
+  trajetoriasProntas.set(trajetoria, pronta);
+  return pronta;
+}
+
 /**
  * Posição heliocêntrica eclíptica (UA, J2000) de uma sonda que está saindo do
- * Sistema Solar: uma hipérbole com o Sol no foco. "trajetoria" traz os
- * elementos como o JPL publicou os das Voyager: aKm (semieixo, negativo na
- * hipérbole), e, i, O (nodo ascendente), w (periélio) e M (anomalia média na
- * época), em graus, na eclíptica de B1950,0. Vale do último planeta visitado
- * em diante.
+ * Sistema Solar, na data pedida. Vale do último planeta visitado em diante.
  */
 export function posicaoSondaHeliocentrica(sonda, data) {
-  const { epoca, aKm, e, i, O, w, M } = sonda.trajetoria;
-  const a = Math.abs(aKm);
-  const movimentoMedio = Math.sqrt(GM_SOL_KM3_S2 / a ** 3);   // rad/s
-  const anomaliaMedia = M * RAD + (movimentoMedio * (data.getTime() - Date.parse(epoca))) / 1000;
-  const h = resolverKeplerHiperbolico(anomaliaMedia, e);
-  const raio = (a * (e * Math.cosh(h) - 1)) / KM_POR_UA;
-  const anomaliaVerdadeira = 2 * Math.atan(Math.sqrt((e + 1) / (e - 1)) * Math.tanh(h / 2));
-  const u = anomaliaVerdadeira + w * RAD, nodo = O * RAD, inclinacao = i * RAD;
-  return eclipticaB1950ParaJ2000({
-    x: raio * (Math.cos(nodo) * Math.cos(u) - Math.sin(nodo) * Math.sin(u) * Math.cos(inclinacao)),
-    y: raio * (Math.sin(nodo) * Math.cos(u) + Math.cos(nodo) * Math.sin(u) * Math.cos(inclinacao)),
-    z: raio * Math.sin(u) * Math.sin(inclinacao)
-  });
+  const { a, e, P, Q, epoca, movimentoMedio, anomaliaMedia } = prepararTrajetoria(sonda.trajetoria);
+  const h = resolverKeplerHiperbolico(anomaliaMedia + (movimentoMedio * (data.getTime() - epoca)) / 86_400_000, e);
+  const noEixoP = a * (e - Math.cosh(h)), noEixoQ = a * Math.sqrt(e * e - 1) * Math.sinh(h);
+  return { x: noEixoP * P[0] + noEixoQ * Q[0], y: noEixoP * P[1] + noEixoQ * Q[1], z: noEixoP * P[2] + noEixoQ * Q[2] };
 }
 
 /** Velocidade da sonda em relação ao Sol (km/s), pela conservação da energia: v² = GM·(2/r + 1/|a|). */
 export function velocidadeDaSonda(sonda, data) {
   const p = posicaoSondaHeliocentrica(sonda, data);
-  const raioKm = Math.hypot(p.x, p.y, p.z) * KM_POR_UA;
-  return Math.sqrt(GM_SOL_KM3_S2 * (2 / raioKm + 1 / Math.abs(sonda.trajetoria.aKm)));
+  const { a } = prepararTrajetoria(sonda.trajetoria);
+  return Math.sqrt(GM_SOL_UA3_DIA2 * (2 / Math.hypot(p.x, p.y, p.z) + 1 / a)) * UA_POR_DIA_EM_KM_S;
 }
 
 /** Velocidade com que a sonda escapa, muito longe do Sol (km/s): v∞ = √(GM/|a|). */
 export function velocidadeDeFuga(sonda) {
-  return Math.sqrt(GM_SOL_KM3_S2 / Math.abs(sonda.trajetoria.aKm));
+  return Math.sqrt(GM_SOL_UA3_DIA2 / prepararTrajetoria(sonda.trajetoria).a) * UA_POR_DIA_EM_KM_S;
 }
 
 /** Magnitude aparente de uma estrela vista a uma distância (anos-luz). */
