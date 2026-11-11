@@ -77,7 +77,10 @@ const PARES = {
   plutao: ["lua", "a Lua"],
   ceres: ["lua", "a Lua"],
   "sgr-a": ["ton-618", "TON 618"],
-  andromeda: ["via-lactea", "a Via Láctea"]
+  smc: ["lmc", "a Grande Nuvem"],
+  lmc: ["via-lactea", "a Via Láctea"],
+  andromeda: ["via-lactea", "a Via Láctea"],
+  triangulo: ["andromeda", "Andrômeda"]
 };
 
 /** Link para o comparador: com a Terra (planetas, Lua, Sol), com o Sol (estrelas) ou com um par especial. */

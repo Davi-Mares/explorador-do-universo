@@ -335,6 +335,65 @@ for (const p of cat.PLANETAS_ANOES) {
     cat.raioParaComparar(ton) > sistemaSolar);
 }
 
+// ---------- 7b2. Galáxias vizinhas: posição, distância e geometria ----------
+// Os modelos 3D usam a geometria medida de cada disco. Aqui se confere que a
+// conta reproduz o que foi medido: o lado que se afasta de nós, o sentido do
+// giro, a inclinação e onde ficam os lugares com nome.
+{
+  const G = "Galáxias vizinhas";
+  const KPC = 3.26156;
+  const escalar = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const vetorial = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  const vizinha = (id) => cat.objetoPorId(id);
+  const geometria = (o) => astro.geometriaDoDisco({ ar: astro.arParaGraus(o.ar), dec: astro.decParaGraus(o.dec), ...o.disco });
+  for (const [id, kpc, fonte] of [["andromeda", 761, "Li et al., 2021"], ["triangulo", 840, "Breuval et al., 2023"], ["lmc", 49.59, "Pietrzyński et al., 2019"], ["smc", 62.44, "Graczyk et al., 2020"]]) {
+    const o = vizinha(id);
+    const { l, b } = astro.equatorialParaGalactica(astro.arParaGraus(o.ar), astro.decParaGraus(o.dec));
+    teste(G, `${o.nome}: l e b batem com a posição no céu (ar, dec)`, Math.hypot(diferencaAngular(l, o.l) * Math.cos(b * Math.PI / 180), b - o.b), 0, 0.02, "°");
+    teste(G, `${o.nome}: distância de ${kpc} kpc (${fonte})`, o.d, kpc * KPC, 0.6, " mil anos-luz");
+  }
+  for (const id of ["andromeda", "triangulo", "lmc"]) {
+    const o = vizinha(id), g = geometria(o);
+    const angulo = Math.acos(Math.abs(escalar(g.giro, g.n))) * 180 / Math.PI;
+    teste(G, `${o.nome}: o eixo de giro faz ${o.disco.inclinacao}° com a linha de visada (inclinação)`, angulo, o.disco.inclinacao, 1e-6, "°");
+    teste(G, `${o.nome}: lado próximo a 90° do eixo maior`, Math.abs(diferencaAngular(o.disco.ladoProximo, o.disco.pa)), 90, 1e-9, "°");
+  }
+  // Velocidade de um ponto do eixo maior, do lado "pa": v = giro × r; + = se afasta de nós.
+  const seAfasta = (o) => { const g = geometria(o); return escalar(vetorial(g.giro, g.m), g.n); };
+  verdadeiro(G, "Andrômeda: o lado nordeste se afasta de nós e o sudoeste se aproxima (Chemin et al., 2009)", seAfasta(vizinha("andromeda")) > 0.9);
+  verdadeiro(G, "Triângulo: a metade norte se aproxima de nós (Kam et al., 2017)", seAfasta(vizinha("triangulo")) < -0.7);
+  verdadeiro(G, "Grande Nuvem: gira no sentido horário visto da Terra (van der Marel e Kallivayalil, 2014)", escalar(geometria(vizinha("lmc")).giro, geometria(vizinha("lmc")).n) > 0);
+  // O eixo de giro de Andrômeda reproduz o publicado por Andrae e Jahnke (2011),
+  // que usam o sinal contrário (o deles aponta para longe de nós).
+  {
+    const g = geometria(vizinha("andromeda"));
+    const publicado = [-0.08031, -0.79651, 0.59926];
+    const cosseno = -escalar(g.giro, publicado) / Math.hypot(...publicado);
+    teste(G, "Andrômeda: eixo de giro igual ao de Andrae e Jahnke (2011), com o sinal trocado", Math.acos(Math.min(1, cosseno)) * 180 / Math.PI, 0, 0.05, "°");
+  }
+  // Lugares com nome, levados do céu para o plano do disco.
+  const noDisco = (id, regiao) => {
+    const o = vizinha(id), r = o.regioes.find((x) => x.id === regiao);
+    const p = astro.noPlanoDoDisco(geometria(o), o.d, astro.arParaGraus(r.ar), astro.decParaGraus(r.dec));
+    return Math.hypot(p.x, p.z);
+  };
+  const r206 = noDisco("andromeda", "ngc206"), r604 = noDisco("triangulo", "ngc604"), rTarantula = noDisco("lmc", "tarantula");
+  verdadeiro(G, `NGC 206 fica no disco de Andrômeda, perto do anel de 10 kpc (${r206.toFixed(1)} mil anos-luz do centro)`, r206 > 25 && r206 < 36);
+  verdadeiro(G, `NGC 604 fica a ${r604.toFixed(1)} mil anos-luz do centro da Triângulo, dentro do disco de 60 mil`, r604 > 6 && r604 < 15);
+  verdadeiro(G, `A Tarântula fica a ${rTarantula.toFixed(1)} mil anos-luz do centro da Grande Nuvem`, rTarantula > 2 && rTarantula < 8);
+  // M32: 24′ ao sul do núcleo (≈ 5,3 kpc no céu, na distância de Andrômeda).
+  {
+    const o = vizinha("andromeda"), m32 = o.regioes.find((x) => x.id === "m32");
+    const sep = Math.acos(escalar(astro.vetorEquatorial(astro.arParaGraus(o.ar), astro.decParaGraus(o.dec)),
+      astro.vetorEquatorial(astro.arParaGraus(m32.ar), astro.decParaGraus(m32.dec)))) * 180 / Math.PI * 60;
+    teste(G, "M32 está a 24′ do núcleo de Andrômeda", sep, 24.3, 0.5, "′");
+  }
+  // Tamanhos no comparador, do menor para o maior.
+  const ordem = cat.COMPARAVEIS.filter((o) => o.categoria === "galáxia").map((o) => o.id);
+  verdadeiro(G, `Galáxias no comparador em ordem: ${ordem.join(" < ")}`, ordem.join(",") === "smc,lmc,triangulo,via-lactea,andromeda");
+  teste(G, "A Triângulo tem ≈ 60% do diâmetro da Via Láctea (ESA/Hubble)", vizinha("triangulo").diametroAnosLuz / 100_000, 0.6, 0.01);
+}
+
 // ---------- 7c. A luz perto de um buraco negro (a conta do desenho) ----------
 // O desenho do buraco negro segue cada raio de luz com a relatividade geral.
 // A mesma conta, em JavaScript, tem de reproduzir resultados conhecidos.

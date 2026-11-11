@@ -995,24 +995,126 @@ export const OBJETOS_GALAXIA = [
     resumo: "Uma bola com cerca de 10 milhões de estrelas velhas, fora do disco da galáxia.",
     curiosidade: "Pode ser o núcleo de uma pequena galáxia que a Via Láctea 'engoliu' há muito tempo."
   },
+  // -------------------------------------------------------------------------
+  // Galáxias vizinhas. Além de l, b e d, cada uma tem o centro no céu (ar,
+  // dec, J2000) e a geometria medida, que os modelos 3D usam para ficar
+  // virados como de verdade (astronomia.geometriaDoDisco):
+  //   disco.pa          ângulo de posição do eixo maior (graus, do norte para o leste);
+  //   disco.inclinacao  0° = de frente, 90° = de lado;
+  //   disco.ladoProximo ângulo de posição do lado do disco mais perto de nós;
+  //   disco.giro        sentido do giro visto da Terra (dos mapas de velocidade).
+  // "regioes" são lugares de verdade (posição no céu e tamanho aproximado em
+  // mil anos-luz): o modelo os põe no ponto certo do disco.
+  // -------------------------------------------------------------------------
   {
-    id: "lmc", nome: "Grande Nuvem de Magalhães", tipo: "Galáxia satélite", l: 280.47, b: -32.89, d: 163,
-    cor: "#cfd8ff",
-    resumo: "Uma galáxia anã que gira em volta da Via Láctea, visível a olho nu no Hemisfério Sul.",
-    curiosidade: "Em 1987 uma supernova explodiu lá e foi a mais brilhante vista da Terra em quase 400 anos."
+    id: "lmc", nome: "Grande Nuvem de Magalhães", tipo: "Galáxia satélite da Via Láctea",
+    ar: "05 23 34.5", dec: "-69 45 22", l: 280.47, b: -32.89,
+    d: 161.7,                          // 49,59 kpc (Pietrzyński et al., 2019, eclipses de estrelas duplas)
+    cor: "#cfd8ff", categoria: "galáxia",
+    diametroAnosLuz: 14_000,           // corpo principal (NASA, Swift, 2013; ESO, 2018)
+    // Disco das estrelas velhas: i = 34°, linha dos nodos a 139° e giro no sentido
+    // horário visto daqui (van der Marel e Kallivayalil, 2014); o lado nordeste é o
+    // mais próximo (van der Marel e Cioni, 2001). Escala do disco: 1,44° ≈ 4 mil
+    // anos-luz (van der Marel, 2001).
+    disco: { pa: 139.1, inclinacao: 34, ladoProximo: 49.1, giro: "horario", escalaGraus: 1.44 },
+    centroDoDisco: { ar: "05 19 31.2", dec: "-69 35 24" },   // centro da rotação (van der Marel e Kallivayalil, 2014)
+    // Barra fora do centro: máximo de estrelas em 5h25,1m, −69°47′; ângulo de 112° a 126° (van der Marel, 2001).
+    barra: { ar: "05 25 06", dec: "-69 47 00", pa: 120, meioComprimentoGraus: 1.6, razao: 0.4 },
+    regioes: [
+      { id: "tarantula", nome: "Nebulosa da Tarântula (30 Doradus)", ar: "05 38 42", dec: "-69 06 03", raioKly: 0.6 },   // mais de 1.000 anos-luz (ESO, 2018)
+      { id: "n11", nome: "N11", ar: "04 56 48", dec: "-66 24 00", raioKly: 0.3 },
+      { id: "n44", nome: "N44", ar: "05 22 01", dec: "-67 57 00", raioKly: 0.15 }
+    ],
+    resumo: "Uma galáxia anã que gira em volta da Via Láctea, visível a olho nu no Hemisfério Sul. Tem uma barra de estrelas fora do centro e um só braço espiral.",
+    curiosidade: "Em 1987 uma supernova explodiu lá, na beirada da Nebulosa da Tarântula, e foi a mais brilhante vista da Terra em quase 400 anos.",
+    ficha: [
+      ["Diâmetro", "cerca de 14 mil anos-luz (o corpo principal)"],
+      ["Distância do Sol", "162 mil anos-luz (49,6 mil parsecs)"],
+      ["Maior berçário", "Nebulosa da Tarântula, com mais de 1.000 anos-luz"],
+      ["Forma", "barra fora do centro e um só braço espiral"],
+      ["Inclinação do disco", "cerca de 34° (vemos quase de frente)"]
+    ]
   },
   {
-    id: "smc", nome: "Pequena Nuvem de Magalhães", tipo: "Galáxia satélite", l: 302.80, b: -44.30, d: 200,
-    cor: "#c4ccff",
-    resumo: "A irmã menor da Grande Nuvem, também visível do Brasil longe das luzes da cidade.",
-    curiosidade: "As duas Nuvens foram descritas na viagem de Fernão de Magalhães (1519–1522), daí o nome."
+    id: "smc", nome: "Pequena Nuvem de Magalhães", tipo: "Galáxia satélite da Via Láctea",
+    ar: "00 52 44.8", dec: "-72 49 43", l: 302.80, b: -44.30,
+    d: 203.7,                          // 62,44 kpc (Graczyk et al., 2020)
+    cor: "#c4ccff", categoria: "galáxia",
+    diametroAnosLuz: 7_000,            // NASA (Swift, 2013)
+    // Não é um disco: é alongada na direção da Terra. As estrelas velhas ocupam
+    // ≈ 7 kpc de profundidade (Graczyk et al., 2020); as jovens formam uma "barra"
+    // de nordeste a sudoeste, com o nordeste mais perto de nós, e a "Asa" a leste,
+    // na direção da Grande Nuvem (Zaritsky et al., 2000; Ripepi et al., 2017).
+    corpo: { profundidadeKly: 22.8, paBarra: 45, inclinacaoDoEixo: 70 },
+    regioes: [
+      { id: "ngc346", nome: "NGC 346", ar: "00 59 05.2", dec: "-72 10 38", raioKly: 0.1 }
+    ],
+    resumo: "A irmã menor da Grande Nuvem, também visível do Brasil longe das luzes da cidade. É uma galáxia anã irregular, esticada pela gravidade da vizinha.",
+    curiosidade: "É mais funda do que larga: tem uns 7 mil anos-luz de largura no céu, mas as estrelas dela ocupam uns 23 mil anos-luz na direção da Terra.",
+    ficha: [
+      ["Diâmetro", "cerca de 7 mil anos-luz"],
+      ["Distância do Sol", "204 mil anos-luz (62,4 mil parsecs)"],
+      ["Profundidade", "cerca de 23 mil anos-luz na direção da Terra"],
+      ["Maior berçário", "NGC 346, na ponta nordeste"],
+      ["Ponte de Magalhães", "gás e estrelas jovens que ligam as duas Nuvens"]
+    ]
   },
   {
-    id: "andromeda", nome: "Galáxia de Andrômeda", tipo: "Galáxia espiral vizinha", l: 121.17, b: -21.57, d: 2537,
+    id: "andromeda", nome: "Galáxia de Andrômeda", tipo: "Galáxia espiral vizinha (M31)",
+    ar: "00 42 44.3", dec: "+41 16 09", l: 121.17, b: -21.57,
+    d: 2482,                           // 761 kpc (Li et al., 2021, cefeidas com o Hubble)
     cor: "#e6dcff", imagem: "img/universo/andromeda.webp",
     categoria: "galáxia", diametroAnosLuz: 220_000,   // NASA (Hubble, 2025): "mais de 200 mil anos-luz" de diâmetro
+    // i = 77° e eixo maior a 38° (Walterbos e Kennicutt, 1987; Carignan et al., 2006). O
+    // lado próximo é o noroeste e o nordeste se afasta de nós (Chemin, Carignan e
+    // Foster, 2009): visto daqui, o disco gira no sentido anti-horário.
+    // Disco exponencial de 5,3 kpc e bojo de Sérsic n = 2,2 com Re = 1,0 kpc (Courteau et al., 2011);
+    // anel de formação de estrelas de 43′ de raio, partido perto de M32, e dois braços
+    // de 9° e 9,5° de inclinação (Gordon et al., 2006); barra de 4 kpc vista a 55,7°
+    // (Blaña Díaz et al., 2017).
+    disco: { pa: 38, inclinacao: 77, ladoProximo: 308, giro: "anti-horario" },
+    regioes: [
+      { id: "ngc206", nome: "NGC 206", ar: "00 40 31.3", dec: "+40 44 21", raioKly: 2 },   // ≈ 4.000 anos-luz (NASA)
+      // Satélites (McConnachie, 2012): raio de meia-luz, achatamento e ângulo no céu.
+      // M32 fica na distância de Andrômeda (na frente do disco); M110, 41 kpc atrás.
+      { id: "m32", nome: "M32", ar: "00 42 41.8", dec: "+40 51 55", raioMeiaLuzKly: 0.36, elipticidade: 0.25, pa: 159, atrasKly: 0 },
+      { id: "m110", nome: "M110", ar: "00 40 22.1", dec: "+41 41 07", raioMeiaLuzKly: 1.92, elipticidade: 0.43, pa: 28, atrasKly: 134 }
+    ],
     resumo: "A grande galáxia mais próxima, com cerca de 1 trilhão de estrelas. É um dos objetos mais distantes que dá para ver a olho nu.",
-    curiosidade: "Andrômeda e a Via Láctea se aproximam a ≈ 110 km/s e podem se fundir daqui a bilhões de anos (estudos de 2025 estimam uma chance de cerca de 50% nos próximos 10 bilhões de anos)."
+    curiosidade: "Andrômeda e a Via Láctea se aproximam a ≈ 110 km/s e podem se fundir daqui a bilhões de anos (estudos de 2025 estimam uma chance de cerca de 50% nos próximos 10 bilhões de anos).",
+    ficha: [
+      ["Diâmetro", "mais de 200 mil anos-luz"],
+      ["Estrelas", "cerca de 1 trilhão"],
+      ["Distância do Sol", "2,48 milhões de anos-luz (761 mil parsecs)"],
+      ["Maior berçário", "NGC 206, nuvem de estrelas jovens de uns 4 mil anos-luz"],
+      ["Satélites", "M32 e M110 são os mais brilhantes"],
+      ["Inclinação do disco", "77° (vemos quase de lado)"]
+    ]
+  },
+  {
+    id: "triangulo", nome: "Galáxia do Triângulo", tipo: "Galáxia espiral vizinha (M33)",
+    ar: "01 33 50.9", dec: "+30 39 36", l: 133.61, b: -31.33,
+    d: 2740,                           // 840 kpc (Breuval et al., 2023, cefeidas com o Hubble)
+    cor: "#cddcff", categoria: "galáxia",
+    diametroAnosLuz: 60_000,           // ESA/Hubble (2019)
+    // i = 52° e eixo maior a 22,5°; a metade norte se aproxima de nós (Kam et al., 2017).
+    // Os braços são do tipo "Z" e o lado próximo é o noroeste (Andrae e Jahnke, 2011,
+    // com Cioni et al., 2008): visto daqui, gira no sentido horário. Disco de 1,6 kpc
+    // (Kam et al., 2017) e braços abertos, de ≈ 42° (Seigar et al., 2008). Sem bojo.
+    disco: { pa: 22.5, inclinacao: 52, ladoProximo: 292.5, giro: "horario" },
+    regioes: [
+      { id: "ngc604", nome: "NGC 604", ar: "01 34 32.9", dec: "+30 47 04", raioKly: 0.75 }   // quase 1.500 anos-luz (NASA)
+    ],
+    resumo: "A terceira maior galáxia do Grupo Local, depois de Andrômeda e da Via Láctea. Não tem bojo nem barra: é um disco cheio de gás onde nascem muitas estrelas.",
+    curiosidade: "Num céu bem escuro dá para vê-la a olho nu, como uma mancha bem fraca. A luz que chega dela hoje saiu de lá há uns 2,7 milhões de anos.",
+    ficha: [
+      ["Diâmetro", "cerca de 60 mil anos-luz"],
+      ["Estrelas", "cerca de 40 bilhões"],
+      ["Distância do Sol", "2,74 milhões de anos-luz (840 mil parsecs)"],
+      ["Maior berçário", "NGC 604, com quase 1.500 anos-luz"],
+      ["Estrelas novas", "cerca de 1 Sol a cada 2 anos"],
+      ["Inclinação do disco", "52°"]
+    ]
   }
 ].map((objeto) => ({ ...objeto, nivel: "galaxia" }));
 
@@ -1079,6 +1181,12 @@ export const MISSOES = [
     objetivo: "Visite a Galáxia de Andrômeda.",
     dica: "Ela está a 2,5 milhões de anos-luz. Talvez seja melhor usar o salto…",
     condicao: { tipo: "descobrir", ids: ["andromeda"] }
+  },
+  {
+    id: "grupo-local", nome: "Os vizinhos", nivel: "galaxia",
+    objetivo: "Descubra as duas Nuvens de Magalhães, Andrômeda e a Galáxia do Triângulo.",
+    dica: "As Nuvens estão a uns 160 e 200 mil anos-luz; Andrômeda e o Triângulo, a mais de 2 milhões. Use o salto!",
+    condicao: { tipo: "descobrir", ids: ["lmc", "smc", "andromeda", "triangulo"] }
   },
   {
     id: "tres-escalas", nome: "Três escalas", nivel: null,
@@ -1301,7 +1409,14 @@ export const PERGUNTAS = [
     pergunta: "O que é a Grande Nuvem de Magalhães?",
     opcoes: ["Uma galáxia satélite da Via Láctea", "Uma nuvem de chuva vista do espaço", "Uma nebulosa dentro do Sistema Solar"],
     certa: 0,
-    explicacao: "É uma galáxia anã a uns 163 mil anos-luz, que gira em volta da nossa."
+    explicacao: "É uma galáxia anã a uns 162 mil anos-luz, que gira em volta da nossa."
+  },
+  {
+    id: "q-smc", objeto: "smc",
+    pergunta: "O que liga a Pequena Nuvem de Magalhães à Grande Nuvem?",
+    opcoes: ["Nada: elas estão longe demais uma da outra", "A Ponte de Magalhães, uma faixa de gás com estrelas jovens", "Um rio de água congelada"],
+    certa: 1,
+    explicacao: "A gravidade da Grande Nuvem arrancou gás da Pequena. Essa ponte de gás liga as duas, e nela ainda nascem estrelas."
   },
   {
     id: "q-andromeda", objeto: "andromeda",
@@ -1309,6 +1424,13 @@ export const PERGUNTAS = [
     opcoes: ["Dinossauros", "Os primeiros ancestrais humanos do gênero Homo", "As pirâmides do Egito"],
     certa: 1,
     explicacao: "Os dinossauros (não avianos) sumiram há 66 milhões de anos; as pirâmides têm uns 4.500 anos. Há 2,5 milhões de anos surgiam os primeiros Homo."
+  },
+  {
+    id: "q-triangulo", objeto: "triangulo",
+    pergunta: "Quantas estrelas tem a Galáxia do Triângulo?",
+    opcoes: ["Cerca de 40 mil", "Cerca de 40 bilhões", "Cerca de 40 trilhões"],
+    certa: 1,
+    explicacao: "O Hubble estima uns 40 bilhões: bem menos que a Via Láctea (centenas de bilhões) e que Andrômeda (cerca de 1 trilhão)."
   }
 ];
 
@@ -1388,5 +1510,5 @@ export const COMPARAVEIS = [
   ...ESTRELAS.filter((e) => e.raioSolar),
   SISTEMA_SOLAR,
   ...GIGANTES,
-  ...OBJETOS_GALAXIA.filter((o) => o.categoria)   // Sagitário A* e Andrômeda
+  ...OBJETOS_GALAXIA.filter((o) => o.categoria)   // Sagitário A* e as galáxias vizinhas
 ].sort((a, b) => raioParaComparar(a) - raioParaComparar(b));

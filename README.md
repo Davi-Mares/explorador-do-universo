@@ -13,7 +13,7 @@
 - **Explorar**, em três níveis de escala:
   - **Sistema Solar** — os planetas onde estão hoje (com o dia e a noite certos), a Lua e mais 10 luas, Plutão, Ceres, o Cinturão de Asteroides e a Voyager 1, com o céu de verdade ao fundo.
   - **Estrelas vizinhas** — 30 estrelas para visitar, as 9 mil visíveis a olho nu nas posições 3D reais e uma régua de distâncias.
-  - **Via Láctea** — os braços espirais medidos, a barra, nebulosas, aglomerados, Sagitário A* e as galáxias vizinhas.
+  - **Via Láctea** — os braços espirais medidos, a barra, nebulosas, aglomerados, Sagitário A* e as galáxias vizinhas: as Nuvens de Magalhães, Andrômeda e a do Triângulo, viradas como as vemos daqui.
 
   Ao chegar num astro, a nave entra em órbita: arrastar gira em volta e a rodinha (ou W/S, ou dois dedos) aproxima.
 - **Comparar** — dois astros lado a lado, na mesma escala: de luas e planetas até galáxias e buracos negros.
@@ -54,6 +54,7 @@ Confere o modelo contra eventos reais e leis físicas — equinócios, oposiçõ
 - **Órbitas e fichas:** JPL/NASA (elementos orbitais, luas) e NASA NSSDC; eixos e rotação: IAU (Archinal et al., 2018).
 - **Estrelas:** catálogo HYG v4.0, a partir do Hipparcos (ESA) — `dados/estrelas.json` está sob CC BY-SA 4.0.
 - **Via Láctea:** braços medidos por Reid et al. (2019), barra de Wegg et al. (2015), disco de Bland-Hawthorn e Gerhard (2016), distância ao centro do GRAVITY (2019).
+- **Galáxias vizinhas:** distâncias de Li et al. (2021), Breuval et al. (2023), Pietrzyński et al. (2019) e Graczyk et al. (2020); inclinação, giro e estrutura de cada uma a partir de artigos e da NASA, ESA e ESO.
 - **Céu:** foto panorâmica da ESO/S. Brunier (CC BY 4.0).
 - **Mapas:** [Solar System Scope](https://www.solarsystemscope.com/textures/) (CC BY 4.0), NASA (Blue Marble, New Horizons) e [Celestia](https://github.com/CelestiaProject/CelestiaContent) (CC BY) para as luas. Nebulosas, galáxias, buracos negros e os mapas de Europa, Calisto, Encélado e Caronte são ilustrações feitas por código.
 - **Three.js** (MIT) para o 3D. As referências completas estão no documento do TCC.

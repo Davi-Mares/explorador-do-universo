@@ -947,7 +947,7 @@ function selecionar(corpo) {
 }
 
 /** Até cinco dados da ficha técnica (ou, nas estrelas, os dados de catálogo). */
-const CAMPOS_RAPIDOS = ["Diâmetro", "Tamanho", "Gravidade", "Rotação", "Ano", "Volta", "Temperatura", "Luas"];
+const CAMPOS_RAPIDOS = ["Diâmetro", "Tamanho", "Gravidade", "Rotação", "Ano", "Volta", "Temperatura", "Luas", "Estrelas", "Maior berçário", "Profundidade"];
 const numeroBr = (valor, casas = 0) => valor.toLocaleString("pt-BR", { maximumFractionDigits: casas });
 
 function fichaRapida(objeto) {

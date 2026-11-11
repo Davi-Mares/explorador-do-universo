@@ -13,7 +13,8 @@ import {
   SOL, PLANETAS, CINTURAO, GALAXIA, COMPARAVEIS, categoriaDoAstro as categoria, raioParaComparar as raioKm, corDaEstrela
 } from "./explorador/catalogo.js";
 import { criarAstro, definirAnisotropia, texturaDeBrilho } from "./explorador/astros3d.js";
-import { criarViaLactea, criarGalaxiaEspiral, ajustarMateriais } from "./explorador/galaxias3d.js";
+import { criarViaLactea, ajustarMateriais } from "./explorador/galaxias3d.js";
+import { CRIAR_VIZINHA } from "./explorador/vizinhas3d.js";
 
 const $ = (id) => document.getElementById(id);
 const movimentoReduzido = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -34,7 +35,7 @@ const NOMES = { andromeda: "Andrômeda" };
 const nome = (o) => NOMES[o.id] || o.nomeComparador || o.nome;
 
 // Artigos e plurais para frases naturais ("do Sol", "na Terra", "1.321 Terras").
-const ARTIGOS = { sol: "o", terra: "a", lua: "a", "via-lactea": "a", "sistema-solar": "o" };
+const ARTIGOS = { sol: "o", terra: "a", lua: "a", "via-lactea": "a", "sistema-solar": "o", triangulo: "a", lmc: "a", smc: "a" };
 const PLURAIS = {
   sol: "Sóis", mercurio: "Mercúrios", venus: "Vênus", terra: "Terras", lua: "Luas", marte: "Martes",
   jupiter: "Júpiteres", saturno: "Saturnos", urano: "Uranos", netuno: "Netunos", ceres: "Ceres", plutao: "Plutões"
@@ -382,11 +383,18 @@ let tamanhoTela = { largura: 1, altura: 1 };
  */
 function criarGalaxia3d(objeto) {
   const materiais = [];
+  // Raio (mil anos-luz) que vira 1 na tela; o disco só vai um pouco além dele.
+  const raio = objeto.id === "via-lactea" ? GALAXIA.raioDiscoKly : objeto.diametroAnosLuz / 2000;
   const modelo = objeto.id === "via-lactea"
-    ? criarViaLactea({ escala: 1 / GALAXIA.raioDiscoKly, materiais })
-    : criarGalaxiaEspiral({ raio: 1, semente: 31, quantidade: 60000, anel: 0.3, companheiras: true, materiais });
+    ? criarViaLactea({ escala: 1 / raio, materiais })
+    : CRIAR_VIZINHA[objeto.id]({ escala: 1 / raio, materiais, limite: raio * 2 });
   const plano = new THREE.Group();
-  plano.rotation.x = 0.85;          // disco visto de lado, um pouco de cima
+  if (modelo.userData.semDisco) {
+    // Pequena Nuvem: como a vemos daqui (norte para cima, leste à esquerda).
+    plano.rotation.y = Math.PI;
+  } else {
+    plano.rotation.x = 0.85;        // disco visto de lado, um pouco de cima
+  }
   plano.add(modelo);
   const grupo = new THREE.Group();
   grupo.add(plano);
@@ -597,8 +605,11 @@ qParaCamera.setFromAxisAngle(EIXO_X, INCLINACAO_PARA_CAMERA);
 
 function orientar(lado, horas) {
   if (lado.astro.modelo) {
-    // Galáxia: uma volta a cada 2 minutos (de verdade, centenas de milhões de anos).
-    lado.astro.modelo.rotation.y = -(horas / 120) * Math.PI * 2;
+    // Galáxia: uma volta a cada 2 minutos (de verdade, centenas de milhões de
+    // anos), no sentido do giro dela. A Pequena Nuvem não é um disco: fica parada.
+    const { modelo } = lado.astro;
+    if (!modelo.userData.semDisco) modelo.rotation.y = (modelo.userData.giro ?? -1) * (horas / 120) * Math.PI * 2;
+    modelo.userData.atualizar?.(camera);
     return;
   }
   const rot = lado.objeto.rotacao;

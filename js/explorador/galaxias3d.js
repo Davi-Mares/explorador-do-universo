@@ -34,12 +34,12 @@ export function corRgb(hex) {
   return [c.r, c.g, c.b];
 }
 
-const misturar = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
-const limitar = (v, min = 0, max = 1) => Math.min(max, Math.max(min, v));
-const degrau = (a, b, v) => { const t = limitar((v - a) / (b - a)); return t * t * (3 - 2 * t); };
+export const misturar = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+export const limitar = (v, min = 0, max = 1) => Math.min(max, Math.max(min, v));
+export const degrau = (a, b, v) => { const t = limitar((v - a) / (b - a)); return t * t * (3 - 2 * t); };
 
 /** Ruído 3D suave (value noise em oitavas), resultado entre 0 e 1. */
-function criarRuido(semente) {
+export function criarRuido(semente) {
   const aleatorio = aleatorioComSemente(semente);
   const p = Array.from({ length: 256 }, (_, i) => i);
   for (let i = 255; i > 0; i--) {
@@ -179,7 +179,7 @@ export function materialDeGas({ escuro = false } = {}) {
         // Uma mancha some quando a nave entra nela (não vira um borrão na tela).
         float dentro = smoothstep(0.6, 2.5, -mv.z / max(tamanho * escalaTamanho, 1e-12));
         vBrilho = brilho * min(1.0, px * 0.5) * min(1.0, pow(36.0 / limitado, 0.75)) * dentro
-          * exp(-extincao * length(mv.xyz)) * intensidade;
+          * exp(-extincao * length(mv.xyz)) * intensidade${escuro ? " * min(1.0, pow(30.0 / limitado, 0.6))" : ""};
         vCor = cor;
         gl_PointSize = limitado * escalaPixel;
         #include <logdepthbuf_vertex>
@@ -216,7 +216,7 @@ export function pontos(posicoes, cores, tamanhos, brilhos, material) {
 }
 
 /** Acumula pontos e cria o objeto 3D no fim. */
-class Lote {
+export class Lote {
   constructor() { this.p = []; this.c = []; this.t = []; this.b = []; }
   add(x, y, z, cor, tamanho, brilho) {
     this.p.push(x, y, z);
@@ -232,13 +232,13 @@ class Lote {
 }
 
 /** Direção aleatória uniforme na esfera. */
-function direcao(aleatorio) {
+export function direcao(aleatorio) {
   const z = aleatorio() * 2 - 1, fi = aleatorio() * DOIS_PI, r = Math.sqrt(1 - z * z);
   return [r * Math.cos(fi), z, r * Math.sin(fi)];
 }
 
 /** Raio de uma distribuição de Plummer (aglomerados), cortado em "maximo". */
-function raioPlummer(aleatorio, escala, maximo) {
+export function raioPlummer(aleatorio, escala, maximo) {
   for (;;) {
     const u = Math.max(aleatorio(), 1e-6);
     const r = escala / Math.sqrt(u ** (-2 / 3) - 1);
@@ -513,116 +513,6 @@ export function criarViaLactea({ escala = 1, materiais } = {}) {
     }
   };
   return grupo;
-}
-
-// ===========================================================================
-// Galáxia espiral genérica (Andrômeda), disco no plano XZ (normal +Y).
-// Bojo amarelado, braços azulados com faixas de poeira do lado de dentro,
-// regiões cor-de-rosa de formação de estrelas e, em Andrômeda, o "anel" de
-// formação estelar a uns 10 kpc do centro e as galáxias-satélite M32 e M110.
-// ===========================================================================
-
-export function criarGalaxiaEspiral({
-  raio, semente = 31, quantidade = 40000, bracos = 2, passo = 0.22, anel = 0.6, companheiras = false, materiais
-}) {
-  const aleatorio = aleatorioComSemente(semente);
-  const ruido = criarRuido(semente + 7);
-  const lote = new Lote();
-  const corBojo = corRgb("#ffe0ad"), corNucleo = corRgb("#fff3d6"), corDisco = corRgb("#dfe3f5");
-  const corBraco = corRgb("#b9ccff"), corRosa = corRgb("#ff8fb8"), corVelha = corRgb("#ffd9a8");
-  const tamanho = raio * 0.0075;
-
-  // Bojo: concentrado e achatado.
-  const nBojo = Math.round(quantidade * 0.24);
-  for (let i = 0; i < nBojo; i++) {
-    const r = raio * 0.11 * Math.pow(-Math.log(1 - aleatorio() * 0.995), 1.5) * 0.55;
-    const [dx, dy, dz] = direcao(aleatorio);
-    const perto = r < raio * 0.02;
-    lote.add(dx * r, dy * r * 0.62, dz * r, perto ? corNucleo : corBojo, tamanho * (perto ? 1.3 : 1.1), perto ? 0.34 : 0.22);
-  }
-
-  // Disco com braços.
-  const raioInicio = raio * 0.12;
-  let feitos = 0, tentativas = 0;
-  const nDisco = quantidade - nBojo;
-  while (feitos < nDisco && tentativas < nDisco * 20) {
-    tentativas++;
-    const r = -raio * 0.3 * Math.log(1 - aleatorio() * 0.99);
-    if (r > raio || r < raio * 0.03) continue;
-    const t = aleatorio() * DOIS_PI;
-    const fase = Math.log(Math.max(r, raioInicio) / raioInicio) / passo;
-    let menor = Infinity, sinal = 0;
-    for (let j = 0; j < bracos; j++) {
-      let d = t - fase - (DOIS_PI * j) / bracos;
-      d = ((d % DOIS_PI) + DOIS_PI * 1.5) % DOIS_PI - Math.PI;
-      if (Math.abs(d) < Math.abs(menor)) { menor = d; sinal = Math.sign(d); }
-    }
-    const noBraco = Math.exp(-((menor / 0.42) ** 2));
-    const poeira = Math.exp(-(((menor + 0.24) / 0.08) ** 2));   // faixa escura do lado de dentro
-    const pesoAnel = anel ? 0.9 * Math.exp(-(((r / raio - anel) / 0.05) ** 2)) : 0;
-    const textura = 0.65 + 0.7 * ruido(r / raio * 6, t * 1.3, 0.5, 3);
-    let chance = (0.18 + 0.82 * noBraco + pesoAnel) * textura * (1 - 0.8 * poeira);
-    if (aleatorio() > Math.min(1, chance)) continue;
-    const altura = gaussiana(aleatorio) * raio * 0.01 * (1 + 1.5 * r / raio);
-    const regiaoRosa = (noBraco > 0.5 || pesoAnel > 0.4) && aleatorio() < 0.05;
-    const cor = regiaoRosa ? corRosa : noBraco > 0.55 || pesoAnel > 0.4 ? corBraco : r < raio * 0.25 ? corVelha : corDisco;
-    const brilho = regiaoRosa ? 0.42 : 0.12 + 0.14 * noBraco + 0.1 * pesoAnel;
-    lote.add(r * Math.cos(t), altura, r * Math.sin(t), cor, tamanho * (regiaoRosa ? 1.4 : 0.7 + aleatorio() * 0.6), brilho);
-    feitos++;
-  }
-
-  if (companheiras) {
-    // M32: pequena e compacta, perto do centro. M110: maior e difusa, mais longe.
-    const satelite = (cx, cy, cz, escalaRaio, n, achatamento) => {
-      for (let i = 0; i < n; i++) {
-        const r = raioPlummer(aleatorio, escalaRaio, escalaRaio * 6);
-        const [dx, dy, dz] = direcao(aleatorio);
-        lote.add(cx + dx * r, cy + dy * r * achatamento, cz + dz * r, corBojo, tamanho * 0.9, 0.2);
-      }
-    };
-    satelite(raio * 0.12, raio * 0.05, raio * 0.06, raio * 0.006, 900, 0.8);
-    satelite(-raio * 0.16, raio * 0.18, -raio * 0.16, raio * 0.02, 1400, 0.55);
-  }
-  return lote.criar(materialDePontos({ atenuar: true }), materiais);
-}
-
-// ===========================================================================
-// Galáxia irregular (Nuvens de Magalhães): barra, disco manchado e
-// regiões de formação de estrelas (na Grande Nuvem, a Nebulosa da Tarântula).
-// ===========================================================================
-
-export function criarGalaxiaIrregular({ raio, semente, quantidade = 12000, alongamento = 1, tarantula = false, materiais }) {
-  const aleatorio = aleatorioComSemente(semente);
-  const ruido = criarRuido(semente + 3);
-  const lote = new Lote();
-  const corBarra = corRgb("#ffe7c2"), corDisco = corRgb("#d6e0ff"), corRosa = corRgb("#ff86b6");
-  const tamanho = raio * 0.012;
-  const nBarra = Math.round(quantidade * 0.3);
-  for (let i = 0; i < nBarra; i++) {
-    lote.add(gaussiana(aleatorio) * raio * 0.32 * alongamento, gaussiana(aleatorio) * raio * 0.07,
-      gaussiana(aleatorio) * raio * 0.09, corBarra, tamanho, 0.32);
-  }
-  let feitos = 0, tentativas = 0;
-  const nDisco = Math.round(quantidade * 0.62);
-  while (feitos < nDisco && tentativas < nDisco * 12) {
-    tentativas++;
-    const x = gaussiana(aleatorio) * raio * 0.45 * alongamento, z = gaussiana(aleatorio) * raio * 0.38;
-    const y = gaussiana(aleatorio) * raio * 0.06;
-    const n = ruido(x / raio * 3 + 5, y / raio * 3, z / raio * 3, 4);
-    if (aleatorio() > degrau(0.3, 0.7, n)) continue;
-    lote.add(x, y, z, corDisco, tamanho * (0.7 + aleatorio() * 0.6), 0.24);
-    feitos++;
-  }
-  // Regiões de formação de estrelas (rosas).
-  const nucleos = tarantula ? [[raio * 0.28, raio * 0.02, -raio * 0.18, 0.05, 1.4]] : [];
-  for (let i = 0; i < 6; i++) nucleos.push([gaussiana(aleatorio) * raio * 0.35, 0, gaussiana(aleatorio) * raio * 0.3, 0.025, 0.7]);
-  const nRosa = quantidade - nBarra - nDisco;
-  for (let i = 0; i < nRosa; i++) {
-    const [cx, cy, cz, sigma, peso] = nucleos[Math.min(nucleos.length - 1, Math.floor(aleatorio() ** (tarantula ? 2.2 : 1) * nucleos.length))];
-    lote.add(cx + gaussiana(aleatorio) * raio * sigma, cy + gaussiana(aleatorio) * raio * sigma * 0.5, cz + gaussiana(aleatorio) * raio * sigma,
-      corRosa, tamanho * 1.2, 0.42 * peso);
-  }
-  return lote.criar(materialDePontos({ atenuar: true }), materiais);
 }
 
 // ===========================================================================

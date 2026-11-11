@@ -296,6 +296,105 @@ export function equatorialParaGalactica(arGraus, decGraus) {
   return { l: normalizarGraus(Math.atan2(gy, gx) / RAD), b: Math.asin(Math.max(-1, Math.min(1, gz))) / RAD };
 }
 
+/** Vetor unitário equatorial (J2000) de ascensão reta e declinação em graus. */
+export function vetorEquatorial(arGraus, decGraus) {
+  const ra = arGraus * RAD, dec = decGraus * RAD;
+  return [Math.cos(dec) * Math.cos(ra), Math.cos(dec) * Math.sin(ra), Math.sin(dec)];
+}
+
+/** Vetor equatorial → galáctico (x para o centro da galáxia, z para o polo norte galáctico). */
+export function equatorialParaGalacticoVetor([x, y, z]) {
+  return [
+    -0.0548755604 * x - 0.8734370902 * y - 0.4838350155 * z,
+    0.4941094279 * x - 0.4448296300 * y + 0.7469822445 * z,
+    -0.8676661490 * x - 0.1980763734 * y + 0.4559837762 * z
+  ];
+}
+
+const escalar = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const combinar = (a, ka, b, kb) => [a[0] * ka + b[0] * kb, a[1] * ka + b[1] * kb, a[2] * ka + b[2] * kb];
+
+/**
+ * Direções no céu em volta de (ar, dec): norte, leste e a direção de um
+ * ângulo de posição qualquer (graus, do norte para o leste), equatoriais.
+ */
+export function direcoesNoCeu(arGraus, decGraus) {
+  const a = arGraus * RAD, d = decGraus * RAD;
+  const norte = [-Math.sin(d) * Math.cos(a), -Math.sin(d) * Math.sin(a), Math.cos(d)];
+  const leste = [-Math.sin(a), Math.cos(a), 0];
+  return { norte, leste, angulo: (pa) => combinar(norte, Math.cos(pa * RAD), leste, Math.sin(pa * RAD)) };
+}
+
+/**
+ * Geometria de uma galáxia de disco vista da Terra, a partir do que se mede
+ * nas fotos e nos mapas de velocidade:
+ *   pa          ângulo de posição do eixo maior (graus, do norte para o leste);
+ *   inclinacao  0° = de frente, 90° = de lado;
+ *   ladoProximo ângulo de posição do lado do disco mais perto de nós (pa ± 90°);
+ *   giro        "horario" ou "anti-horario": o sentido do giro visto da Terra.
+ * Devolve vetores unitários equatoriais: n (linha de visada, da Terra para a
+ * galáxia), m (eixo maior, para o lado "pa"), giro (eixo de rotação, pela regra
+ * da mão direita) e lateral = m × giro (completa a base do disco).
+ * A normal do disco que aponta para longe de nós é n·cos i + u(ladoProximo)·sen i;
+ * quem gira no sentido horário (visto daqui) tem o giro nessa direção.
+ */
+export function geometriaDoDisco({ ar, dec, pa, inclinacao, ladoProximo, giro }) {
+  const n = vetorEquatorial(ar, dec);
+  const ceu = direcoesNoCeu(ar, dec);
+  const m = ceu.angulo(pa);
+  const i = inclinacao * RAD;
+  const normalParaLonge = combinar(n, Math.cos(i), ceu.angulo(ladoProximo), Math.sin(i));
+  const eixo = giro === "horario" ? normalParaLonge : normalParaLonge.map((v) => -v);
+  return { n, m, giro: eixo, lateral: vetorial(m, eixo), ceu };
+}
+
+/**
+ * Coordenadas no referencial do disco (x = eixo maior, y = eixo de giro,
+ * z = lateral) de um ponto do espaço dado em coordenadas equatoriais,
+ * relativo ao centro da galáxia.
+ */
+export function noReferencialDoDisco(geometria, vetor) {
+  return { x: escalar(vetor, geometria.m), y: escalar(vetor, geometria.giro), z: escalar(vetor, geometria.lateral) };
+}
+
+/**
+ * Onde fica, no plano do disco, um ponto do céu (ar, dec) da galáxia: a linha
+ * de visada até ele cruza o plano do disco (que passa pelo centro, a uma
+ * distância "distancia"). Devolve x, y (≈ 0) e z no referencial do disco, na
+ * unidade de "distancia".
+ */
+export function noPlanoDoDisco(geometria, distancia, arGraus, decGraus) {
+  return noPlanoDoDiscoNaDirecao(geometria, distancia, vetorEquatorial(arGraus, decGraus));
+}
+
+/** O mesmo, para uma direção do céu dada como vetor equatorial unitário. */
+export function noPlanoDoDiscoNaDirecao(geometria, distancia, p) {
+  const centro = geometria.n.map((v) => v * distancia);
+  const t = escalar(centro, geometria.giro) / escalar(p, geometria.giro);
+  return noReferencialDoDisco(geometria, combinar(p, t, centro, -1));
+}
+
+/**
+ * Direção (x, z unitários no plano do disco) que, vista da Terra, sai do
+ * centro da galáxia no ângulo de posição "pa" do céu.
+ */
+export function direcaoNoDisco(geometria, pa) {
+  const passo = 1e-4;
+  const p = combinar(geometria.n, 1, geometria.ceu.angulo(pa), passo);
+  const q = noPlanoDoDiscoNaDirecao(geometria, 1, p.map((v) => v / Math.hypot(...p)));
+  const tamanho = Math.hypot(q.x, q.z);
+  return { x: q.x / tamanho, z: q.z / tamanho };
+}
+
+/**
+ * Ponto do céu (ar, dec) a uma distância própria, relativo ao centro da
+ * galáxia, no referencial do disco (para satélites, fora do disco).
+ */
+export function noEspacoDaGalaxia(geometria, distanciaCentro, arGraus, decGraus, distanciaPonto) {
+  const p = vetorEquatorial(arGraus, decGraus);
+  return noReferencialDoDisco(geometria, combinar(p, distanciaPonto, geometria.n, -distanciaCentro));
+}
+
 /**
  * Posição galactocêntrica (mesma unidade de d) de um objeto com longitude e
  * latitude galácticas l, b (graus), visto do Sol. O centro da galáxia fica na

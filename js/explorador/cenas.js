@@ -19,10 +19,10 @@ import {
 } from "./catalogo.js";
 import { criarAstro, orientarPelaIau, texturaDeBrilho } from "./astros3d.js";
 import {
-  corRgb, materialDePontos, pontos, criarViaLactea, criarGalaxiaEspiral,
-  criarGalaxiaIrregular, criarNebulosaDeOrion, criarNebulosaDaAguia, criarNebulosaDeCarina,
+  corRgb, materialDePontos, pontos, criarViaLactea, criarNebulosaDeOrion, criarNebulosaDaAguia, criarNebulosaDeCarina,
   criarNebulosaDoCaranguejo, criarPleiades, criarAglomeradoGlobular, criarNucleoGalactico
 } from "./galaxias3d.js";
+import { CRIAR_VIZINHA, orientacaoNaCena } from "./vizinhas3d.js";
 import { criarCinturao } from "./cinturao3d.js";
 import {
   criarFaixaDaViaLactea, criarEstrelasDoCatalogo, matrizCenaEclipticaParaGalactica, matrizCenaGalacticaParaGalactica
@@ -549,9 +549,10 @@ const RAIOS_GALAXIA = {
   eagle: { descoberta: 0.8, chegada: 0.11 },
   carina: { descoberta: 1, chegada: 0.45 },
   "omega-centauri": { descoberta: 1.5, chegada: 0.2 },
-  lmc: { descoberta: 60, chegada: 45 },
+  lmc: { descoberta: 60, chegada: 40 },
   smc: { descoberta: 40, chegada: 28 },
-  andromeda: { descoberta: 420, chegada: 230 }
+  andromeda: { descoberta: 420, chegada: 230 },
+  triangulo: { descoberta: 150, chegada: 80 }
 };
 
 /**
@@ -567,8 +568,8 @@ const GIRO_RAD_POR_SEGUNDO = (2 * Math.PI) / GIRO_GALAXIA.segundosPorVolta;
  * de raio — ampliado ≈ 1,2 milhão de vezes. O aviso aparece no painel do alvo.
  */
 export const ILUSTRACAO_SGR_A = { raioHorizonteKly: 0.0015 };
-/** Fora do disco (não giram com ele): as Nuvens de Magalhães e Andrômeda. */
-const FORA_DO_DISCO = new Set(["lmc", "smc", "andromeda"]);
+/** Fora do disco (não giram com ele): as galáxias vizinhas. */
+const FORA_DO_DISCO = new Set(["lmc", "smc", "andromeda", "triangulo"]);
 
 /** Estrelas mais brilhantes das Plêiades (J2000, SIMBAD) e brilho relativo. */
 const ESTRELAS_PLEIADES = [
@@ -635,35 +636,35 @@ export function criarNivelGalaxia() {
     eagle: () => criarNebulosaDaAguia({ raio: 0.035, materiais: materiaisDePontos }),
     carina: () => criarNebulosaDeCarina({ raio: 0.15, materiais: materiaisDePontos }),
     "omega-centauri": () => criarAglomeradoGlobular({ raio: 0.225, materiais: materiaisDePontos }),
-    lmc: () => criarGalaxiaIrregular({ raio: 16, semente: 41, quantidade: 18000, alongamento: 1.25, tarantula: true, materiais: materiaisDePontos }),
-    smc: () => criarGalaxiaIrregular({ raio: 9.5, semente: 42, quantidade: 7000, alongamento: 1.7, materiais: materiaisDePontos }),
-    andromeda: () => criarGalaxiaEspiral({ raio: 110, semente: 31, quantidade: 50000, anel: 0.3, companheiras: true, materiais: materiaisDePontos })
   };
-  const TAMANHO_MODELO = { "sgr-a": 0.03, pleiades: 0.025, "orion-nebula": 0.012, crab: 0.003, eagle: 0.035, carina: 0.15, "omega-centauri": 0.225, lmc: 16, smc: 9.5, andromeda: 110 };
+  const TAMANHO_MODELO = { "sgr-a": 0.03, pleiades: 0.025, "orion-nebula": 0.012, crab: 0.003, eagle: 0.035, carina: 0.15, "omega-centauri": 0.225, lmc: 12, smc: 7, andromeda: 110, triangulo: 30 };
+  const vizinhas = [];
+  const vizinhasPendentes = [];
 
   const marcas = [];
   for (const corpo of corpos) {
     const pai = corpo.gira ? disco : cena;
-    if (MODELOS[corpo.id]) {
+    if (CRIAR_VIZINHA[corpo.id]) {
+      // Galáxias vizinhas (vizinhas3d.js): em escala real e viradas como de
+      // verdade (eixo maior, inclinação e lado mais próximo de nós, medidos nas
+      // fotos e nos mapas de velocidade). São montadas logo depois que o nível
+      // aparece, uma de cada vez, para a troca de nível não travar.
+      const lugar = new THREE.Group();
+      lugar.position.copy(corpo.posicaoNoDisco);
+      lugar.quaternion.copy(orientacaoNaCena(corpo.objeto));
+      pai.add(lugar);
+      vizinhasPendentes.push({ id: corpo.id, lugar });
+    } else if (MODELOS[corpo.id]) {
       const modelo = MODELOS[corpo.id]();
       modelo.position.copy(corpo.posicaoNoDisco);
-      if (corpo.id === "andromeda") {
-        // Disco inclinado ≈ 77° em relação à nossa linha de visada.
-        const linhaDeVisada = corpo.posicaoNoDisco.clone().sub(posicaoDoSol).normalize();
-        const normal = linhaDeVisada.clone().applyAxisAngle(new THREE.Vector3(1, 0, 0), (77 * Math.PI) / 180);
-        modelo.quaternion.setFromUnitVectors(EIXO_Y, normal.normalize());
-      } else if (corpo.id === "lmc" || corpo.id === "smc") {
-        // As Nuvens aparecem quase de frente para nós.
-        const paraOSol = posicaoDoSol.clone().sub(corpo.posicaoNoDisco).normalize();
-        modelo.quaternion.setFromUnitVectors(EIXO_Y, paraOSol.applyAxisAngle(new THREE.Vector3(0, 0, 1), 0.5).normalize());
-      } else if (corpo.id !== "pleiades") {
+      if (corpo.id !== "pleiades") {
         // Nebulosas: o lado que vemos da Terra fica virado para o Sol.
         modelo.lookAt(posicaoDoSol);
       }
       pai.add(modelo);
     }
     // Brilho que marca o objeto de longe e some quando a nave chega perto.
-    const tamanho = { "sgr-a": 1.6, lmc: 9, smc: 6, andromeda: 60, "sol-galaxia": 0.25 }[corpo.id] || 0.35;
+    const tamanho = { "sgr-a": 1.6, lmc: 9, smc: 6, andromeda: 60, triangulo: 18, "sol-galaxia": 0.25 }[corpo.id] || 0.35;
     const opacidade = corpo.id === "sol-galaxia" ? 1 : 0.85;
     const sprite = brilhoSprite(corpo.cor, tamanho, { opacidade });
     sprite.position.copy(corpo.posicaoNoDisco);
@@ -671,6 +672,27 @@ export function criarNivelGalaxia() {
     if (TAMANHO_MODELO[corpo.id]) marcas.push({ corpo, sprite, opacidade, tamanho: Math.max(TAMANHO_MODELO[corpo.id], tamanho * 0.5) });
   }
   disco.add(brilhoSprite("#ffd27a", 0.012, { atenuar: false }).translateX(posicaoDoSol.x));
+
+  // Monta as vizinhas em segundo plano (as mais próximas primeiro). Os pontos
+  // novos recebem a mesma escala de tela dos que já existem.
+  function montarProximaVizinha() {
+    const pendente = vizinhasPendentes.shift();
+    if (!pendente) return;
+    const novos = [];
+    const modelo = CRIAR_VIZINHA[pendente.id]({ materiais: novos, ponte: true });
+    const referencia = materiaisDePontos[0]?.uniforms;
+    for (const material of novos) {
+      if (referencia) {
+        material.uniforms.escalaPixel.value = referencia.escalaPixel.value;
+        material.uniforms.escalaProjecao.value = referencia.escalaProjecao.value;
+      }
+      materiaisDePontos.push(material);
+    }
+    pendente.lugar.add(modelo);
+    vizinhas.push(modelo);
+    setTimeout(montarProximaVizinha, 60);
+  }
+  setTimeout(montarProximaVizinha, 400);
 
   // Buraco negro do centro, com o disco de gás no plano da galáxia (ilustração ampliada).
   const sgr = porId("sgr-a");
@@ -712,6 +734,12 @@ export function criarNivelGalaxia() {
       const ceuDeCasa = Math.max(1 - suave(2.5, 8, distanciaDoSol), noDisco * (1 - suave(9, 18, distanciaDoSol)));
       faixa.atualizar(camera, ceuDeCasa);
       viaLactea.userData.definirIntensidade(1 - ceuDeCasa);
+      // As vizinhas também estão na foto do céu de casa: perto do Sol, o
+      // modelo dá lugar a ela (os dois juntos ficariam com brilho dobrado).
+      for (const modelo of vizinhas) {
+        modelo.userData.definirIntensidade(1 - 0.9 * ceuDeCasa);
+        modelo.userData.atualizar(camera);
+      }
       // O buraco negro só é desenhado de perto (de longe ele some num pixel).
       buracoNegro.grupo.visible = camera.position.distanceTo(sgr.posicao) < 2.5;
       for (const { corpo, sprite, opacidade, tamanho } of marcas) {
