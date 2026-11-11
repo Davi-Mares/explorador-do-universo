@@ -14,7 +14,7 @@
 import * as THREE from "three";
 import * as astro from "./astronomia.js";
 import {
-  SOL, PLANETAS, LUA, LUAS, VOYAGER, PLANETAS_ANOES, CINTURAO, ESTRELAS, SOL_MAGNITUDE_ABSOLUTA,
+  SOL, PLANETAS, LUA, LUAS, SONDAS, PLANETAS_ANOES, CINTURAO, ESTRELAS, SOL_MAGNITUDE_ABSOLUTA,
   GALAXIA, OBJETOS_GALAXIA, corDaEstrela
 } from "./catalogo.js";
 import { criarAstro, orientarPelaIau, texturaDeBrilho } from "./astros3d.js";
@@ -200,10 +200,13 @@ export function criarNivelSolar(dataInicial) {
   // Ao chegar, olhar ao longo do anel (25° à frente): os asteroides aparecem em fila.
   cinturao.pontoDeOlhar = () => cinturao.posicao.clone().applyAxisAngle(EIXO_Y, (25 * Math.PI) / 180);
 
-  // --- Voyager 1 e a fronteira do vento solar ---
-  const voyager = criarCorpo(VOYAGER, { raioReal: 0, raioExibido: 1e-9, raioDescoberta: 2, distanciaChegada: 0.01, sonda: true });
-  const marcaVoyager = brilhoSprite("#f4f1e8", 0.008, { atenuar: false, opacidade: 0.9 });
-  cena.add(marcaVoyager);
+  // --- Sondas Voyager 1 e 2, cada uma na sua trajetória de saída (JPL) ---
+  const sondas = SONDAS.map((objeto) => {
+    const corpo = criarCorpo(objeto, { raioReal: 0, raioExibido: 1e-9, raioDescoberta: 2, distanciaChegada: 0.01, sonda: true });
+    corpo.marca = brilhoSprite(objeto.cor, 0.008, { atenuar: false, opacidade: 0.9 });
+    cena.add(corpo.marca);
+    return corpo;
+  });
   // --- Céu de verdade: a faixa da Via Láctea (foto da ESO) e as 9 mil
   // estrelas visíveis a olho nu (catálogo Hipparcos), vistas daqui. ---
   const faixa = criarFaixaDaViaLactea({ raio: 5e8, matriz: matrizCenaEclipticaParaGalactica(), intensidade: 0.85 });
@@ -231,7 +234,7 @@ export function criarNivelSolar(dataInicial) {
   const corpos = [sol];
   for (const planeta of planetas) corpos.push(planeta, ...(planeta === terra ? [lua] : []), ...luasDe(planeta.id));
   for (const anao of anoes) corpos.push(anao, ...luasDe(anao.id));
-  corpos.push(cinturao, voyager);
+  corpos.push(cinturao, ...sondas);
 
   let modoTamanho = "real";
   function aplicarTamanho(modo) {
@@ -261,7 +264,7 @@ export function criarNivelSolar(dataInicial) {
     for (const corpo of [...planetas, ...anoes]) corpo.posicao.copy(vetor(astro.posicaoHeliocentrica(corpo.objeto, data)));
     const geo = astro.posicaoLuaGeocentrica(data);
     lua.posicao.copy(terra.posicao).add(vetor({ x: geo.x / ua, y: geo.y / ua, z: geo.z / ua }));
-    voyager.posicao.copy(vetor(astro.posicaoSondaHeliocentrica(VOYAGER, data)));
+    for (const sonda of sondas) sonda.posicao.copy(vetor(astro.posicaoSondaHeliocentrica(sonda.objeto, data)));
     for (const corpo of luas) {
       const pai = porId.get(corpo.pai);
       const p = astro.posicaoDaLua(corpo.objeto, pai.objeto.rotacao, data);
@@ -309,7 +312,7 @@ export function criarNivelSolar(dataInicial) {
       if (!corpo.astro.pedido && tamanho > TAMANHO_PARA_TEXTURA) corpo.astro.carregar();
       if (PODE_HD && corpo.astro.temHD && !corpo.astro.pedidoHD && tamanho > TAMANHO_PARA_HD) corpo.astro.carregarHD();
     }
-    marcaVoyager.position.copy(voyager.posicao);
+    for (const sonda of sondas) sonda.marca.position.copy(sonda.posicao);
     if (camera) faixa.atualizar(camera);
   }
   atualizar(dataInicial);
@@ -338,10 +341,10 @@ export function criarNivelSolar(dataInicial) {
     get modoTamanho() { return modoTamanho; },
     atualizar,
     inicio,
-    /** Órbita em volta do Sol (sem entrar no brilho) e da Voyager (um pontinho). */
+    /** Órbita em volta do Sol (sem entrar no brilho) e das sondas (cada uma, um pontinho). */
     limitesDaOrbita(corpo) {
       if (corpo === sol) return { minimo: sol.raioExibido * 1.2, maximo: 0.75, superficie: sol.raioExibido };
-      if (corpo === voyager) return { minimo: 1e-6, maximo: 2, superficie: 0 };
+      if (corpo.sonda) return { minimo: 1e-6, maximo: 2, superficie: 0 };
       return null;
     },
     /**
@@ -350,7 +353,7 @@ export function criarNivelSolar(dataInicial) {
      * se vê a face dos anéis que está recebendo luz).
      */
     pontoDeVista(corpo) {
-      if (corpo === sol || corpo === voyager || !corpo.malha) return null;
+      if (corpo === sol || corpo.sonda || !corpo.malha) return null;
       const paraOSol = sol.posicao.clone().sub(corpo.posicao).normalize();
       const polo = EIXO_Y.clone().applyQuaternion(corpo.malha.quaternion);
       const lado = Math.sign(paraOSol.dot(polo)) || 1;

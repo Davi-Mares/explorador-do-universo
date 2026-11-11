@@ -5,8 +5,9 @@
 // Superfícies com mapas reais (projeção equirretangular, img/texturas/):
 //   Sol, planetas, Lua e anéis — Solar System Scope (CC BY 4.0), feitos com
 //   dados da NASA; Terra de dia e à noite — NASA Blue Marble e Earth at
-//   Night (domínio público). As nuvens da Terra são ilustrativas (geradas
-//   por código), porque as nuvens de verdade mudam o tempo todo.
+//   Night (domínio público); nuvens da Terra — mapa de nuvens de verdade do
+//   Solar System Scope (CC BY 4.0), que gira um pouco mais rápido que o chão.
+//   Os créditos de todos os mapas, luas incluídas, estão na página Sobre.
 //
 // Atmosfera, anéis e o Sol usam shaders próprios. A luz é calculada no
 // espaço local de cada astro (em raios do próprio astro), o que evita erros

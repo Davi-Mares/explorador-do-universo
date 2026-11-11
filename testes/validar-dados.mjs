@@ -264,14 +264,58 @@ for (const p of cat.PLANETAS_ANOES) {
   verdadeiro("Lua", `Apogeu entre 400 e 407 mil km (${Math.round(maior).toLocaleString("pt-BR")} km)`, maior > 400_000 && maior < 407_000);
 }
 
-// ---------- 5. Voyager 1 ----------
+// ---------- 5. Voyager 1 e 2 ----------
+// As sondas seguem as hipérboles que o JPL publicou em 1989 (catalogo.js). A
+// conta, levada até hoje, é conferida com marcos da NASA: a saída da
+// heliosfera de cada uma, a marca de 1 dia-luz e o rumo com que elas escapam.
 {
-  const data = new Date("2026-11-15T00:00:00Z");
-  const v = astro.posicaoSondaHeliocentrica(cat.VOYAGER, data);
-  const t = astro.posicaoHeliocentrica(planeta("terra"), data);
-  const distanciaDaTerra = Math.hypot(v.x - t.x, v.y - t.y, v.z - t.z);
-  const diasLuz = (distanciaDaTerra * astro.KM_POR_UA) / astro.VELOCIDADE_LUZ_KM_S / 86_400;
-  teste("Voyager", "Voyager 1 a ≈ 1 dia-luz da Terra em nov/2026", diasLuz, 1, 0.02, " dia-luz");
+  const G = "Voyager";
+  const modulo = (p) => Math.hypot(p.x, p.y, p.z);
+  const doSol = (sonda, iso) => modulo(astro.posicaoSondaHeliocentrica(sonda, new Date(iso)));
+  const vistaDaTerra = (sonda, iso) => {
+    const data = new Date(iso), v = astro.posicaoSondaHeliocentrica(sonda, data), t = astro.posicaoHeliocentrica(planeta("terra"), data);
+    return { x: v.x - t.x, y: v.y - t.y, z: v.z - t.z };
+  };
+  const UA_POR_DIA_LUZ = (astro.VELOCIDADE_LUZ_KM_S * 86_400) / astro.KM_POR_UA;   // 173,14 UA
+  const [v1, v2] = cat.SONDAS;
+
+  teste(G, "Voyager 1 a 1 dia-luz da Terra em 18/nov/2026, 10h16 UTC (NASA: 25,902 bilhões de km)",
+    modulo(vistaDaTerra(v1, new Date(cat.VOYAGER_A_UM_DIA_LUZ).toISOString())) / UA_POR_DIA_LUZ, 1, 0.001, " dia-luz");
+  teste(G, "Voyager 1 a 121,6 UA do Sol ao sair da heliosfera, em 25/ago/2012 (NASA)", doSol(v1, "2012-08-25T00:00:00Z"), 121.6, 0.15, " UA");
+  teste(G, "Voyager 2 a ≈ 119 UA do Sol ao sair da heliosfera, em 5/nov/2018 (NASA)", doSol(v2, "2018-11-05T00:00:00Z"), 119, 0.3, " UA");
+  const v2Em2018 = modulo(vistaDaTerra(v2, "2018-12-10T00:00:00Z")) * astro.KM_POR_UA;
+  teste(G, "Voyager 2 a ≈ 18 bilhões de km da Terra em 10/dez/2018 (NASA)", v2Em2018 / 1e9, 18, 0.2, " bilhões de km");
+  teste(G, "A luz levava ≈ 16,5 h da Voyager 2 até a Terra em 10/dez/2018 (NASA)", v2Em2018 / astro.VELOCIDADE_LUZ_KM_S / 3600, 16.5, 0.2, " h");
+
+  // Velocidade com que escapam, longe do Sol: 520 e 470 milhões de km por ano (NASA).
+  const milhoesDeKmPorAno = (sonda) => (astro.velocidadeDeFuga(sonda) * astro.SEGUNDOS_POR_ANO) / 1e6;
+  teste(G, "Voyager 1 escapa a ≈ 520 milhões de km por ano (NASA)", milhoesDeKmPorAno(v1), 520, 10, " milhões de km/ano");
+  teste(G, "Voyager 2 escapa a ≈ 470 milhões de km por ano (NASA)", milhoesDeKmPorAno(v2), 470, 10, " milhões de km/ano");
+  teste(G, "Voyager 1 a ≈ 17 km/s em relação ao Sol, em nov/2026", astro.velocidadeDaSonda(v1, new Date("2026-11-11T00:00:00Z")), 17, 0.2, " km/s");
+  teste(G, "Voyager 2 a ≈ 15,4 km/s em relação ao Sol, em nov/2026 (NASA)", astro.velocidadeDaSonda(v2, new Date("2026-11-11T00:00:00Z")), 15.4, 0.2, " km/s");
+
+  // Rumo de saída: a direção do movimento daqui a séculos, em relação ao plano dos planetas.
+  const latitudeDoRumo = (sonda) => {
+    const a = astro.posicaoSondaHeliocentrica(sonda, new Date("2300-01-01T00:00:00Z"));
+    const b = astro.posicaoSondaHeliocentrica(sonda, new Date("2301-01-01T00:00:00Z"));
+    return (Math.asin((b.z - a.z) / modulo({ x: b.x - a.x, y: b.y - a.y, z: b.z - a.z })) * 180) / Math.PI;
+  };
+  teste(G, "Voyager 1 sobe ≈ 35° para o norte do plano dos planetas (NASA)", latitudeDoRumo(v1), 35, 1, "°");
+  teste(G, "Voyager 2 desce ≈ 48° para o sul do plano dos planetas (NASA)", latitudeDoRumo(v2), -48, 1, "°");
+
+  // Lugar no céu visto da Terra em dezembro de 2018 (Sky & Telescope, com as efemérides do JPL):
+  // confere a passagem do referencial de 1950 para o de 2000.
+  const separacao = (sonda, ar, dec) => {
+    const g = vistaDaTerra(sonda, "2018-12-15T00:00:00Z"), e = astro.equatorialParaEcliptica(ar, dec, 1);
+    return (Math.acos((g.x * e.x + g.y * e.y + g.z * e.z) / modulo(g)) * 180) / Math.PI;
+  };
+  teste(G, "Voyager 1 em Ofiúco (AR 17h13m03s, Dec +11°58′) em dez/2018", separacao(v1, (17 + 13 / 60 + 3 / 3600) * 15, 11 + 58 / 60 + 19 / 3600), 0, 0.25, "°");
+  teste(G, "Voyager 2 no Pavão (AR 20h02m57s, Dec −57°37′) em dez/2018", separacao(v2, (20 + 2 / 60 + 57 / 3600) * 15, -(57 + 37 / 60 + 12 / 3600)), 0, 0.25, "°");
+
+  const equinocio = astro.eclipticaB1950ParaJ2000({ x: 1, y: 0, z: 0 });
+  teste(G, "Precessão de 1950 a 2000: o equinócio anda 0,698° (50,3″ por ano)", (Math.atan2(equinocio.y, equinocio.x) * 180) / Math.PI, (50.29 * 50) / 3600, 0.001, "°");
+  verdadeiro(G, "A Voyager 1 está mais longe do Sol que a Voyager 2 (é o objeto humano mais distante)",
+    doSol(v1, "2026-11-11T00:00:00Z") > doSol(v2, "2026-11-11T00:00:00Z"));
 }
 
 // ---------- 6. Estrelas ----------
@@ -420,9 +464,15 @@ for (const p of cat.PLANETAS_ANOES) {
   const ids = cat.TODOS_OS_OBJETOS.map((o) => o.id);
   verdadeiro("Base", `Ids únicos (${ids.length} objetos)`, new Set(ids).size === ids.length);
   for (const q of cat.PERGUNTAS) {
-    verdadeiro("Base", `Pergunta ${q.id}: objeto existe e resposta válida`,
-      cat.objetoPorId(q.objeto) && Number.isInteger(q.certa) && q.certa >= 0 && q.certa < q.opcoes.length);
+    verdadeiro("Base", `Pergunta ${q.id}: objeto existe, resposta válida e opções diferentes entre si`,
+      cat.objetoPorId(q.objeto) && Number.isInteger(q.certa) && q.certa >= 0 && q.certa < q.opcoes.length &&
+      q.opcoes.length >= 3 && new Set(q.opcoes).size === q.opcoes.length && q.pergunta && q.explicacao);
   }
+  // Todo objeto tem o seu desafio, e só um.
+  const desafios = cat.PERGUNTAS.map((q) => q.objeto);
+  verdadeiro("Base", `Cada um dos ${ids.length} objetos tem um desafio (${cat.PERGUNTAS.length} perguntas)`,
+    new Set(desafios).size === desafios.length && ids.every((id) => desafios.includes(id)));
+  verdadeiro("Base", "Ids das perguntas únicos", new Set(cat.PERGUNTAS.map((q) => q.id)).size === cat.PERGUNTAS.length);
   for (const m of cat.MISSOES) {
     const c = m.condicao;
     const referencias = c.tipo === "descobrir" ? c.ids : c.tipo === "viagem" ? [c.alvo, c.origem].filter(Boolean) : [];
@@ -459,12 +509,20 @@ for (const p of cat.PLANETAS_ANOES) {
         : [b.readUInt16LE(26) & 0x3fff, b.readUInt16LE(28) & 0x3fff];
     verdadeiro(G, `${o.nome}: foto quadrada de ${w} × ${h} px`, w === h && w >= 400);
   }
-  // Toda ficha técnica vem com o texto do "saiba mais" e pelo menos uma fonte com link.
-  for (const o of cat.TODOS_OS_OBJETOS.filter((x) => x.ficha)) {
+  // Todo objeto tem ficha técnica e pelo menos uma fonte com link. Fora as estrelas
+  // (ficha montada com os dados de catálogo do SIMBAD), todos têm também o "saiba mais".
+  for (const o of [...cat.TODOS_OS_OBJETOS, ...cat.GIGANTES, cat.SISTEMA_SOLAR]) {
     const fontes = cat.fontesDoObjeto(o);
-    verdadeiro(G, `${o.nome}: ficha com "saiba mais" e ${fontes.length} ${fontes.length === 1 ? "fonte" : "fontes"} com link`,
-      o.saibaMais && fontes.length && fontes.every((f) => f.rotulo && f.url.startsWith("https://")));
+    const noExplorador = cat.TODOS_OS_OBJETOS.includes(o);
+    const texto = !noExplorador ? "fonte" : o.espectro ? "ficha de catálogo" : 'ficha com "saiba mais"';
+    verdadeiro(G, `${o.nome}: ${texto} e ${fontes.length} ${fontes.length === 1 ? "fonte" : "fontes"} com link`,
+      (!noExplorador || (o.ficha?.length && (o.saibaMais || o.espectro))) &&
+      fontes.length && fontes.every((f) => f.rotulo && f.url.startsWith("https://")));
   }
+  // As 30 estrelas apontam para a página de cada uma no SIMBAD.
+  verdadeiro(G, "Estrelas: cada uma com o endereço da sua página no SIMBAD",
+    new Set(cat.ESTRELAS.map((e) => cat.fontesDoObjeto(e)[0].url)).size === cat.ESTRELAS.length &&
+    cat.ESTRELAS.every((e) => cat.fontesDoObjeto(e)[0].url.startsWith("https://simbad.cds.unistra.fr/simbad/sim-id?Ident=")));
   // Não sobra foto sem dono (e portanto sem crédito) nas pastas do Diário.
   const usadas = new Set(comFoto.map((o) => o.imagem));
   for (const pasta of ["img/planetas", "img/universo"]) {
@@ -473,6 +531,28 @@ for (const p of cat.PLANETAS_ANOES) {
     }
   }
 }
+// ---------- Site offline (PWA) e página do repositório ----------
+{
+  const G = "Site";
+  const sw = readFileSync(join(raiz, "pwa/service-worker.js"), "utf8");
+  const lista = [...sw.matchAll(/"\.\/([^"]+)"/g)].map((m) => m[1]);
+  const existe = (caminho) => { try { readFileSync(join(raiz, caminho)); return true; } catch { return false; } };
+  const faltando = lista.filter((caminho) => !existe(caminho));
+  verdadeiro(G, `Service worker: os ${lista.length} arquivos guardados para uso offline existem`, lista.length > 40 && !faltando.length, faltando.join(", "));
+  const doSite = [
+    ...readdirSync(raiz).filter((a) => a.endsWith(".html")),
+    ...["css", "js", "js/explorador"].flatMap((pasta) => readdirSync(join(raiz, pasta)).filter((a) => /\.(css|js)$/.test(a)).map((a) => `${pasta}/${a}`))
+  ];
+  const foraDaLista = doSite.filter((caminho) => !lista.includes(caminho));
+  verdadeiro(G, `Service worker: as ${doSite.length} páginas, estilos e scripts do site estão na lista`, !foraDaLista.length, foraDaLista.join(", "));
+  // O README (a página do repositório) acompanha a base de conhecimento.
+  const leiame = readFileSync(join(raiz, "README.md"), "utf8");
+  const numeros = { objetos: cat.TODOS_OS_OBJETOS.length, desafios: cat.PERGUNTAS.length, missoes: cat.MISSOES.length, estrelas: cat.ESTRELAS.length };
+  verdadeiro(G, `README com os números da base: ${numeros.objetos} astros, ${numeros.desafios} desafios, ${numeros.missoes} missões e ${numeros.estrelas} estrelas`,
+    leiame.includes(`${numeros.objetos} astros`) && leiame.includes(`${numeros.desafios} desafios`) &&
+    leiame.includes(`${numeros.missoes} missões`) && leiame.includes(`${numeros.estrelas} estrelas`));
+}
+
 // ---------- Relatório ----------
 const formatar = (v) => (typeof v === "number" ? (Math.abs(v) >= 1000 ? v.toFixed(0) : v.toPrecision(5)) : v);
 let grupoAtual = "";

@@ -991,11 +991,6 @@ kbd {
     transform: none;
   }
 
-  .painel-destinos {
-    z-index: 6;
-    max-height: calc(100dvh - var(--altura-topo) - 64px);
-  }
-
   .painel-alvo {
     top: calc(var(--altura-topo) + 4px);
     right: 14px;
@@ -1036,5 +1031,16 @@ kbd {
     overflow-y: auto;
     transform: none;
     animation-name: surgir-canto;
+  }
+}
+
+/* Em telas estreitas a lista de destinos passa por cima do painel da nave e
+   do cartão de descoberta e vai até perto do fim da tela (ela fecha ao escolher
+   um destino): assim os últimos itens, como as sondas Voyager, nunca ficam
+   escondidos. */
+@media (max-width: 1040px), (max-height: 520px) {
+  .painel-destinos {
+    z-index: 8;
+    max-height: calc(100dvh - var(--altura-topo) - 64px);
   }
 }

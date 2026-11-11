@@ -126,7 +126,7 @@ export function longitudeNoEquinocioDaData(longitudeJ2000, data) {
   return normalizarGraus(longitudeJ2000 + 1.396971 * seculosDesdeJ2000(data));
 }
 
-// ---------- Lua e Voyager ----------
+// ---------- Lua e sondas Voyager ----------
 
 /**
  * Posição geocêntrica eclíptica da Lua (km), pela fórmula de baixa precisão
@@ -147,15 +147,79 @@ export function posicaoLuaGeocentrica(data) {
   };
 }
 
+/** GM do Sol (km³/s²), o valor das efemérides do JPL. */
+export const GM_SOL_KM3_S2 = 1.32712440018e11;
+
+/** Resolve a equação de Kepler da hipérbole, M = e·senh(H) − H (radianos), pelo método de Newton. */
+export function resolverKeplerHiperbolico(anomaliaMedia, excentricidade) {
+  let h = Math.asinh(anomaliaMedia / excentricidade);
+  for (let i = 0; i < 50; i++) {
+    const delta = (excentricidade * Math.sinh(h) - h - anomaliaMedia) / (excentricidade * Math.cosh(h) - 1);
+    h -= delta;
+    if (Math.abs(delta) < 1e-13) break;
+  }
+  return h;
+}
+
 /**
- * Posição heliocêntrica eclíptica aproximada (UA) de uma sonda que se afasta
- * em linha reta (caso da Voyager 1 depois de Saturno).
+ * Precessão de B1950,0 a J2000,0 em coordenadas eclípticas (modelo da IAU de
+ * 1976; Meeus, "Astronomical Algorithms", cap. 21): η é o ângulo entre as duas
+ * eclípticas, Π a longitude da linha em que elas se cruzam e p a precessão geral.
+ */
+const PRECESSAO_B1950 = (() => {
+  const T = (2_433_282.4235 - 2_451_545.0) / 36_525, t = -T;   // séculos julianos: de B1950,0 até J2000,0
+  const segundo = RAD / 3600;
+  return {
+    eta: ((47.0029 - 0.06603 * T + 0.000598 * T * T) * t + (-0.03302 + 0.000598 * T) * t * t + 0.00006 * t ** 3) * segundo,
+    Pi: 174.876384 * RAD + (3289.4789 * T + 0.60622 * T * T - (869.8089 + 0.50491 * T) * t + 0.03536 * t * t) * segundo,
+    p: ((5029.0966 + 2.22226 * T - 0.000042 * T * T) * t + (1.11113 - 0.000042 * T) * t * t - 0.000006 * t ** 3) * segundo
+  };
+})();
+
+/** Leva um vetor da eclíptica e equinócio de B1950,0 para os de J2000,0. */
+export function eclipticaB1950ParaJ2000({ x, y, z }) {
+  const { eta, Pi, p } = PRECESSAO_B1950;
+  // Eixo x na linha em que as duas eclípticas se cruzam, inclinação η e volta ao equinócio novo.
+  const x1 = x * Math.cos(Pi) + y * Math.sin(Pi), y1 = -x * Math.sin(Pi) + y * Math.cos(Pi);
+  const y2 = y1 * Math.cos(eta) + z * Math.sin(eta), z2 = -y1 * Math.sin(eta) + z * Math.cos(eta);
+  const giro = Pi + p;
+  return { x: x1 * Math.cos(giro) - y2 * Math.sin(giro), y: x1 * Math.sin(giro) + y2 * Math.cos(giro), z: z2 };
+}
+
+/**
+ * Posição heliocêntrica eclíptica (UA, J2000) de uma sonda que está saindo do
+ * Sistema Solar: uma hipérbole com o Sol no foco. "trajetoria" traz os
+ * elementos como o JPL publicou os das Voyager: aKm (semieixo, negativo na
+ * hipérbole), e, i, O (nodo ascendente), w (periélio) e M (anomalia média na
+ * época), em graus, na eclíptica de B1950,0. Vale do último planeta visitado
+ * em diante.
  */
 export function posicaoSondaHeliocentrica(sonda, data) {
-  const { referencia, direcao } = sonda;
-  const anos = (data.getTime() - Date.parse(referencia.data)) / (SEGUNDOS_POR_ANO * 1000);
-  const distancia = referencia.distanciaUA + referencia.uaPorAno * anos;
-  return equatorialParaEcliptica(direcao.ar, direcao.dec, distancia);
+  const { epoca, aKm, e, i, O, w, M } = sonda.trajetoria;
+  const a = Math.abs(aKm);
+  const movimentoMedio = Math.sqrt(GM_SOL_KM3_S2 / a ** 3);   // rad/s
+  const anomaliaMedia = M * RAD + (movimentoMedio * (data.getTime() - Date.parse(epoca))) / 1000;
+  const h = resolverKeplerHiperbolico(anomaliaMedia, e);
+  const raio = (a * (e * Math.cosh(h) - 1)) / KM_POR_UA;
+  const anomaliaVerdadeira = 2 * Math.atan(Math.sqrt((e + 1) / (e - 1)) * Math.tanh(h / 2));
+  const u = anomaliaVerdadeira + w * RAD, nodo = O * RAD, inclinacao = i * RAD;
+  return eclipticaB1950ParaJ2000({
+    x: raio * (Math.cos(nodo) * Math.cos(u) - Math.sin(nodo) * Math.sin(u) * Math.cos(inclinacao)),
+    y: raio * (Math.sin(nodo) * Math.cos(u) + Math.cos(nodo) * Math.sin(u) * Math.cos(inclinacao)),
+    z: raio * Math.sin(u) * Math.sin(inclinacao)
+  });
+}
+
+/** Velocidade da sonda em relação ao Sol (km/s), pela conservação da energia: v² = GM·(2/r + 1/|a|). */
+export function velocidadeDaSonda(sonda, data) {
+  const p = posicaoSondaHeliocentrica(sonda, data);
+  const raioKm = Math.hypot(p.x, p.y, p.z) * KM_POR_UA;
+  return Math.sqrt(GM_SOL_KM3_S2 * (2 / raioKm + 1 / Math.abs(sonda.trajetoria.aKm)));
+}
+
+/** Velocidade com que a sonda escapa, muito longe do Sol (km/s): v∞ = √(GM/|a|). */
+export function velocidadeDeFuga(sonda) {
+  return Math.sqrt(GM_SOL_KM3_S2 / Math.abs(sonda.trajetoria.aKm));
 }
 
 /** Magnitude aparente de uma estrela vista a uma distância (anos-luz). */
