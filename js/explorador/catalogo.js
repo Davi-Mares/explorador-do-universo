@@ -873,7 +873,7 @@ const TAMANHOS_ESTELARES = {
  * Designações de catálogo (Bayer, Gliese, HD), que o SIMBAD sempre reconhece.
  */
 const NOMES_NO_SIMBAD = {
-  proxima: "Proxima Centauri", "alfa-centauri": "alf Cen", barnard: "GJ 699", "wolf-359": "Wolf 359",
+  proxima: "GJ 551", "alfa-centauri": "alf Cen", barnard: "GJ 699", "wolf-359": "Wolf 359",
   "lalande-21185": "HD 95735", sirius: "alf CMa", "luyten-726-8": "GJ 65", "ross-154": "Ross 154",
   "ross-248": "Ross 248", "epsilon-eridani": "eps Eri", "lacaille-9352": "HD 217987", "ross-128": "Ross 128",
   "61-cygni": "61 Cyg", procyon: "alf CMi", "tau-ceti": "tau Cet", altair: "alf Aql", vega: "alf Lyr",
