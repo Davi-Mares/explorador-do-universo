@@ -1014,8 +1014,7 @@ export const OBJETOS_GALAXIA = [
     diametroAnosLuz: 14_000,           // corpo principal (NASA, Swift, 2013; ESO, 2018)
     // Disco das estrelas velhas: i = 34°, linha dos nodos a 139° e giro no sentido
     // horário visto daqui (van der Marel e Kallivayalil, 2014); o lado nordeste é o
-    // mais próximo (van der Marel e Cioni, 2001). Escala do disco: 1,44° ≈ 4 mil
-    // anos-luz (van der Marel, 2001).
+    // mais próximo e a escala do disco é 1,44° ≈ 4 mil anos-luz (van der Marel, 2001).
     disco: { pa: 139.1, inclinacao: 34, ladoProximo: 49.1, giro: "horario", escalaGraus: 1.44 },
     centroDoDisco: { ar: "05 19 31.2", dec: "-69 35 24" },   // centro da rotação (van der Marel e Kallivayalil, 2014)
     // Barra fora do centro: máximo de estrelas em 5h25,1m, −69°47′; ângulo de 112° a 126° (van der Marel, 2001).
@@ -1065,7 +1064,7 @@ export const OBJETOS_GALAXIA = [
     d: 2482,                           // 761 kpc (Li et al., 2021, cefeidas com o Hubble)
     cor: "#e6dcff", imagem: "img/universo/andromeda.webp",
     categoria: "galáxia", diametroAnosLuz: 220_000,   // NASA (Hubble, 2025): "mais de 200 mil anos-luz" de diâmetro
-    // i = 77° e eixo maior a 38° (Walterbos e Kennicutt, 1987; Carignan et al., 2006). O
+    // i = 77° e eixo maior a 38° (Carignan et al., 2006). O
     // lado próximo é o noroeste e o nordeste se afasta de nós (Chemin, Carignan e
     // Foster, 2009): visto daqui, o disco gira no sentido anti-horário.
     // Disco exponencial de 5,3 kpc e bojo de Sérsic n = 2,2 com Re = 1,0 kpc (Courteau et al., 2011);
@@ -1098,8 +1097,8 @@ export const OBJETOS_GALAXIA = [
     cor: "#cddcff", categoria: "galáxia",
     diametroAnosLuz: 60_000,           // ESA/Hubble (2019)
     // i = 52° e eixo maior a 22,5°; a metade norte se aproxima de nós (Kam et al., 2017).
-    // Os braços são do tipo "Z" e o lado próximo é o noroeste (Andrae e Jahnke, 2011,
-    // com Cioni et al., 2008): visto daqui, gira no sentido horário. Disco de 1,6 kpc
+    // Os braços são do tipo "Z" e o lado próximo é o noroeste (Andrae e Jahnke, 2011):
+    // visto daqui, gira no sentido horário. Disco de 1,6 kpc
     // (Kam et al., 2017) e braços abertos, de ≈ 42° (Seigar et al., 2008). Sem bojo.
     disco: { pa: 22.5, inclinacao: 52, ladoProximo: 292.5, giro: "horario" },
     regioes: [
