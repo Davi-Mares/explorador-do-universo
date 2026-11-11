@@ -6,7 +6,7 @@
 
 import * as astro from "./explorador/astronomia.js";
 import {
-  NIVEIS, SOL, PLANETAS, LUA, LUAS, PLANETAS_ANOES, CINTURAO, VOYAGER, ESTRELAS, OBJETOS_GALAXIA, MISSOES, PERGUNTAS, GALAXIA,
+  NIVEIS, SOL, PLANETAS, LUA, LUAS, PLANETAS_ANOES, CINTURAO, SONDAS, ESTRELAS, OBJETOS_GALAXIA, MISSOES, PERGUNTAS, GALAXIA,
   TODOS_OS_OBJETOS, COMPARAVEIS, perguntaDoObjeto, corDaEstrela, fontesDoObjeto
 } from "./explorador/catalogo.js";
 import * as progresso from "./explorador/progresso.js";
@@ -25,8 +25,8 @@ function distanciaDoObjeto(objeto) {
   const kmPorKly = 1000 * astro.KM_POR_ANO_LUZ;
   if (objeto.id === "sol") return { km: astro.KM_POR_UA, rotulo: "da Terra" };
   if (objeto.id === "lua") return { km: LUA.distanciaMediaKm, rotulo: "da Terra" };
-  if (objeto.id === "voyager") {
-    const p = astro.posicaoSondaHeliocentrica(VOYAGER, new Date());
+  if (objeto.trajetoria) {
+    const p = astro.posicaoSondaHeliocentrica(objeto, new Date());
     return { km: Math.hypot(p.x, p.y, p.z) * astro.KM_POR_UA, rotulo: "do Sol, hoje" };
   }
   if (objeto.pai) return { km: objeto.distanciaMediaKm, rotulo: `de ${objeto.nomePai}` };
@@ -50,7 +50,7 @@ const GRUPOS = [
       SOL,
       ...PLANETAS.flatMap((p) => [p, ...(p.id === "terra" ? [LUA] : []), ...luasDe(p.id)]),
       ...PLANETAS_ANOES.flatMap((a) => [a, ...luasDe(a.id)]),
-      CINTURAO, VOYAGER
+      CINTURAO, ...SONDAS
     ]
   },
   { nivel: "estrelas", objetos: ESTRELAS },
@@ -98,7 +98,7 @@ function linkComparar(objeto) {
     return `<a href="comparar.html?a=${objeto.id}&b=${outro}">⚖️ Comparar com ${nome}</a>`;
   }
   if (objeto.raioSolar) return `<a href="comparar.html?a=sol&b=${objeto.id}">⚖️ Comparar com o Sol</a>`;
-  if (objeto.raioKm && objeto.id !== "voyager") return `<a href="comparar.html?a=terra&b=${objeto.id}">⚖️ Comparar com a Terra</a>`;
+  if (objeto.raioKm && !objeto.trajetoria) return `<a href="comparar.html?a=terra&b=${objeto.id}">⚖️ Comparar com a Terra</a>`;
   return "";
 }
 
@@ -116,7 +116,7 @@ function verbete(objeto, nivel) {
   const fontes = fontesDoObjeto(objeto);
   const ficha = objeto.ficha ? `
     <details class="ficha">
-      <summary>Ficha técnica e saiba mais</summary>
+      <summary>${objeto.saibaMais ? "Ficha técnica e saiba mais" : "Ficha técnica"}</summary>
       ${objeto.saibaMais ? `<p>${escapar(objeto.saibaMais)}</p>` : ""}
       <table>${objeto.ficha.map(([campo, valor]) => `<tr><th scope="row">${escapar(campo)}</th><td>${escapar(valor)}</td></tr>`).join("")}</table>
       ${fontes.length ? `<p class="fonte">${fontes.length > 1 ? "Fontes" : "Fonte"}: ${fontes

@@ -669,7 +669,7 @@ function chegar(corpo, { salto }) {
 // ---------- Estado da nave: piloto automático ou em órbita ----------
 
 // Artigo de cada nome ("da Terra", "do Sol", "das Plêiades", "de Marte").
-const ARTIGOS = { terra: "a", lua: "a", voyager: "a", sol: "o", "sol-galaxia": "o", cinturao: "o", pleiades: "as" };
+const ARTIGOS = { terra: "a", lua: "a", voyager: "a", "voyager-2": "a", sol: "o", "sol-galaxia": "o", cinturao: "o", pleiades: "as" };
 const artigo = (corpo) => ARTIGOS[corpo.id] || (/^(Nebulosa|Galáxia|Grande|Pequena|Estrela|Nuvem)\b/.test(corpo.nome) ? "a" : "");
 const nomeCurto = (corpo) => corpo.nome.replace(/\s*\(.*\)$/, "");
 const com = (corpo) => (artigo(corpo) ? `${artigo(corpo)} ${nomeCurto(corpo)}` : nomeCurto(corpo));
@@ -974,8 +974,17 @@ $("botao-opcoes").addEventListener("click", () => {
 
 // ---------- Alvo selecionado ----------
 
+/** Telas em que o cartão de descoberta ocupa o lugar do painel do alvo (a mesma condição do explorador.css). */
+const TELA_PEQUENA = window.matchMedia("(max-width: 760px), (max-height: 520px)");
+
 function selecionar(corpo) {
   selecionado = corpo;
+  // Quem escolhe um destino segue viagem: em telas pequenas o cartão de descoberta
+  // sai para dar lugar a este painel (a descoberta já está guardada no Diário).
+  if (filaDeDescobertas.length && TELA_PEQUENA.matches && !$("dialogo-quiz").open) {
+    filaDeDescobertas.length = 0;
+    mostrarDescoberta();
+  }
   const painel = $("painel-alvo");
   painel.hidden = false;
   $("alvo-nome").textContent = corpo.nome;
@@ -991,22 +1000,16 @@ function selecionar(corpo) {
   atualizarDestinos();
 }
 
-/** Até cinco dados da ficha técnica (ou, nas estrelas, os dados de catálogo). */
-const CAMPOS_RAPIDOS = ["Diâmetro", "Tamanho", "Gravidade", "Rotação", "Ano", "Volta", "Temperatura", "Luas", "Estrelas", "Maior berçário", "Profundidade"];
-const numeroBr = (valor, casas = 0) => valor.toLocaleString("pt-BR", { maximumFractionDigits: casas });
+/** Até cinco dados da ficha técnica: os campos principais ou, nas estrelas vizinhas, a ficha de catálogo inteira. */
+const CAMPOS_RAPIDOS = [
+  "Diâmetro", "Tamanho", "Gravidade", "Rotação", "Ano", "Volta", "Temperatura", "Luas", "Estrelas", "Maior berçário", "Profundidade",
+  "Onde fica", "Distância do centro", "Massa", "Brilho no céu", "No centro", "Lançamento", "Visitou", "Velocidade"
+];
 
 function fichaRapida(objeto) {
-  if (objeto.ficha) {
-    return objeto.ficha.filter(([campo]) => CAMPOS_RAPIDOS.some((c) => campo.startsWith(c))).slice(0, 5);
-  }
-  if (objeto.espectro) {
-    const itens = [["Tipo espectral", objeto.espectro]];
-    if (objeto.raioSolar) itens.push(["Tamanho", `${numeroBr(objeto.raioSolar, objeto.raioSolar < 10 ? 2 : 0)} × o raio do Sol`]);
-    if (objeto.temperaturaK) itens.push(["Temperatura", `${numeroBr(objeto.temperaturaK)} K na superfície`]);
-    if (objeto.anosLuz) itens.push(["Distância do Sol", `${numeroBr(objeto.anosLuz, 2)} anos-luz`]);
-    return itens;
-  }
-  return [];
+  if (!objeto.ficha) return [];
+  const campos = objeto.anosLuz ? objeto.ficha : objeto.ficha.filter(([campo]) => CAMPOS_RAPIDOS.some((c) => campo.startsWith(c)));
+  return campos.slice(0, 5);
 }
 
 function fecharAlvo() {

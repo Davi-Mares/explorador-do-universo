@@ -6,16 +6,22 @@
 //
 // Módulo puro: também é lido pelo script de validação (testes/).
 //
-// Fontes dos dados:
+// Fontes dos dados (cada verbete traz os links das suas, em "fonte" ou "fontes"):
 // - Órbitas: Standish/JPL, elementos keplerianos aproximados (1800–2050).
 // - Raios, períodos, gravidade e inclinação dos eixos: NASA Planetary Fact Sheet.
 // - Polos e meridianos: IAU WGCCRE (Archinal et al., 2018).
-// - Estrelas: coordenadas J2000 (SIMBAD) e distâncias por paralaxe
-//   (Hipparcos/Gaia); distâncias de supergigantes têm incerteza grande.
+// - Luas: NASA Science (uma página por lua) e JPL (órbitas e tamanhos);
+//   contagem das luas dos planetas gigantes: NASA e JPL (junho de 2026).
+// - Estrelas: coordenadas J2000, tipo espectral e magnitude do SIMBAD (CDS,
+//   Estrasburgo); distâncias por paralaxe (Hipparcos/Gaia). As distâncias das
+//   supergigantes têm incerteza grande.
 // - Galáxia: R0 = 8,178 kpc (GRAVITY, 2019); coordenadas galácticas SIMBAD;
-//   distâncias e tamanhos das nebulosas e aglomerados: catálogos Messier e
-//   Caldwell do Hubble (NASA); Sagitário A*: ESO (eso2208).
+//   nebulosas e aglomerados: catálogos Messier e Caldwell do Hubble (NASA);
+//   Nebulosa de Órion: 414 pc (Menten et al., 2007); Sagitário A*: ESO (2022);
+//   galáxias vizinhas: artigos citados em cada uma, NASA, ESA e ESO.
 // - Plutão e Ceres: NASA (NSSDC e NASA Science); Cinturão: NASA e equipe Lucy (SwRI).
+// - Voyager 1 e 2: trajetórias publicadas pelo JPL (elementos hiperbólicos,
+//   1989) e páginas da missão na NASA.
 // ---------------------------------------------------------------------------
 
 /** Níveis de escala do explorador. "unidadeKm" converte a unidade da cena. */
@@ -289,14 +295,14 @@ const FICHAS = {
   },
   jupiter: {
     fonte: "https://science.nasa.gov/jupiter/jupiter-facts/",
-    saibaMais: "Gigante gasoso de hidrogênio e hélio, Júpiter tem um dia de cerca de 10 horas, faixas de nuvens, tempestades intensas e a magnetosfera mais forte entre os planetas. Entre suas dezenas de luas estão Ganimedes, a maior do Sistema Solar, e Europa, que pode ter um oceano sob o gelo.",
+    saibaMais: "Gigante gasoso de hidrogênio e hélio, Júpiter tem um dia de cerca de 10 horas, faixas de nuvens, tempestades intensas e a magnetosfera mais forte entre os planetas. Entre as suas mais de cem luas estão Ganimedes, a maior do Sistema Solar, e Europa, que pode ter um oceano sob o gelo.",
     ficha: [
       ["Tipo", "Gigante gasoso"],
       ["Diâmetro", "139.820 km (11 Terras)"],
       ["Distância do Sol", "778 milhões de km (5,2 UA)"],
       ["Rotação", "9 h 56 min"],
       ["Ano", "11,9 anos terrestres"],
-      ["Luas", "Mais de 90"],
+      ["Luas", "115 conhecidas (2026)"],
       ["Temperatura", "≈ −110 °C (topo das nuvens)"],
       ["Gravidade", "24,8 m/s² (2,5× a da Terra)"]
     ]
@@ -310,7 +316,7 @@ const FICHAS = {
       ["Distância do Sol", "1,4 bilhão de km (9,5 UA)"],
       ["Rotação", "10 h 33 min"],
       ["Ano", "29,4 anos terrestres"],
-      ["Luas", "Mais de 270"],
+      ["Luas", "293 conhecidas (2026)"],
       ["Temperatura", "≈ −140 °C"],
       ["Gravidade", "10,4 m/s² (1,07× a da Terra)"]
     ]
@@ -455,11 +461,25 @@ export const LUA = {
   ]
 };
 
+// ---------------------------------------------------------------------------
+// Sondas Voyager. Cada uma segue a hipérbole que o JPL publicou para o trecho
+// depois do último planeta visitado ("Voyager 1 and 2 Hyperbolic Orbital
+// Elements", S. Matousek, JPL, novembro de 1989): semieixo em km e ângulos em
+// graus, com o Sol no foco, na eclíptica de 1950,0; M é a anomalia média na
+// época (1º/jan/1991). A conta está em astronomia.posicaoSondaHeliocentrica.
+// Conferido com a NASA (testes/): Voyager 1 a 121,6 UA do Sol em 25/ago/2012 e
+// Voyager 2 a 119 UA em 5/nov/2018 (saída da heliosfera); Voyager 1 a 173,2 UA
+// da Terra no instante em que a NASA marca 1 dia-luz (173,1 UA): 0,03% a mais.
+// ---------------------------------------------------------------------------
+
 /**
- * Voyager 1: posição aproximada (±1 UA). Depois de passar por Saturno ela
- * segue quase em linha reta rumo à constelação de Ofiúco, afastando-se
- * ≈ 3,58 UA por ano. Cruzou a heliopausa em 25/ago/2012 a 121,6 UA.
+ * Em 18/nov/2026, às 10h16 UTC, a Voyager 1 chega a 1 dia-luz da Terra
+ * (25,902 bilhões de km), segundo a NASA. A Terra vai e volta na órbita, mas
+ * a sonda se afasta mais rápido: depois dessa data ela não fica mais a menos
+ * de 1 dia-luz.
  */
+export const VOYAGER_A_UM_DIA_LUZ = Date.UTC(2026, 10, 18, 10, 16, 7);
+
 export const VOYAGER = {
   id: "voyager",
   nome: "Voyager 1",
@@ -467,11 +487,60 @@ export const VOYAGER = {
   tipo: "Sonda espacial (NASA, lançada em 1977)",
   raioKm: 0.002,
   cor: "#f4f1e8",
-  direcao: { ar: 258.0, dec: 12.1 },             // graus (equatorial J2000)
-  referencia: { data: "2012-08-25", distanciaUA: 121.6, uaPorAno: 3.58 },
+  // Depois de Saturno (nov/1980): sobe 35° para o norte do plano dos planetas, rumo a Ofiúco.
+  trajetoria: { epoca: "1991-01-01T00:00:00Z", aKm: -480_926_000, e: 3.724716, i: 35.762854, O: 178.197845, w: -21.671355, M: 688.967795 },
   resumo: "O objeto feito por humanos mais distante da Terra. Já saiu da bolha do vento solar e está no espaço interestelar.",
-  curiosidade: "Por volta de novembro de 2026 ela fica a 1 dia-luz da Terra: um comando enviado daqui leva quase 24 horas para chegar."
+  /** O texto acompanha a data: antes e depois de a sonda chegar a 1 dia-luz. */
+  get curiosidade() {
+    return Date.now() < VOYAGER_A_UM_DIA_LUZ
+      ? "Em 18 de novembro de 2026 ela chega a 1 dia-luz da Terra, segundo a NASA: um comando enviado daqui passa a levar 24 horas para chegar. Nenhum objeto feito por humanos foi tão longe."
+      : "Desde 18 de novembro de 2026 ela está a mais de 1 dia-luz da Terra: um comando enviado daqui leva mais de 24 horas para chegar. Nenhum outro objeto feito por humanos foi tão longe.";
+  },
+  fontes: [
+    ["NASA (onde estão as Voyager)", "https://science.nasa.gov/mission/voyager/where-are-voyager-1-and-voyager-2-now/"],
+    ["NASA (ficha da missão)", "https://science.nasa.gov/mission/voyager/fact-sheet"]
+  ],
+  saibaMais: "Lançada em 1977, a Voyager 1 passou por Júpiter em 1979 e por Saturno em 1980. Desde então se afasta a cerca de 17 km/s, subindo 35° para o norte do plano dos planetas. Em agosto de 2012 ela saiu da heliosfera, a bolha de vento solar que envolve os planetas. Em 2026, quase 50 anos depois do lançamento, dois dos seus dez instrumentos científicos continuavam ligados.",
+  ficha: [
+    ["Tipo", "Sonda espacial da NASA"],
+    ["Lançamento", "5 de setembro de 1977"],
+    ["Visitou", "Júpiter (1979) e Saturno (1980)"],
+    ["Espaço interestelar", "desde agosto de 2012"],
+    ["Velocidade", "cerca de 17 km/s (61 mil km/h)"],
+    ["Rumo", "35° ao norte do plano dos planetas, na direção de Ofiúco"],
+    ["1 dia-luz da Terra", "18 de novembro de 2026"]
+  ]
 };
+
+export const VOYAGER_2 = {
+  id: "voyager-2",
+  nome: "Voyager 2",
+  nivel: "solar",
+  tipo: "Sonda espacial (NASA, lançada em 1977)",
+  raioKm: 0.002,
+  cor: "#f4f1e8",
+  // Depois de Netuno (ago/1989): desce 48° para o sul do plano dos planetas, rumo ao Pavão.
+  trajetoria: { epoca: "1991-01-01T00:00:00Z", aKm: -601_124_000, e: 6.284578, i: 78.810177, O: 100.934989, w: 130.043962, M: 342.970736 },
+  resumo: "A única sonda que já visitou Urano e Netuno. Depois dos quatro planetas gigantes, também saiu da bolha do vento solar e viaja pelo espaço interestelar.",
+  curiosidade: "Foi lançada 16 dias antes da Voyager 1, mas a irmã pegou um caminho mais curto e mais rápido e chegou primeiro a Júpiter e a Saturno.",
+  fontes: [
+    ["NASA (Voyager 2)", "https://science.nasa.gov/mission/voyager/voyager-2/"],
+    ["NASA (2018)", "https://science.nasa.gov/missions/voyager/nasas-voyager-2-probe-enters-interstellar-space/"],
+    ["NASA (ficha da missão)", "https://science.nasa.gov/mission/voyager/fact-sheet"]
+  ],
+  saibaMais: "A Voyager 2 aproveitou um alinhamento de Júpiter, Saturno, Urano e Netuno que só acontece a cada 175 anos, mais ou menos: a gravidade de cada planeta jogou a sonda para o seguinte, e a viagem até Netuno caiu de 30 para 12 anos. Em Urano ela descobriu 10 luas. Em 5 de novembro de 2018 saiu da heliosfera, seis anos depois da irmã. Hoje se afasta a cerca de 15 km/s, descendo 48° para o sul do plano dos planetas. Em 2026, três dos seus dez instrumentos científicos continuavam ligados.",
+  ficha: [
+    ["Tipo", "Sonda espacial da NASA"],
+    ["Lançamento", "20 de agosto de 1977"],
+    ["Visitou", "Júpiter (1979), Saturno (1981), Urano (1986) e Netuno (1989)"],
+    ["Espaço interestelar", "desde 5 de novembro de 2018"],
+    ["Velocidade", "cerca de 15 km/s (55 mil km/h)"],
+    ["Rumo", "48° ao sul do plano dos planetas, na direção do Pavão"]
+  ]
+};
+
+/** As duas sondas, na ordem em que aparecem nos destinos e no Diário. */
+export const SONDAS = [VOYAGER, VOYAGER_2];
 
 // ---------------------------------------------------------------------------
 // Planetas anões e o Cinturão de Asteroides.
@@ -798,6 +867,46 @@ const TAMANHOS_ESTELARES = {
   betelgeuse: { raioSolar: 764, temperaturaK: 3600 }
 };
 
+/**
+ * Nome de cada estrela no SIMBAD, o banco de dados de referência do CDS
+ * (Estrasburgo), de onde vêm as coordenadas, o tipo espectral e a magnitude.
+ * Designações de catálogo (Bayer, Gliese, HD), que o SIMBAD sempre reconhece.
+ */
+const NOMES_NO_SIMBAD = {
+  proxima: "Proxima Centauri", "alfa-centauri": "alf Cen", barnard: "GJ 699", "wolf-359": "Wolf 359",
+  "lalande-21185": "HD 95735", sirius: "alf CMa", "luyten-726-8": "GJ 65", "ross-154": "Ross 154",
+  "ross-248": "Ross 248", "epsilon-eridani": "eps Eri", "lacaille-9352": "HD 217987", "ross-128": "Ross 128",
+  "61-cygni": "61 Cyg", procyon: "alf CMi", "tau-ceti": "tau Cet", altair: "alf Aql", vega: "alf Lyr",
+  fomalhaut: "alf PsA", polux: "bet Gem", arcturo: "alf Boo", capela: "alf Aur", aldebara: "alf Tau",
+  regulo: "alf Leo", espiga: "alf Vir", canopus: "alf Car", acrux: "alf Cru", polaris: "alf UMi",
+  antares: "alf Sco", betelgeuse: "alf Ori", rigel: "bet Ori"
+};
+
+/** Endereço da estrela no SIMBAD (formato do guia do SIMBAD: sim-id?Ident=nome). */
+const enderecoNoSimbad = (nome) => `https://simbad.cds.unistra.fr/simbad/sim-id?Ident=${encodeURIComponent(nome)}`;
+
+const numeroBr = (valor, casas) => valor.toLocaleString("pt-BR", { maximumFractionDigits: casas }).replace("-", "−");
+
+/** Como a estrela aparece no céu da Terra, pela magnitude (o olho vê até perto de 6). */
+function visibilidade(magnitude) {
+  if (magnitude <= 1.5) return "uma das mais brilhantes do céu";
+  if (magnitude <= 6) return "visível a olho nu";
+  if (magnitude <= 10) return "com binóculos ou telescópio pequeno";
+  return "só com telescópio";
+}
+
+/** Ficha técnica de uma estrela, montada com os dados do próprio catálogo (a fonte é a página dela no SIMBAD). */
+function fichaDaEstrela(estrela) {
+  const ficha = [
+    ["Tipo espectral", estrela.espectro],
+    ["Brilho no céu", `Magnitude ${numeroBr(estrela.mag, 2)} (${visibilidade(estrela.mag)})`],
+    ["Distância do Sol", `${numeroBr(estrela.anosLuz, 2)} anos-luz`]
+  ];
+  if (estrela.raioSolar) ficha.push(["Tamanho", `${numeroBr(estrela.raioSolar, estrela.raioSolar < 10 ? 2 : 0)} × o raio do Sol`]);
+  if (estrela.temperaturaK) ficha.push(["Temperatura", `${numeroBr(estrela.temperaturaK, 0)} K na superfície`]);
+  return ficha;
+}
+
 export const ESTRELAS = [
   {
     id: "proxima", nome: "Proxima Centauri", ar: "14 29 42.95", dec: "-62 40 46.1", anosLuz: 4.246,
@@ -979,7 +1088,14 @@ export const ESTRELAS = [
     resumo: "O 'pé' de Órion, uma das estrelas mais luminosas que dá para ver a olho nu.",
     curiosidade: "Emite dezenas de milhares de vezes mais luz que o Sol."
   }
-].map((estrela) => ({ ...estrela, ...TAMANHOS_ESTELARES[estrela.id], nivel: "estrelas" }));
+].map((estrela) => {
+  const completa = { ...estrela, ...TAMANHOS_ESTELARES[estrela.id], nivel: "estrelas" };
+  return {
+    ...completa,
+    ficha: fichaDaEstrela(completa),
+    fontes: [["SIMBAD (CDS)", enderecoNoSimbad(NOMES_NO_SIMBAD[estrela.id])]]
+  };
+});
 
 /** O Sol também aparece como estrela no nível 2 (magnitude absoluta 4,83). */
 export const SOL_MAGNITUDE_ABSOLUTA = 4.83;
@@ -1029,50 +1145,133 @@ export const OBJETOS_GALAXIA = [
     id: "sol-galaxia", nome: "Sol (você está aqui)", tipo: "Nossa estrela", centro: false, l: 0, b: 0, d: 0,
     cor: "#ffd27a",
     resumo: "O Sol fica num braço pequeno, o Braço de Órion, a cerca de 26.670 anos-luz do centro da galáxia.",
-    curiosidade: "O Sol leva cerca de 230 milhões de anos para dar uma volta na galáxia — a última vez que esteve neste ponto, os primeiros dinossauros estavam surgindo."
+    curiosidade: "O Sol leva cerca de 230 milhões de anos para dar uma volta na galáxia — a última vez que esteve neste ponto, os primeiros dinossauros estavam surgindo.",
+    saibaMais: "A distância até o centro foi medida seguindo a estrela S2, que dá uma volta em torno do buraco negro central a cada 16 anos: 8.178 parsecs, com erro de 0,3%. A essa distância, o Sol leva cerca de 230 milhões de anos para completar uma volta, segundo a NASA.",
+    fontes: [
+      ["NASA (StarChild)", "https://starchild.gsfc.nasa.gov/docs/StarChild/questions/question18.html"],
+      ["GRAVITY Collaboration (2019)", "https://doi.org/10.1051/0004-6361/201935656"]
+    ],
+    ficha: [
+      ["Onde fica", "no Braço Local (de Órion), entre os braços de Sagitário e de Perseu"],
+      ["Distância do centro", "26.670 anos-luz (8.178 parsecs)"],
+      ["Volta na galáxia", "cerca de 230 milhões de anos"]
+    ]
   },
   {
     id: "sgr-a", nome: "Sagitário A*", tipo: "Buraco negro supermassivo", centro: true,
     cor: "#ffb36b", categoria: "buraco negro", massaSolar: 4.0e6,   // ESO/EHT (2022): ≈ 4 milhões de Sóis
     notaEscala: "🎨 O buraco negro aqui é uma ilustração ampliada mais de 1 milhão de vezes. O de verdade tem 24 milhões de km de diâmetro e seria invisível nesta escala.",
     resumo: "O buraco negro no centro da Via Láctea, com cerca de 4 milhões de vezes a massa do Sol.",
-    curiosidade: "Em 2022 o Event Horizon Telescope mostrou a primeira imagem da 'sombra' dele."
+    curiosidade: "Em 2022 o Event Horizon Telescope mostrou a primeira imagem da 'sombra' dele.",
+    saibaMais: "A imagem, divulgada em 12 de maio de 2022, foi feita com uma rede de radiotelescópios espalhados pelo planeta, que juntos funcionam como um telescópio do tamanho da Terra. Ela mostra um anel de gás brilhante em volta de uma região escura, a 'sombra' do buraco negro. A massa é conhecida pelo movimento das estrelas que giram em volta dele.",
+    fontes: [
+      ["ESO (2022)", "https://www.eso.org/public/news/eso2208-eht-mw/"],
+      ["GRAVITY Collaboration (2019)", "https://doi.org/10.1051/0004-6361/201935656"]
+    ],
+    ficha: [
+      ["Massa", "cerca de 4 milhões de vezes a do Sol"],
+      ["Diâmetro", "cerca de 24 milhões de km (o horizonte de eventos, calculado pela massa)"],
+      ["Distância do Sol", "26.670 anos-luz (8.178 parsecs)"],
+      ["Primeira imagem", "12 de maio de 2022 (Event Horizon Telescope)"]
+    ]
   },
   {
-    id: "pleiades", nome: "Plêiades (Sete Estrelo)", tipo: "Aglomerado aberto de estrelas", l: 166.57, b: -23.52, d: 0.444,
+    id: "pleiades", nome: "Plêiades (Sete Estrelo)", tipo: "Aglomerado aberto de estrelas", l: 166.57, b: -23.52, d: 0.445,
     cor: "#a9c4ff",
     resumo: "Um grupo de estrelas jovens e azuis que nasceram juntas, na constelação de Touro.",
-    curiosidade: "Muitos povos indígenas do Brasil usavam o aparecimento das Plêiades no céu para marcar o calendário."
+    curiosidade: "Muitos povos indígenas do Brasil usavam o aparecimento das Plêiades no céu para marcar o calendário.",
+    saibaMais: "O nome popular fala em sete estrelas, mas o aglomerado tem mais de mil, segundo a NASA. É um dos objetos mais fáceis de achar no céu: tem magnitude 1,6 e aparece melhor nas noites de dezembro. Também é chamado de M45, o número dele no catálogo de Charles Messier.",
+    fontes: [["NASA (Hubble, catálogo Messier)", "https://science.nasa.gov/mission/hubble/science/explore-the-night-sky/hubble-messier-catalog/messier-45/"]],
+    ficha: [
+      ["Tipo", "Aglomerado aberto de estrelas (M45)"],
+      ["Distância do Sol", "cerca de 445 anos-luz"],
+      ["Estrelas", "mais de mil"],
+      ["Brilho no céu", "magnitude 1,6 (visível a olho nu)"],
+      ["Constelação", "Touro"],
+      ["Melhor época", "dezembro"]
+    ]
   },
   {
-    id: "orion-nebula", nome: "Nebulosa de Órion", tipo: "Berçário de estrelas", l: 209.01, b: -19.38, d: 1.344,
+    id: "orion-nebula", nome: "Nebulosa de Órion", tipo: "Berçário de estrelas", l: 209.01, b: -19.38,
+    d: 1.35,                           // 414 pc (Menten et al., 2007, paralaxe com o radiotelescópio VLBA)
     cor: "#ff7aa8",
     resumo: "Uma nuvem enorme de gás e poeira onde novas estrelas estão nascendo agora.",
-    curiosidade: "Dá para ver a olho nu, como uma 'manchinha' na espada de Órion, pertinho das Três Marias."
+    curiosidade: "Dá para ver a olho nu, como uma 'manchinha' na espada de Órion, pertinho das Três Marias.",
+    saibaMais: "É um dos berçários de estrelas mais próximos da Terra. No centro ficam quatro estrelas jovens e muito pesadas, o Trapézio, que iluminam a nuvem. A distância foi medida por paralaxe com radiotelescópios: 414 parsecs, uns 1.350 anos-luz (a NASA arredonda para 1.500). No céu ela tem magnitude 4 e aparece melhor em janeiro.",
+    fontes: [
+      ["NASA (Hubble, catálogo Messier)", "https://science.nasa.gov/mission/hubble/science/explore-the-night-sky/hubble-messier-catalog/messier-42/"],
+      ["Menten et al. (2007)", "https://doi.org/10.1051/0004-6361:20078247"]
+    ],
+    ficha: [
+      ["Tipo", "Nebulosa de emissão, berçário de estrelas (M42)"],
+      ["Distância do Sol", "cerca de 1.350 anos-luz (414 parsecs)"],
+      ["Estrelas do centro", "o Trapézio: quatro estrelas jovens e muito pesadas"],
+      ["Brilho no céu", "magnitude 4 (visível a olho nu)"],
+      ["Constelação", "Órion"],
+      ["Melhor época", "janeiro"]
+    ]
   },
   {
     id: "crab", nome: "Nebulosa do Caranguejo", tipo: "Resto de supernova", l: 184.56, b: -5.78, d: 6.5,
     cor: "#ffa26b",
     resumo: "O que sobrou de uma estrela que explodiu. No centro gira uma estrela de nêutrons.",
-    curiosidade: "A explosão foi vista na Terra em 1054 e registrada por astrônomos chineses: brilhou até de dia."
+    curiosidade: "A explosão foi vista na Terra em 1054 e registrada por astrônomos chineses: brilhou até de dia.",
+    saibaMais: "Os astrônomos chineses chamaram a explosão de 'estrela convidada': ela ficou visível de dia por quase um mês. O que sobrou do centro da estrela é um pulsar, uma estrela de nêutrons que gira 30 vezes por segundo. A nuvem de gás em volta tem uns 6 anos-luz de largura e continua se expandindo.",
+    fontes: [["NASA (Hubble, catálogo Messier)", "https://science.nasa.gov/mission/hubble/science/explore-the-night-sky/hubble-messier-catalog/messier-1/"]],
+    ficha: [
+      ["Tipo", "Resto de supernova (M1)"],
+      ["Distância do Sol", "cerca de 6.500 anos-luz"],
+      ["Tamanho", "uns 6 anos-luz de largura"],
+      ["Explosão vista em", "1054 (registrada na China)"],
+      ["No centro", "um pulsar que gira 30 vezes por segundo"],
+      ["Constelação", "Touro"]
+    ]
   },
   {
     id: "eagle", nome: "Nebulosa da Águia", tipo: "Berçário de estrelas", l: 16.95, b: 0.79, d: 7.0,
     cor: "#ff9a6b",
     resumo: "Casa dos famosos 'Pilares da Criação', colunas de gás onde nascem estrelas.",
-    curiosidade: "Os Pilares foram fotografados pelo Hubble em 1995 e de novo pelo James Webb em 2022."
+    curiosidade: "Os Pilares foram fotografados pelo Hubble em 1995 e de novo pelo James Webb em 2022.",
+    saibaMais: "Os Pilares da Criação são colunas de gás frio e poeira com 4 a 5 anos-luz de altura, mais ou menos a distância do Sol até a estrela mais próxima. A luz forte das estrelas jovens vizinhas vai desgastando as colunas, e nas partes mais densas novas estrelas se formam. A nebulosa foi descoberta em 1745 pelo astrônomo suíço Jean-Philippe Loys de Chéseaux.",
+    fontes: [["NASA (Hubble, catálogo Messier)", "https://science.nasa.gov/mission/hubble/science/explore-the-night-sky/hubble-messier-catalog/messier-16/"]],
+    ficha: [
+      ["Tipo", "Nebulosa de emissão, berçário de estrelas (M16)"],
+      ["Distância do Sol", "cerca de 7.000 anos-luz"],
+      ["Tamanho dos Pilares", "4 a 5 anos-luz de altura"],
+      ["Constelação", "Serpente"],
+      ["Descoberta", "1745, por Jean-Philippe Loys de Chéseaux"]
+    ]
   },
   {
     id: "carina", nome: "Nebulosa de Carina", tipo: "Berçário de estrelas", l: 287.6, b: -0.63, d: 7.5,
     cor: "#ff8f8f",
     resumo: "Uma das maiores nebulosas da galáxia, com algumas das estrelas mais pesadas conhecidas.",
-    curiosidade: "Dentro dela está Eta Carinae, uma estrela que pode explodir a qualquer momento (em termos astronômicos)."
+    curiosidade: "Dentro dela está Eta Carinae, uma estrela que pode explodir a qualquer momento (em termos astronômicos).",
+    saibaMais: "A nebulosa tem uns 300 anos-luz de largura e fica no céu do sul, por isso é bem vista do Brasil. Eta Carinae é um par de estrelas: a maior tem cerca de 100 vezes a massa do Sol e emite uns 5 milhões de vezes mais luz que ele, segundo a NASA. A nebulosa foi descoberta em 1752 pelo francês Nicolas-Louis de Lacaille.",
+    fontes: [["NASA (Hubble, catálogo Caldwell)", "https://science.nasa.gov/mission/hubble/science/explore-the-night-sky/hubble-caldwell-catalog/caldwell-92/"]],
+    ficha: [
+      ["Tipo", "Nebulosa de emissão, berçário de estrelas (Caldwell 92)"],
+      ["Distância do Sol", "cerca de 7.500 anos-luz"],
+      ["Tamanho", "uns 300 anos-luz de largura"],
+      ["Estrela mais famosa", "Eta Carinae, uns 5 milhões de vezes mais luminosa que o Sol"],
+      ["Constelação", "Carina (a Quilha)"],
+      ["Descoberta", "1752, por Nicolas-Louis de Lacaille"]
+    ]
   },
   {
-    id: "omega-centauri", nome: "Ômega Centauri", tipo: "Aglomerado globular", l: 309.10, b: 14.97, d: 17.1,
+    id: "omega-centauri", nome: "Ômega Centauri", tipo: "Aglomerado globular", l: 309.10, b: 14.97, d: 17,
     cor: "#ffe6a8",
     resumo: "Uma bola com cerca de 10 milhões de estrelas velhas, fora do disco da galáxia.",
-    curiosidade: "Pode ser o núcleo de uma pequena galáxia que a Via Láctea 'engoliu' há muito tempo."
+    curiosidade: "Pode ser o núcleo de uma pequena galáxia que a Via Láctea 'engoliu' há muito tempo.",
+    saibaMais: "É o maior aglomerado globular da Via Láctea. A olho nu parece uma estrela meio borrada, e foi assim que Ptolomeu o registrou há quase 2 mil anos. Em 1677, Edmond Halley percebeu que não era uma estrela. Fica na constelação do Centauro, no céu do sul.",
+    fontes: [["NASA (Hubble, catálogo Caldwell)", "https://science.nasa.gov/mission/hubble/science/explore-the-night-sky/hubble-caldwell-catalog/caldwell-80/"]],
+    ficha: [
+      ["Tipo", "Aglomerado globular (Caldwell 80)"],
+      ["Distância do Sol", "cerca de 17.000 anos-luz"],
+      ["Estrelas", "cerca de 10 milhões"],
+      ["Constelação", "Centauro"],
+      ["Reconhecido como aglomerado", "1677, por Edmond Halley"]
+    ]
   },
   // -------------------------------------------------------------------------
   // Galáxias vizinhas. Além de l, b e d, cada uma tem o centro no céu (ar,
@@ -1266,6 +1465,12 @@ export const MISSOES = [
     condicao: { tipo: "descobrir", ids: ["voyager"] }
   },
   {
+    id: "voyagers", nome: "As gêmeas Voyager", nivel: "solar",
+    objetivo: "Descubra as duas sondas Voyager, lançadas em 1977.",
+    dica: "Elas foram para lados diferentes: a Voyager 1 subiu para o norte do plano dos planetas e a Voyager 2 desceu para o sul. As duas estão a mais de 140 UA do Sol.",
+    condicao: { tipo: "descobrir", ids: ["voyager", "voyager-2"] }
+  },
+  {
     id: "proxima", nome: "A vizinha mais próxima", nivel: "estrelas",
     objetivo: "Descubra Proxima Centauri, a estrela mais próxima do Sol.",
     dica: "Mude para o nível 'Estrelas vizinhas'. Na velocidade da luz, a viagem leva 4,2 anos!",
@@ -1310,7 +1515,8 @@ export const MISSOES = [
 ];
 
 // ---------------------------------------------------------------------------
-// Quiz: um desafio por objeto, liberado quando o objeto é descoberto.
+// Quiz: um desafio por objeto (todos têm o seu), liberado quando o objeto é
+// descoberto. As respostas saem da ficha e das fontes do próprio verbete.
 // "certa" é o índice da opção correta.
 // ---------------------------------------------------------------------------
 
@@ -1407,6 +1613,55 @@ export const PERGUNTAS = [
     explicacao: "Titã é tão frio (−179 °C) que o metano e o etano, que na Terra são gases, ficam líquidos e formam rios, lagos e mares."
   },
   {
+    id: "q-fobos", objeto: "fobos",
+    pergunta: "Fobos chega 1,8 metro mais perto de Marte a cada século. O que deve acontecer com ela daqui a uns 50 milhões de anos?",
+    opcoes: ["Vai escapar e virar um planeta", "Vai cair em Marte ou se despedaçar e virar um anel", "Nada: a órbita dela não muda"],
+    certa: 1,
+    explicacao: "Segundo a NASA, nesse ritmo Fobos acaba caindo em Marte ou se despedaçando, e os pedaços formariam um anel em volta do planeta."
+  },
+  {
+    id: "q-deimos", objeto: "deimos",
+    pergunta: "A nossa Lua leva 27 dias para dar uma volta na Terra. Quanto tempo Deimos leva para dar uma volta em Marte?",
+    opcoes: ["Cerca de 30 horas", "Cerca de 30 dias", "Cerca de 3 anos"],
+    certa: 0,
+    explicacao: "Deimos fica a só 23.460 km de Marte e completa a volta em 30 horas e 18 minutos. Fobos, ainda mais perto, leva 7 horas e 39 minutos."
+  },
+  {
+    id: "q-ganimedes", objeto: "ganimedes",
+    pergunta: "O que Ganimedes tem que nenhuma outra lua conhecida tem?",
+    opcoes: ["Vulcões ativos", "Um campo magnético próprio", "Mares de metano"],
+    certa: 1,
+    explicacao: "Ganimedes é a maior lua do Sistema Solar e a única com campo magnético próprio, que produz auroras nela. Os vulcões ativos são de Io, e os mares de metano, de Titã."
+  },
+  {
+    id: "q-calisto", objeto: "calisto",
+    pergunta: "Por que Calisto é um dos astros com mais crateras do Sistema Solar?",
+    opcoes: ["Porque a superfície é muito antiga e quase não mudou em 4 bilhões de anos", "Porque tem muitos vulcões", "Porque fica muito perto do Sol"],
+    certa: 0,
+    explicacao: "Quase sem atividade que renove o chão, as marcas das batidas de asteroides e cometas foram se acumulando. Segundo a NASA, a superfície de Calisto tem cerca de 4 bilhões de anos."
+  },
+  {
+    id: "q-encelado", objeto: "encelado",
+    pergunta: "De onde vem o material do anel E, um dos anéis de Saturno?",
+    opcoes: ["Dos jatos de água e gelo que saem de Encélado", "Da poeira dos desertos de Titã", "De pedaços do próprio Saturno"],
+    certa: 0,
+    explicacao: "Os jatos saem das 'listras de tigre', rachaduras perto do polo sul de Encélado. O gelo que escapa da lua forma o anel E, segundo a NASA."
+  },
+  {
+    id: "q-tritao", objeto: "tritao",
+    pergunta: "O que Tritão tem de diferente de todas as outras luas grandes?",
+    opcoes: ["Gira em volta do planeta no sentido contrário ao da rotação dele", "É maior que o planeta em volta do qual gira", "Não tem gravidade"],
+    certa: 0,
+    explicacao: "A órbita 'ao contrário' indica que Tritão não nasceu junto com Netuno: provavelmente veio do Cinturão de Kuiper e foi capturado pela gravidade do planeta."
+  },
+  {
+    id: "q-caronte", objeto: "caronte",
+    pergunta: "Qual é o tamanho de Caronte comparado com Plutão?",
+    opcoes: ["É cem vezes menor", "Tem cerca de metade do diâmetro", "É duas vezes maior"],
+    certa: 1,
+    explicacao: "Caronte tem 1.212 km, metade do diâmetro de Plutão. Segundo a NASA, nenhuma outra lua conhecida é tão grande em comparação com o astro em volta do qual gira."
+  },
+  {
     id: "q-ceres", objeto: "ceres",
     pergunta: "Quanto da massa de todo o Cinturão de Asteroides está só em Ceres?",
     opcoes: ["Quase nada (1%)", "Cerca de um quarto (25%)", "Metade (50%)", "Tudo (100%)"],
@@ -1429,10 +1684,17 @@ export const PERGUNTAS = [
   },
   {
     id: "q-voyager", objeto: "voyager",
-    pergunta: "Lançada em 1977, a Voyager 1 está hoje tão longe que um sinal de rádio (que viaja na velocidade da luz) leva quanto tempo para chegar até ela?",
-    opcoes: ["Cerca de 1 minuto", "Cerca de 1 hora", "Quase 1 dia inteiro"],
+    pergunta: "Lançada em 1977, a Voyager 1 está tão longe que um sinal de rádio (que viaja na velocidade da luz) leva quanto tempo para chegar até ela?",
+    opcoes: ["Cerca de 1 minuto", "Cerca de 1 hora", "Cerca de 1 dia inteiro"],
     certa: 2,
-    explicacao: "A mais de 170 UA, a Voyager 1 está quase a 1 dia-luz: 'falar' com ela demora quase 2 dias, ida e volta."
+    explicacao: "A mais de 170 UA do Sol, a Voyager 1 chega em novembro de 2026 a 1 dia-luz da Terra, segundo a NASA: mandar um comando e receber a resposta demora uns 2 dias."
+  },
+  {
+    id: "q-voyager-2", objeto: "voyager-2",
+    pergunta: "Qual é a única sonda que já visitou Urano e Netuno?",
+    opcoes: ["Voyager 1", "Voyager 2", "New Horizons"],
+    certa: 1,
+    explicacao: "A Voyager 2 passou por Urano em 1986 e por Netuno em 1989. A Voyager 1 visitou Júpiter e Saturno, e a New Horizons, Plutão."
   },
   {
     id: "q-proxima", objeto: "proxima",
@@ -1477,6 +1739,174 @@ export const PERGUNTAS = [
     explicacao: "Olhar longe é olhar para o passado: a luz de Betelgeuse viajou uns 550 anos até chegar aqui."
   },
   {
+    id: "q-barnard", objeto: "barnard",
+    pergunta: "A Estrela de Barnard é a campeã em quê?",
+    opcoes: ["É a estrela que mais rápido muda de posição no nosso céu", "É a maior estrela conhecida", "É a mais brilhante do céu noturno"],
+    certa: 0,
+    explicacao: "As estrelas parecem fixas, mas todas se movem. A de Barnard, por estar perto e ser rápida, anda no céu o equivalente à largura da Lua cheia em cerca de 180 anos."
+  },
+  {
+    id: "q-wolf-359", objeto: "wolf-359",
+    pergunta: "Wolf 359 está a menos de 8 anos-luz, mas não dá para vê-la a olho nu. Por quê?",
+    opcoes: ["Porque fica escondida atrás da Lua", "Porque é uma anã vermelha fraquinha: emite cerca de 0,1% da luz do Sol", "Porque só aparece durante o dia"],
+    certa: 1,
+    explicacao: "Estar perto não basta para brilhar no céu. A maior parte das estrelas vizinhas do Sol são anãs vermelhas, fracas demais para o olho nu."
+  },
+  {
+    id: "q-lalande-21185", objeto: "lalande-21185",
+    pergunta: "Lalande 21185 tem magnitude 7,5. O olho humano enxerga, num céu bem escuro, até a magnitude 6. O que isso quer dizer?",
+    opcoes: ["Que ela brilha demais para olhar direto", "Que ela é fraca demais para o olho nu, mas aparece em binóculos", "Que ela tem 7 planetas e meio"],
+    certa: 1,
+    explicacao: "Na escala de magnitude, quanto maior o número, mais fraca a estrela aparece. Sírius, a mais brilhante do céu noturno, tem magnitude −1,46."
+  },
+  {
+    id: "q-luyten-726-8", objeto: "luyten-726-8",
+    pergunta: "O que UV Ceti, uma das duas estrelas de Luyten 726-8, faz de especial?",
+    opcoes: ["Dá 'explosões' de brilho: em minutos fica várias vezes mais brilhante", "Muda de cor toda noite", "Gira em volta da Terra"],
+    certa: 0,
+    explicacao: "São erupções parecidas com as do Sol, só que muito mais fortes para o tamanho da estrela. Anãs vermelhas que fazem isso são chamadas de estrelas eruptivas."
+  },
+  {
+    id: "q-ross-154", objeto: "ross-154",
+    pergunta: "Ross 154 está a 9,69 anos-luz. Se ela se apagasse hoje, quando deixaríamos de vê-la?",
+    opcoes: ["Na mesma hora", "Daqui a quase 10 anos", "Daqui a 10 mil anos"],
+    certa: 1,
+    explicacao: "A luz leva 9,69 anos para vir de lá. Tudo o que vemos dessa estrela aconteceu quase 10 anos atrás."
+  },
+  {
+    id: "q-ross-248", objeto: "ross-248",
+    pergunta: "As estrelas se movem pela galáxia. Qual delas deve passar a ser, daqui a uns 36 mil anos, a mais próxima do Sol?",
+    opcoes: ["Ross 248", "Betelgeuse", "A Estrela Polar"],
+    certa: 0,
+    explicacao: "Ross 248 está vindo na nossa direção. Por um tempo ela vai ficar mais perto do Sol do que Proxima Centauri, a vizinha mais próxima de hoje."
+  },
+  {
+    id: "q-epsilon-eridani", objeto: "epsilon-eridani",
+    pergunta: "Epsilon Eridani é uma estrela do tipo K (laranja). Comparada com o Sol, que é do tipo G (amarelo), ela é…",
+    opcoes: ["mais quente e maior", "um pouco mais fria e menor", "igualzinha"],
+    certa: 1,
+    explicacao: "As letras O, B, A, F, G, K e M põem as estrelas em ordem, das mais quentes (azuis) para as mais frias (vermelhas). Uma estrela K fica entre o Sol e as anãs vermelhas."
+  },
+  {
+    id: "q-lacaille-9352", objeto: "lacaille-9352",
+    pergunta: "Por que as anãs vermelhas, como Lacaille 9352, são vermelhas?",
+    opcoes: ["Porque a superfície delas é mais fria que a do Sol", "Porque são mais quentes que o Sol", "Porque são cobertas de ferrugem, como Marte"],
+    certa: 0,
+    explicacao: "A cor de uma estrela mostra a temperatura: as vermelhas são as mais frias, as amarelas como o Sol ficam no meio e as azuis são as mais quentes."
+  },
+  {
+    id: "q-ross-128", objeto: "ross-128",
+    pergunta: "O que os astrônomos encontraram girando em volta de Ross 128?",
+    opcoes: ["Um planeta com massa parecida com a da Terra", "Um buraco negro", "Uma estrela igual ao Sol"],
+    certa: 0,
+    explicacao: "O planeta se chama Ross 128 b. Planetas que giram em volta de outras estrelas são chamados de exoplanetas."
+  },
+  {
+    id: "q-procyon", objeto: "procyon",
+    pergunta: "O nome Prócion vem do grego e quer dizer 'antes do cão'. Por quê?",
+    opcoes: ["Porque, vista da Grécia, ela nasce um pouco antes de Sírius, a estrela do Cão Maior", "Porque foi descoberta antes de existirem cachorros", "Porque tem o formato de um cão"],
+    certa: 0,
+    explicacao: "Sírius é a estrela mais brilhante do Cão Maior, e Prócion, a do Cão Menor. Vistas do Brasil, a ordem se inverte: Sírius nasce primeiro."
+  },
+  {
+    id: "q-tau-ceti", objeto: "tau-ceti",
+    pergunta: "Por que Tau Ceti é uma das primeiras estrelas em que os astrônomos procuram planetas parecidos com a Terra?",
+    opcoes: ["Porque é parecida com o Sol e está perto: 11,9 anos-luz", "Porque é a maior estrela do céu", "Porque já sabemos que existe vida lá"],
+    certa: 0,
+    explicacao: "Tau Ceti é do tipo G, como o Sol, só um pouco menor e mais fria. Por isso também é um alvo clássico na busca por sinais de vida inteligente. Até hoje, nenhum sinal foi encontrado."
+  },
+  {
+    id: "q-altair", objeto: "altair",
+    pergunta: "Altair dá uma volta em si mesma a cada 9 horas, mais ou menos (o Sol leva uns 25 dias). O que isso faz com ela?",
+    opcoes: ["Deixa a estrela achatada nos polos e mais larga no equador", "Faz a estrela ficar parada no céu", "Nada: girar não muda o formato"],
+    certa: 0,
+    explicacao: "Girando tão rápido, o equador é empurrado para fora. Acontece o mesmo, bem mais de leve, com a Terra, com Júpiter e com Saturno."
+  },
+  {
+    id: "q-vega", objeto: "vega",
+    pergunta: "Vega já foi a 'estrela polar' do norte, há uns 12 mil anos, e vai voltar a ser. Como isso é possível?",
+    opcoes: ["O eixo da Terra balança devagar, como um pião, e vai apontando para estrelas diferentes", "Vega gira em volta da Terra", "As estrelas trocam de lugar a cada mil anos"],
+    certa: 0,
+    explicacao: "Esse balanço se chama precessão e leva cerca de 26 mil anos para completar uma volta. Hoje o eixo aponta para perto da Estrela Polar."
+  },
+  {
+    id: "q-fomalhaut", objeto: "fomalhaut",
+    pergunta: "O que existe em volta de Fomalhaut?",
+    opcoes: ["Um grande anel de poeira", "Um anel de fogo", "Nada"],
+    certa: 0,
+    explicacao: "O anel é feito de poeira e de pedaços de gelo e rocha, como um Cinturão de Kuiper gigante. Discos assim são restos da formação de planetas."
+  },
+  {
+    id: "q-polux", objeto: "polux",
+    pergunta: "Pólux tem 9 vezes o raio do Sol. Por que ela ficou tão grande?",
+    opcoes: ["Porque gastou o hidrogênio do núcleo e inchou: virou uma gigante", "Porque engoliu outra estrela", "Porque é uma estrela recém-nascida"],
+    certa: 0,
+    explicacao: "É uma fase do fim da vida das estrelas parecidas com o Sol. O próprio Sol deve virar uma gigante vermelha daqui a uns 5 bilhões de anos."
+  },
+  {
+    id: "q-arcturo", objeto: "arcturo",
+    pergunta: "Arcturo é 25 vezes maior que o Sol, mas a superfície dela é mais fria: 4.290 K contra 5.772 K. De que cor ela aparece no céu?",
+    opcoes: ["Azulada", "Alaranjada", "Verde"],
+    certa: 1,
+    explicacao: "Estrelas mais frias que o Sol têm tons de laranja e vermelho; as mais quentes, de branco e azul. Mesmo mais fria, Arcturo emite bem mais luz que o Sol, porque é enorme."
+  },
+  {
+    id: "q-capela", objeto: "capela",
+    pergunta: "A olho nu, Capela parece uma estrela só. O que ela é de verdade?",
+    opcoes: ["Um sistema de quatro estrelas: duas gigantes amarelas e duas anãs vermelhas", "Um planeta do Sistema Solar", "Uma galáxia distante"],
+    certa: 0,
+    explicacao: "Muitos pontos de luz do céu são duas ou mais estrelas girando umas em volta das outras. As duas gigantes de Capela ficam tão juntas que parecem uma só."
+  },
+  {
+    id: "q-aldebara", objeto: "aldebara",
+    pergunta: "No céu, Aldebarã parece fazer parte do aglomerado das Híades. Ela faz mesmo?",
+    opcoes: ["Sim: é a estrela principal do aglomerado", "Não: ela está bem mais perto de nós e só fica na mesma direção", "Não: ela fica muito mais longe que o aglomerado"],
+    certa: 1,
+    explicacao: "Aldebarã está a 65 anos-luz, e as Híades, a uns 150. O céu parece 'chapado', mas as estrelas de uma mesma região podem estar a distâncias muito diferentes."
+  },
+  {
+    id: "q-regulo", objeto: "regulo",
+    pergunta: "Por que a Lua às vezes passa na frente de Régulo e a esconde?",
+    opcoes: ["Porque Régulo fica quase em cima da eclíptica, o caminho do Sol no céu, do qual a Lua nunca se afasta muito", "Porque Régulo gira em volta da Lua", "Porque Régulo é menor que a Lua"],
+    certa: 0,
+    explicacao: "Quando a Lua esconde uma estrela, isso se chama ocultação. Só as estrelas brilhantes perto da eclíptica passam por isso: Régulo, Espiga, Antares e Aldebarã."
+  },
+  {
+    id: "q-espiga", objeto: "espiga",
+    pergunta: "Na bandeira do Brasil, que estrela aparece sozinha acima da faixa 'Ordem e Progresso'?",
+    opcoes: ["Espiga, que representa o Pará", "Sírius, que representa Mato Grosso", "Ácrux, que representa São Paulo"],
+    certa: 0,
+    explicacao: "As três estão na bandeira, mas só Espiga fica acima da faixa. As estrelas mostram o céu do Rio de Janeiro na manhã de 15 de novembro de 1889, dia da Proclamação da República."
+  },
+  {
+    id: "q-canopus", objeto: "canopus",
+    pergunta: "Para que muitas sondas espaciais usam a estrela Canopus?",
+    opcoes: ["Para se orientar: ela serve de referência para a sonda saber para onde está apontando", "Para recarregar as baterias", "Para pegar impulso com a gravidade dela"],
+    certa: 0,
+    explicacao: "Canopus é a segunda estrela mais brilhante do céu noturno e fica longe da direção do Sol. Um sensor da sonda procura por ela e, junto com o Sol, dá a orientação da nave."
+  },
+  {
+    id: "q-polaris", objeto: "polaris",
+    pergunta: "Por que a Estrela Polar não aparece no céu de quase todo o Brasil?",
+    opcoes: ["Porque ela fica quase em cima do polo norte celeste, abaixo do horizonte de quem está ao sul do equador", "Porque ela só brilha no inverno", "Porque a poluição do ar esconde a estrela"],
+    certa: 0,
+    explicacao: "No Hemisfério Sul, quem aponta o polo é o Cruzeiro do Sul: prolongando o braço maior da cruz umas quatro vezes e meia, chega-se perto do polo sul celeste."
+  },
+  {
+    id: "q-antares", objeto: "antares",
+    pergunta: "Antares tem cerca de 680 vezes o raio do Sol. Se ela estivesse no lugar do Sol, até onde chegaria?",
+    opcoes: ["Só até a órbita de Mercúrio", "Além da órbita de Marte", "Até a Lua"],
+    certa: 1,
+    explicacao: "São uns 470 milhões de km de raio, ou 3,2 UA. Mercúrio, Vênus, a Terra e Marte (a 1,5 UA do Sol) ficariam dentro da estrela."
+  },
+  {
+    id: "q-rigel", objeto: "rigel",
+    pergunta: "Rigel está 100 vezes mais longe que Sírius (860 contra 8,6 anos-luz) e mesmo assim é uma das estrelas mais brilhantes do céu. Como?",
+    opcoes: ["Ela emite dezenas de milhares de vezes mais luz que o Sol", "Ela fica dentro do Sistema Solar", "Ela reflete a luz da Lua"],
+    certa: 0,
+    explicacao: "O brilho que vemos depende de duas coisas: de quanta luz a estrela emite e da distância. Rigel é uma supergigante azul, tão luminosa que aparece forte mesmo de muito longe."
+  },
+  {
     id: "q-sgr-a", objeto: "sgr-a",
     pergunta: "O que existe no centro da Via Láctea?",
     opcoes: ["Um buraco negro supermassivo, com uns 4 milhões de vezes a massa do Sol", "Uma estrela gigante", "Nada: é um espaço vazio"],
@@ -1492,10 +1922,10 @@ export const PERGUNTAS = [
   },
   {
     id: "q-pleiades", objeto: "pleiades",
-    pergunta: "As Plêiades estão a cerca de 444 anos-luz. Na velocidade da luz, quanto tempo levaria a viagem até lá?",
-    opcoes: ["444 dias", "444 anos", "4 anos"],
+    pergunta: "As Plêiades estão a cerca de 445 anos-luz. Na velocidade da luz, quanto tempo levaria a viagem até lá?",
+    opcoes: ["445 dias", "445 anos", "4 anos"],
     certa: 1,
-    explicacao: "Um ano-luz é a distância que a luz percorre em um ano. Então 444 anos-luz = 444 anos viajando na velocidade da luz."
+    explicacao: "Um ano-luz é a distância que a luz percorre em um ano. Então 445 anos-luz = 445 anos viajando na velocidade da luz."
   },
   {
     id: "q-orion-nebula", objeto: "orion-nebula",
@@ -1510,6 +1940,27 @@ export const PERGUNTAS = [
     opcoes: ["1054", "1500", "1969"],
     certa: 0,
     explicacao: "Astrônomos chineses registraram uma 'estrela convidada' em 1054, visível até de dia por semanas."
+  },
+  {
+    id: "q-eagle", objeto: "eagle",
+    pergunta: "Os 'Pilares da Criação', na Nebulosa da Águia, são colunas de gás e poeira. Qual é a altura deles?",
+    opcoes: ["Mais ou menos a de uma montanha", "A distância da Terra ao Sol", "De 4 a 5 anos-luz, parecida com a distância do Sol até a estrela mais próxima"],
+    certa: 2,
+    explicacao: "Segundo a NASA, os pilares têm de 4 a 5 anos-luz de altura. Proxima Centauri, a estrela mais próxima do Sol, está a 4,25 anos-luz."
+  },
+  {
+    id: "q-carina", objeto: "carina",
+    pergunta: "Dentro da Nebulosa de Carina fica Eta Carinae, um par de estrelas. Quanta luz a maior delas emite?",
+    opcoes: ["A mesma que o Sol", "Umas 5 mil vezes a do Sol", "Uns 5 milhões de vezes a do Sol"],
+    certa: 2,
+    explicacao: "Segundo a NASA, ela tem cerca de 100 vezes a massa do Sol e emite uns 5 milhões de vezes mais luz. Estrelas tão pesadas vivem pouco e terminam numa explosão: uma supernova."
+  },
+  {
+    id: "q-omega-centauri", objeto: "omega-centauri",
+    pergunta: "Quantas estrelas tem Ômega Centauri, o maior aglomerado globular da Via Láctea?",
+    opcoes: ["Cerca de 10 mil", "Cerca de 10 milhões", "Cerca de 10 trilhões"],
+    certa: 1,
+    explicacao: "São uns 10 milhões de estrelas velhas, presas umas às outras pela gravidade. Pode ser o que sobrou de uma galáxia anã engolida pela Via Láctea (NASA)."
   },
   {
     id: "q-lmc", objeto: "lmc",
@@ -1554,7 +2005,7 @@ for (const objeto of [SOL, ...PLANETAS, LUA, ...OBJETOS_GALAXIA]) {
   objeto.creditoImagem = foto;
 }
 
-export const TODOS_OS_OBJETOS = [SOL, ...PLANETAS, LUA, ...LUAS, ...PLANETAS_ANOES, CINTURAO, VOYAGER, ...ESTRELAS, ...OBJETOS_GALAXIA];
+export const TODOS_OS_OBJETOS = [SOL, ...PLANETAS, LUA, ...LUAS, ...PLANETAS_ANOES, CINTURAO, ...SONDAS, ...ESTRELAS, ...OBJETOS_GALAXIA];
 
 /** Fontes de um verbete, para mostrar na ficha: [{ rotulo, url }]. */
 export function fontesDoObjeto(objeto) {
