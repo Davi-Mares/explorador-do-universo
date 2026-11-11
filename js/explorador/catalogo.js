@@ -152,7 +152,6 @@ export const SOL = {
   temperaturaK: 5772,
   rotacao: { poloAr: 286.13, poloDec: 63.87, meridiano: 84.176, horas: 609.12, inclinacao: 7.25 },
   cor: "#ffd27a",
-  imagem: "img/planetas/sol.webp",
   resumo: "A estrela no centro do Sistema Solar. Sozinho, o Sol tem 99,86% de toda a massa do sistema.",
   curiosidade: "A luz que sai do Sol leva 8 minutos e 20 segundos para chegar à Terra: você sempre vê o Sol como ele era há 8 minutos."
 };
@@ -160,37 +159,37 @@ export const SOL = {
 export const PLANETAS = [
   {
     id: "mercurio", nome: "Mercúrio", tipo: "Planeta rochoso", raioKm: 2_439.7, cor: "#a9a39b",
-    periodoAnos: 0.2408467, imagem: "img/planetas/mercurio.webp",
+    periodoAnos: 0.2408467,
     resumo: "O menor planeta e o mais próximo do Sol. Não tem atmosfera para segurar o calor.",
     curiosidade: "Um ano em Mercúrio dura só 88 dias terrestres."
   },
   {
     id: "venus", nome: "Vênus", tipo: "Planeta rochoso", raioKm: 6_051.8, cor: "#e8cf9a",
-    periodoAnos: 0.61519726, imagem: "img/planetas/venus.webp",
+    periodoAnos: 0.61519726,
     resumo: "Quase do tamanho da Terra, mas coberto por nuvens de ácido e um efeito estufa fortíssimo.",
     curiosidade: "É o planeta mais quente (≈ 465 °C), mesmo sendo o segundo mais distante do Sol."
   },
   {
     id: "terra", nome: "Terra", tipo: "Planeta rochoso", raioKm: 6_371, cor: "#3f7fd6",
-    periodoAnos: 1.0000174, imagem: "img/planetas/terra.webp",
+    periodoAnos: 1.0000174,
     resumo: "Nosso planeta: o único lugar onde sabemos que existe vida.",
     curiosidade: "A Terra viaja em volta do Sol a cerca de 30 km/s — mais de 100 mil km/h."
   },
   {
     id: "marte", nome: "Marte", tipo: "Planeta rochoso", raioKm: 3_389.5, cor: "#c1440e",
-    periodoAnos: 1.8808476, imagem: "img/planetas/marte.webp",
+    periodoAnos: 1.8808476,
     resumo: "O planeta vermelho, com o maior vulcão do Sistema Solar (Monte Olimpo).",
     curiosidade: "A cor vem do óxido de ferro — a ferrugem — espalhado na poeira."
   },
   {
     id: "jupiter", nome: "Júpiter", tipo: "Gigante gasoso", raioKm: 69_911, cor: "#d8b48a",
-    periodoAnos: 11.862615, imagem: "img/planetas/jupiter.webp",
+    periodoAnos: 11.862615,
     resumo: "O maior planeta. Sua Grande Mancha Vermelha é uma tempestade maior que a Terra.",
     curiosidade: "Caberiam mais de 1.300 Terras dentro de Júpiter."
   },
   {
     id: "saturno", nome: "Saturno", tipo: "Gigante gasoso", raioKm: 58_232, cor: "#e3cf9c",
-    periodoAnos: 29.447498, imagem: "img/planetas/saturno.webp",
+    periodoAnos: 29.447498,
     // Anéis principais (do anel C ao A), em raios de Saturno.
     aneis: { interno: 1.24, externo: 2.27 },
     resumo: "O planeta dos anéis, feitos de pedaços de gelo e rocha.",
@@ -198,13 +197,13 @@ export const PLANETAS = [
   },
   {
     id: "urano", nome: "Urano", tipo: "Gigante gelado", raioKm: 25_362, cor: "#9fe3e6",
-    periodoAnos: 84.016846, imagem: "img/planetas/urano.webp",
+    periodoAnos: 84.016846,
     resumo: "Um gigante de gelo que gira 'deitado', com o eixo inclinado 98°.",
     curiosidade: "Cada polo de Urano passa cerca de 42 anos seguidos de dia e depois 42 anos de noite."
   },
   {
     id: "netuno", nome: "Netuno", tipo: "Gigante gelado", raioKm: 24_622, cor: "#4b6fe0",
-    periodoAnos: 164.79132, imagem: "img/planetas/netuno.webp",
+    periodoAnos: 164.79132,
     resumo: "O planeta mais distante, com os ventos mais rápidos do Sistema Solar.",
     curiosidade: "A luz do Sol leva cerca de 4 horas para chegar a Netuno."
   }
@@ -348,6 +347,87 @@ const FICHAS = {
 
 for (const objeto of [SOL, ...PLANETAS]) Object.assign(objeto, FICHAS[objeto.id]);
 
+// ---------------------------------------------------------------------------
+// Fotos do Diário de bordo: todas de agências espaciais, com o crédito exato
+// que cada uma pede (copiado da página oficial da foto). As da ESA/Hubble têm
+// licença CC BY 4.0: o crédito precisa aparecer junto da foto, sem mudar as
+// palavras. As da NASA e do JPL são de uso livre, com crédito.
+// As fotos só foram recortadas e reduzidas (quadradas, 512 px, fundo preto).
+// ---------------------------------------------------------------------------
+
+const ESA_HUBBLE = "CC BY 4.0";
+const NASA_LIVRE = "uso livre, com crédito";
+
+const FOTOS = {
+  sol: {
+    descricao: "Observatório de Dinâmica Solar (SDO), em luz ultravioleta extrema, 28 de março de 2013",
+    credito: "NASA/SDO/AIA",
+    link: "https://www.jpl.nasa.gov/images/pia17669-pulses-from-the-sun/",
+    licenca: NASA_LIVRE
+  },
+  mercurio: {
+    descricao: "Mosaico global da sonda MESSENGER, 2011",
+    credito: "NASA/Johns Hopkins University Applied Physics Laboratory/Carnegie Institution of Washington",
+    link: "https://science.nasa.gov/photojournal/mercury-globe-0n-180e/",
+    licenca: NASA_LIVRE
+  },
+  venus: {
+    descricao: "Sonda Mariner 10, fevereiro de 1974 (cores aproximadas, imagem reprocessada em 2020)",
+    credito: "NASA/JPL-Caltech",
+    link: "https://www.jpl.nasa.gov/images/pia23791-venus-from-mariner-10/",
+    licenca: NASA_LIVRE
+  },
+  terra: {
+    descricao: "Satélite Suomi NPP, 30 de março de 2014 (montagem de oito passagens)",
+    credito: "NASA Earth Observatory image by Robert Simmon, using Suomi NPP VIIRS imagery from NOAA's Environmental Visualization Laboratory",
+    link: "https://science.nasa.gov/earth/earth-observatory/blue-marble-eastern-hemisphere-84214/",
+    licenca: NASA_LIVRE
+  },
+  lua: {
+    descricao: "Sonda Galileo, 7 de dezembro de 1992 (cores realçadas)",
+    credito: "NASA/JPL/USGS",
+    link: "https://www.jpl.nasa.gov/images/pia00405-earths-moon/",
+    licenca: NASA_LIVRE
+  },
+  marte: {
+    descricao: "Telescópio Hubble, 26 de junho de 2001",
+    credito: "NASA/ESA and The Hubble Heritage Team STScI/AURA",
+    link: "https://esahubble.org/images/opo0124a/",
+    licenca: ESA_HUBBLE
+  },
+  jupiter: {
+    descricao: "Telescópio Hubble, 25 de agosto de 2020",
+    credito: "NASA, ESA, A. Simon (Goddard Space Flight Center), and M. H. Wong (University of California, Berkeley) and the OPAL team",
+    link: "https://esahubble.org/images/heic2017a/",
+    licenca: ESA_HUBBLE
+  },
+  saturno: {
+    descricao: "Telescópio Hubble, 20 de junho de 2019",
+    credito: "NASA, ESA, A. Simon (Goddard Space Flight Center), and M.H. Wong (University of California, Berkeley)",
+    link: "https://esahubble.org/images/heic1917a/",
+    licenca: ESA_HUBBLE
+  },
+  urano: {
+    descricao: "Telescópio Hubble, programa OPAL (divulgada em 2019)",
+    credito: "NASA, ESA, A.A. Simon (NASA Goddard), and M.H. Wong and A.I. Hsu (University of California, Berkeley)",
+    link: "https://esahubble.org/images/potw1906a/",
+    licenca: ESA_HUBBLE
+  },
+  netuno: {
+    descricao: "Telescópio Hubble (divulgada em 2016)",
+    credito: "NASA, ESA, and M.H. Wong and J. Tollefson (UC Berkeley)",
+    link: "https://esahubble.org/images/opo1622b/",
+    licenca: ESA_HUBBLE
+  },
+  andromeda: {
+    descricao: "Mosaico de mais de 600 imagens do Telescópio Hubble, 2025 (parte central)",
+    credito: "NASA, ESA, B. Williams (University of Washington)",
+    link: "https://esahubble.org/images/heic2501a/",
+    licenca: ESA_HUBBLE
+  }
+};
+const PASTA_DAS_FOTOS = { andromeda: "img/universo" };
+
 export const LUA = {
   id: "lua",
   nome: "Lua",
@@ -359,7 +439,6 @@ export const LUA = {
   rotacao: { horas: 655.72, inclinacao: 6.68 },
   periodoDias: 27.32,
   cor: "#bdbab4",
-  imagem: "img/planetas/lua.webp",
   distanciaMediaKm: 384_400,
   resumo: "O único lugar fora da Terra onde seres humanos já pisaram (missões Apollo, 1969–1972).",
   curiosidade: "Todos os planetas do Sistema Solar, enfileirados, caberiam entre a Terra e a Lua.",
@@ -1025,7 +1104,15 @@ export const OBJETOS_GALAXIA = [
       { id: "n44", nome: "N44", ar: "05 22 01", dec: "-67 57 00", raioKly: 0.15 }
     ],
     resumo: "Uma galáxia anã que gira em volta da Via Láctea, visível a olho nu no Hemisfério Sul. Tem uma barra de estrelas fora do centro e um só braço espiral.",
-    curiosidade: "Em 1987 uma supernova explodiu lá, na beirada da Nebulosa da Tarântula, e foi a mais brilhante vista da Terra em quase 400 anos.",
+    curiosidade: "Em 1987 uma estrela explodiu lá, perto da Nebulosa da Tarântula: a supernova 1987A, uma das explosões de estrela mais brilhantes vistas da Terra em mais de 400 anos.",
+    saibaMais: "É a maior das galáxias que giram em volta da Via Láctea: tem uns 14 mil anos-luz de diâmetro, um décimo do tamanho da nossa galáxia, e só 1% da massa dela. A distância de 162 mil anos-luz foi medida com erro de 1%, usando pares de estrelas que passam uma na frente da outra (estrelas binárias eclipsantes). O disco é visto quase de frente e gira no sentido horário visto daqui.",
+    fontes: [
+      ["NASA (Swift, 2013)", "https://www.nasa.gov/universe/nasas-swift-produces-best-ultraviolet-maps-of-the-nearest-galaxies"],
+      ["NASA (Hubble, 2007)", "https://science.nasa.gov/missions/hubble/nasas-hubble-telescope-celebrates-sn-1987as-20th-anniversary/"],
+      ["ESO (2018)", "https://www.eso.org/public/news/eso1816/"],
+      ["Pietrzyński et al. (2019)", "https://doi.org/10.1038/s41586-019-0999-4"],
+      ["van der Marel e Kallivayalil (2014)", "https://doi.org/10.1088/0004-637X/781/2/121"]
+    ],
     ficha: [
       ["Diâmetro", "cerca de 14 mil anos-luz (o corpo principal)"],
       ["Distância do Sol", "162 mil anos-luz (49,6 mil parsecs)"],
@@ -1050,6 +1137,13 @@ export const OBJETOS_GALAXIA = [
     ],
     resumo: "A irmã menor da Grande Nuvem, também visível do Brasil longe das luzes da cidade. É uma galáxia anã irregular, esticada pela gravidade da vizinha.",
     curiosidade: "É mais funda do que larga: tem uns 7 mil anos-luz de largura no céu, mas as estrelas dela ocupam uns 23 mil anos-luz na direção da Terra.",
+    saibaMais: "Tem metade do tamanho da Grande Nuvem e cerca de dois terços da massa dela. A distância de 204 mil anos-luz foi medida com erro menor que 2%, com estrelas binárias eclipsantes. A gravidade da Grande Nuvem esticou a Pequena: a parte nordeste está mais perto de nós, e entre as duas há uma ponte de gás e de estrelas jovens.",
+    fontes: [
+      ["NASA (Swift, 2013)", "https://www.nasa.gov/universe/nasas-swift-produces-best-ultraviolet-maps-of-the-nearest-galaxies"],
+      ["Graczyk et al. (2020)", "https://doi.org/10.3847/1538-4357/abbb2b"],
+      ["Ripepi et al. (2017)", "https://doi.org/10.1093/mnras/stx2096"],
+      ["Belokurov et al. (2017)", "https://doi.org/10.1093/mnras/stw3357"]
+    ],
     ficha: [
       ["Diâmetro", "cerca de 7 mil anos-luz"],
       ["Distância do Sol", "204 mil anos-luz (62,4 mil parsecs)"],
@@ -1062,7 +1156,7 @@ export const OBJETOS_GALAXIA = [
     id: "andromeda", nome: "Galáxia de Andrômeda", tipo: "Galáxia espiral vizinha (M31)",
     ar: "00 42 44.3", dec: "+41 16 09", l: 121.17, b: -21.57,
     d: 2482,                           // 761 kpc (Li et al., 2021, cefeidas com o Hubble)
-    cor: "#e6dcff", imagem: "img/universo/andromeda.webp",
+    cor: "#e6dcff",
     categoria: "galáxia", diametroAnosLuz: 220_000,   // NASA (Hubble, 2025): "mais de 200 mil anos-luz" de diâmetro
     // i = 77° e eixo maior a 38° (Carignan et al., 2006). O
     // lado próximo é o noroeste e o nordeste se afasta de nós (Chemin, Carignan e
@@ -1081,6 +1175,13 @@ export const OBJETOS_GALAXIA = [
     ],
     resumo: "A grande galáxia mais próxima, com cerca de 1 trilhão de estrelas. É um dos objetos mais distantes que dá para ver a olho nu.",
     curiosidade: "Andrômeda e a Via Láctea se aproximam a ≈ 110 km/s e podem se fundir daqui a bilhões de anos (estudos de 2025 estimam uma chance de cerca de 50% nos próximos 10 bilhões de anos).",
+    saibaMais: "É uma galáxia espiral como a Via Láctea, só que maior: o disco passa de 200 mil anos-luz e tem cerca de 1 trilhão de estrelas. A distância de 2,48 milhões de anos-luz foi medida pelo Hubble com estrelas cefeidas, que piscam num ritmo ligado ao brilho verdadeiro delas. A foto é um mosaico de mais de 600 imagens do Hubble, montado em mais de 10 anos, que mostra 200 milhões de estrelas.",
+    fontes: [
+      ["NASA (Hubble, 2025)", "https://science.nasa.gov/missions/hubble/nasas-hubble-traces-hidden-history-of-andromeda-galaxy/"],
+      ["NASA (Hubble, 2012)", "https://science.nasa.gov/missions/hubble/nasas-hubble-shows-milky-way-is-destined-for-head-on-collision-with-andromeda-galaxy"],
+      ["Li et al. (2021)", "https://doi.org/10.3847/1538-4357/ac1597"],
+      ["Sawala et al. (2025)", "https://doi.org/10.1038/s41550-025-02563-1"]
+    ],
     ficha: [
       ["Diâmetro", "mais de 200 mil anos-luz"],
       ["Estrelas", "cerca de 1 trilhão"],
@@ -1102,15 +1203,22 @@ export const OBJETOS_GALAXIA = [
     // (Kam et al., 2017) e braços abertos, de ≈ 42° (Seigar et al., 2008). Sem bojo.
     disco: { pa: 22.5, inclinacao: 52, ladoProximo: 292.5, giro: "horario" },
     regioes: [
-      { id: "ngc604", nome: "NGC 604", ar: "01 34 32.9", dec: "+30 47 04", raioKly: 0.75 }   // quase 1.500 anos-luz (NASA)
+      { id: "ngc604", nome: "NGC 604", ar: "01 34 32.9", dec: "+30 47 04", raioKly: 0.65 }   // uns 1.300 anos-luz (NASA, Webb, 2024)
     ],
     resumo: "A terceira maior galáxia do Grupo Local, depois de Andrômeda e da Via Láctea. Não tem bojo nem barra: é um disco cheio de gás onde nascem muitas estrelas.",
     curiosidade: "Num céu bem escuro dá para vê-la a olho nu, como uma mancha bem fraca. A luz que chega dela hoje saiu de lá há uns 2,7 milhões de anos.",
+    saibaMais: "Tem uns 60 mil anos-luz de diâmetro e cerca de 40 bilhões de estrelas, pelo menos dez vezes menos que a Via Láctea. Mesmo menor, forma estrelas novas num ritmo de cerca de 1 Sol a cada 2 anos. No berçário NGC 604, com uns 1.300 anos-luz, há mais de 200 estrelas das mais quentes e pesadas que existem.",
+    fontes: [
+      ["ESA/Hubble (2019)", "https://esahubble.org/news/heic1901/"],
+      ["NASA (Webb, 2024)", "https://science.nasa.gov/missions/webb/peering-into-the-tendrils-of-ngc-604-with-nasas-webb/"],
+      ["Breuval et al. (2023)", "https://doi.org/10.3847/1538-4357/acd3f4"],
+      ["Kam et al. (2017)", "https://doi.org/10.3847/1538-3881/aa79f3"]
+    ],
     ficha: [
       ["Diâmetro", "cerca de 60 mil anos-luz"],
       ["Estrelas", "cerca de 40 bilhões"],
       ["Distância do Sol", "2,74 milhões de anos-luz (840 mil parsecs)"],
-      ["Maior berçário", "NGC 604, com quase 1.500 anos-luz"],
+      ["Maior berçário", "NGC 604, com uns 1.300 anos-luz"],
       ["Estrelas novas", "cerca de 1 Sol a cada 2 anos"],
       ["Inclinação do disco", "52°"]
     ]
@@ -1438,7 +1546,32 @@ export const PERGUNTAS = [
 // ---------------------------------------------------------------------------
 
 /** Todos os objetos que podem ser descobertos, com o nível de cada um. */
+// Cada foto vai para o seu astro: imagem (o arquivo) e creditoImagem.
+for (const objeto of [SOL, ...PLANETAS, LUA, ...OBJETOS_GALAXIA]) {
+  const foto = FOTOS[objeto.id];
+  if (!foto) continue;
+  objeto.imagem = `${PASTA_DAS_FOTOS[objeto.id] || "img/planetas"}/${objeto.id}.webp`;
+  objeto.creditoImagem = foto;
+}
+
 export const TODOS_OS_OBJETOS = [SOL, ...PLANETAS, LUA, ...LUAS, ...PLANETAS_ANOES, CINTURAO, VOYAGER, ...ESTRELAS, ...OBJETOS_GALAXIA];
+
+/** Fontes de um verbete, para mostrar na ficha: [{ rotulo, url }]. */
+export function fontesDoObjeto(objeto) {
+  if (objeto.fontes) return objeto.fontes.map(([rotulo, url]) => ({ rotulo, url }));
+  if (objeto.fonte) return [{ rotulo: rotuloDoSite(objeto.fonte), url: objeto.fonte }];
+  return [];
+}
+
+function rotuloDoSite(url) {
+  const site = new URL(url).hostname.replace(/^www\./, "");
+  if (site.endsWith("nasa.gov")) return "NASA";
+  if (site === "esahubble.org") return "ESA/Hubble";
+  if (site.endsWith("esa.int")) return "ESA";
+  if (site.endsWith("eso.org")) return "ESO";
+  if (site === "arxiv.org") return "arXiv";
+  return site;
+}
 
 const PORID = new Map(TODOS_OS_OBJETOS.map((objeto) => [objeto.id, objeto]));
 

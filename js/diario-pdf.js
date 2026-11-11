@@ -6,7 +6,7 @@
 
 import { A4, DocumentoPdf, carregarJpeg, medir, quebrarLinhas } from "./pdf.js";
 import * as astro from "./explorador/astronomia.js";
-import { NIVEIS, MISSOES, PERGUNTAS, perguntaDoObjeto, corDaEstrela } from "./explorador/catalogo.js";
+import { NIVEIS, MISSOES, PERGUNTAS, perguntaDoObjeto, corDaEstrela, fontesDoObjeto, objetoPorId } from "./explorador/catalogo.js";
 import * as progresso from "./explorador/progresso.js";
 
 const COR = {
@@ -71,6 +71,14 @@ function desenharCapa(doc, { nome, resumo, estatisticas, grupos, imagemCapa }) {
     const corEstrela = coresEstrelas[Math.floor(sorte() * coresEstrelas.length)];
     if (imagemCapa && Math.hypot(x - terra.x, y - terra.y) < terra.r) continue;
     p.circulo(x, y, r, { fundo: corEstrela });
+  }
+
+  if (imagemCapa) {
+    // Crédito da foto da Terra, no pé da faixa preta.
+    const { credito, link } = objetoPorId("terra").creditoImagem;
+    const texto = `Terra: ${credito}`;
+    const largura = p.texto(A4.largura - MARGEM, alturaFaixa - 10, texto, { tamanho: 6.5, cor: "#7d88a6", alinhar: "direita" });
+    p.link(A4.largura - MARGEM - largura, alturaFaixa - 18, largura, 10, link);
   }
 
   p.texto(MARGEM, 96, "EXPLORADOR DO UNIVERSO", { fonte: "negrito", tamanho: 9.5, cor: "#8fb4ff", espacamento: 1.6 });
@@ -194,9 +202,20 @@ function montarVerbete(objeto, { distancia, imagem, resposta, pergunta, corNivel
       });
       linhaY += alturaLinha + 6;
     }
-    alturaFicha = linhaY + (objeto.fonte ? 14 : 0);
+    alturaFicha = linhaY;
   }
-  const altura = padding + alturaTopo + (alturaFicha ? 12 + alturaFicha : 0) + padding - 2;
+  // Fontes da ficha, cada uma com o seu link.
+  const larguraUtil = LARGURA - 2 * padding;
+  const fontes = objeto.ficha?.length ? fontesDoObjeto(objeto) : [];
+  const linhasFontes = fontes.length ? arrumarLinks(`${fontes.length > 1 ? "Fontes" : "Fonte"}:`, fontes, 8, larguraUtil) : [];
+  if (linhasFontes.length) alturaFicha += linhasFontes.length * 11 + 2;
+  // Crédito da foto no próprio cartão, junto da imagem (a licença CC BY pede isso).
+  const credito = imagem && objeto.creditoImagem;
+  const linhasCredito = credito
+    ? quebrarLinhas(`Foto: ${credito.descricao}. ${credito.credito} (${credito.licenca}).`, "normal", 7.5, larguraUtil)
+    : [];
+  const alturaCredito = linhasCredito.length ? 8 + linhasCredito.length * 10 : 0;
+  const altura = padding + alturaTopo + (alturaFicha ? 12 + alturaFicha : 0) + alturaCredito + padding - 2;
 
   function desenhar(p, y) {
     p.retangulo(MARGEM, y, LARGURA, altura, { fundo: COR.cartao, borda: COR.borda, raio: 12 });
@@ -224,16 +243,55 @@ function montarVerbete(objeto, { distancia, imagem, resposta, pergunta, corNivel
         base += 2;
         texto.forEach((linha) => { p.texto(x, base, linha, { tamanho: 9.5, cor: COR.tinta }); base += 12; });
       }
-      if (objeto.fonte) {
-        const host = (() => { try { return new URL(objeto.fonte).host.replace(/^www\./, ""); } catch { return ""; } })();
-        const rotulo = `Fonte: ${host || objeto.fonte}`;
-        const yFonte = yFicha + alturaFicha - 2;
-        const largura = p.texto(MARGEM + padding, yFonte, rotulo, { tamanho: 8, cor: COR.acento });
-        p.link(MARGEM + padding, yFonte - 9, largura, 12, objeto.fonte);
-      }
+      linhasFontes.forEach((pedacos, i) => {
+        const base = yFicha + alturaFicha - (linhasFontes.length - 1 - i) * 11 - 4;
+        for (const { texto, url, x, largura } of pedacos) {
+          p.texto(MARGEM + padding + x, base, texto, { tamanho: 8, cor: url ? COR.acento : COR.suave });
+          if (url) p.link(MARGEM + padding + x, base - 9, largura, 12, url);
+        }
+      });
+    }
+    if (linhasCredito.length) {
+      const yCredito = y + padding + alturaTopo + (alturaFicha ? 12 + alturaFicha : 0) + 8;
+      linhasCredito.forEach((linha, i) => {
+        const base = yCredito + 7 + i * 10;
+        const largura = p.texto(MARGEM + padding, base, linha, { tamanho: 7.5, cor: COR.apagado });
+        p.link(MARGEM + padding, base - 8, largura, 10, credito.link);
+      });
     }
   }
   return { altura, desenhar };
+}
+
+/**
+ * Arruma "Fontes: A · B · C" em linhas que cabem na largura; cada pedaço guarda
+ * o x e o link. O separador fica sempre junto do item anterior. (Os espaços são
+ * somados à parte, porque o texto do PDF não guarda espaço no começo nem no fim.)
+ */
+function arrumarLinks(prefixo, itens, tamanho, largura) {
+  const medida = (texto) => medir(texto, "normal", tamanho);
+  const espaco = medida("a a") - medida("aa");
+  const linhas = [[{ texto: prefixo, url: null, x: 0, largura: medida(prefixo) }]];
+  let x = medida(prefixo);
+  itens.forEach(({ rotulo, url }, i) => {
+    const separador = i < itens.length - 1 ? "·" : "";
+    const w = medida(rotulo), wSeparador = separador ? espaco + medida(separador) : 0;
+    if (x + espaco + w + wSeparador > largura) {
+      linhas.push([]);
+      x = 0;
+    } else {
+      x += espaco;
+    }
+    const linha = linhas[linhas.length - 1];
+    linha.push({ texto: rotulo, url, x, largura: w });
+    x += w;
+    if (separador) {
+      x += espaco;
+      linha.push({ texto: separador, url: null, x, largura: medida(separador) });
+      x += medida(separador);
+    }
+  });
+  return linhas;
 }
 
 // ---------- Missões ----------
@@ -264,8 +322,8 @@ export async function gerarPdfDoDiario({ grupos, distanciaDoObjeto, nome = "" })
     const jpeg = await carregarJpeg(objeto.imagem, { lado: 300 });
     if (jpeg) imagens.set(objeto.id, doc.adicionarImagem(jpeg));
   }));
-  // Capa: a Terra (recorte quadrado em volta do disco do planeta).
-  const jpegCapa = await carregarJpeg("img/planetas/terra.webp", { lado: 420, centro: [0.507, 0.495], fundo: COR.espaco, vinheta: [0.4, 0.5] });
+  // Capa: a Terra (a foto já é quadrada, com o planeta no centro).
+  const jpegCapa = await carregarJpeg(objetoPorId("terra").imagem, { lado: 420, centro: [0.5, 0.5], fundo: COR.espaco, vinheta: [0.4, 0.5] });
   const imagemCapa = jpegCapa ? doc.adicionarImagem(jpegCapa) : null;
 
   desenharCapa(doc, { nome, resumo, estatisticas: estado.estatisticas, grupos, imagemCapa });
@@ -324,7 +382,8 @@ export async function gerarPdfDoDiario({ grupos, distanciaDoObjeto, nome = "" })
 
   // Fontes.
   const fontes = "Fontes dos dados: NASA (fichas técnicas dos planetas, da Lua e do Sol), JPL/NASA (órbitas), IAU (eixos e rotação), " +
-    "SIMBAD, Hipparcos e Gaia (estrelas), ESO, ESA e NASA (nebulosas e galáxias). Imagens: NASA e Solar System Scope (CC BY 4.0).";
+    "SIMBAD, Hipparcos e Gaia (estrelas), ESO, ESA e NASA (nebulosas e galáxias); as fontes de cada astro estão na ficha técnica dele. " +
+    "Fotos: NASA, JPL e ESA/Hubble; o crédito de cada uma está no cartão do astro.";
   const linhasFontes = quebrarLinhas(fontes, "normal", 8.5, LARGURA);
   caber(30 + linhasFontes.length * 11.5);
   y += 16;

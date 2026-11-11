@@ -55,6 +55,7 @@ Confere o modelo contra eventos reais e leis físicas — equinócios, oposiçõ
 - **Estrelas:** catálogo HYG v4.0, a partir do Hipparcos (ESA) — `dados/estrelas.json` está sob CC BY-SA 4.0.
 - **Via Láctea:** braços medidos por Reid et al. (2019), barra de Wegg et al. (2015), disco de Bland-Hawthorn e Gerhard (2016), distância ao centro do GRAVITY (2019).
 - **Galáxias vizinhas:** distâncias de Li et al. (2021), Breuval et al. (2023), Pietrzyński et al. (2019) e Graczyk et al. (2020); inclinação, giro e estrutura de cada uma a partir de artigos e da NASA, ESA e ESO.
+- **Fotos do Diário:** NASA, JPL e ESA/Hubble (estas sob CC BY 4.0), cada uma com o crédito oficial no cartão do astro e na página [Sobre](https://davi-mares.github.io/explorador-do-universo/sobre.html).
 - **Céu:** foto panorâmica da ESO/S. Brunier (CC BY 4.0).
 - **Mapas:** [Solar System Scope](https://www.solarsystemscope.com/textures/) (CC BY 4.0), NASA (Blue Marble, New Horizons) e [Celestia](https://github.com/CelestiaProject/CelestiaContent) (CC BY) para as luas. Nebulosas, galáxias, buracos negros e os mapas de Europa, Calisto, Encélado e Caronte são ilustrações feitas por código.
 - **Three.js** (MIT) para o 3D. As referências completas estão no documento do TCC.

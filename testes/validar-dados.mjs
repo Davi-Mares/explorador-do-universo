@@ -11,7 +11,7 @@
 // Sai com código 1 se algum teste falhar — dá para rodar no GitHub Actions.
 // ---------------------------------------------------------------------------
 
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
@@ -435,6 +435,42 @@ for (const p of cat.PLANETAS_ANOES) {
     let existe = true;
     try { readFileSync(join(raiz, o.imagem)); } catch { existe = false; }
     verdadeiro("Base", `${o.nome}: imagem ${o.imagem} existe`, existe);
+  }
+}
+
+// ---------- Créditos das fotos e fontes ----------
+{
+  const G = "Créditos e fontes";
+  const sobre = readFileSync(join(raiz, "sobre.html"), "utf8").replace(/&amp;/g, "&");
+  const AGENCIAS = /^https:\/\/(esahubble\.org|www\.jpl\.nasa\.gov|science\.nasa\.gov)\//;
+  const comFoto = cat.TODOS_OS_OBJETOS.filter((x) => x.imagem);
+  verdadeiro(G, `${comFoto.length} fotos no Diário, todas com crédito`, comFoto.length >= 11 && comFoto.every((o) => o.creditoImagem));
+  for (const o of comFoto) {
+    const c = o.creditoImagem;
+    verdadeiro(G, `${o.nome}: crédito, descrição, licença e link da página oficial da foto`,
+      c.credito && c.descricao && c.licenca && AGENCIAS.test(c.link));
+    if (c.link.includes("esahubble.org")) verdadeiro(G, `${o.nome}: foto da ESA/Hubble com licença CC BY 4.0`, c.licenca === "CC BY 4.0");
+    verdadeiro(G, `${o.nome}: crédito exato e link na página Sobre`, sobre.includes(c.credito) && sobre.includes(c.link));
+    // WebP: largura e altura no cabeçalho (VP8, VP8L ou VP8X); as fotos são quadradas.
+    const b = readFileSync(join(raiz, o.imagem));
+    const tipo = b.toString("ascii", 12, 16);
+    const [w, h] = tipo === "VP8X" ? [1 + b.readUIntLE(24, 3), 1 + b.readUIntLE(27, 3)]
+      : tipo === "VP8L" ? [1 + (b.readUInt32LE(21) & 0x3fff), 1 + ((b.readUInt32LE(21) >> 14) & 0x3fff)]
+        : [b.readUInt16LE(26) & 0x3fff, b.readUInt16LE(28) & 0x3fff];
+    verdadeiro(G, `${o.nome}: foto quadrada de ${w} × ${h} px`, w === h && w >= 400);
+  }
+  // Toda ficha técnica vem com o texto do "saiba mais" e pelo menos uma fonte com link.
+  for (const o of cat.TODOS_OS_OBJETOS.filter((x) => x.ficha)) {
+    const fontes = cat.fontesDoObjeto(o);
+    verdadeiro(G, `${o.nome}: ficha com "saiba mais" e ${fontes.length} ${fontes.length === 1 ? "fonte" : "fontes"} com link`,
+      o.saibaMais && fontes.length && fontes.every((f) => f.rotulo && f.url.startsWith("https://")));
+  }
+  // Não sobra foto sem dono (e portanto sem crédito) nas pastas do Diário.
+  const usadas = new Set(comFoto.map((o) => o.imagem));
+  for (const pasta of ["img/planetas", "img/universo"]) {
+    for (const arquivo of readdirSync(join(raiz, pasta))) {
+      verdadeiro(G, `${pasta}/${arquivo} tem crédito (é foto de um astro)`, usadas.has(`${pasta}/${arquivo}`));
+    }
   }
 }
 // ---------- Relatório ----------

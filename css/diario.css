@@ -195,6 +195,17 @@
   font-size: 0.8rem;
 }
 
+.verbete p.credito-foto {
+  margin: 10px 0 0;
+  color: var(--cor-texto-apagado);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.credito-foto a {
+  color: inherit;
+}
+
 .verbete-acoes {
   display: flex;
   flex-wrap: wrap;

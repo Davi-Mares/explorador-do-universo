@@ -39,7 +39,11 @@ export function paraWinAnsi(texto) {
     const codigo = letra.codePointAt(0);
     if ((codigo >= 32 && codigo < 127) || (codigo >= 160 && codigo <= 255)) bytes.push(codigo);
     else if (ESPECIAIS[letra]) bytes.push(ESPECIAIS[letra]);
-    else bytes.push(63);
+    else {
+      // Letras fora da tabela (ń, ł, ę...) viram a letra sem o acento.
+      const base = letra.normalize("NFD").codePointAt(0);
+      bytes.push(base >= 32 && base < 127 ? base : 63);
+    }
   }
   return bytes;
 }

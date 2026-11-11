@@ -643,7 +643,7 @@ export function criarTriangulo({ escala = 1, materiais, limite = Infinity } = {}
     feitas++;
     montagem.escuro(x, gaussiana(aleatorio) * 0.06, z, COR.poeiraClara, 0.35 + aleatorio() * 0.5, 0.1);
   }
-  // NGC 604: quase 1.500 anos-luz de gás brilhante em volta de mais de 200 estrelas quentes (NASA).
+  // NGC 604: uns 1.300 anos-luz de gás brilhante em volta de mais de 200 estrelas quentes (NASA, Webb, 2024).
   for (let i = 0; i < 120; i++) {
     const [dx, dy, dz] = direcao(aleatorio);
     const r = Math.pow(aleatorio(), 0.6) * ngc604.raioKly;

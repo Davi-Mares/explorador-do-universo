@@ -7,7 +7,7 @@
 import * as astro from "./explorador/astronomia.js";
 import {
   NIVEIS, SOL, PLANETAS, LUA, LUAS, PLANETAS_ANOES, CINTURAO, VOYAGER, ESTRELAS, OBJETOS_GALAXIA, MISSOES, PERGUNTAS, GALAXIA,
-  TODOS_OS_OBJETOS, COMPARAVEIS, perguntaDoObjeto, corDaEstrela
+  TODOS_OS_OBJETOS, COMPARAVEIS, perguntaDoObjeto, corDaEstrela, fontesDoObjeto
 } from "./explorador/catalogo.js";
 import * as progresso from "./explorador/progresso.js";
 import { gerarPdfDoDiario, nomeDoArquivo } from "./diario-pdf.js";
@@ -57,8 +57,13 @@ const GRUPOS = [
   { nivel: "galaxia", objetos: OBJETOS_GALAXIA }
 ];
 
+const LINK_EXTERNO = `target="_blank" rel="noopener noreferrer"`;
+
 function imagem(objeto) {
-  if (objeto.imagem) return `<img src="${objeto.imagem}" alt="" loading="lazy">`;
+  if (objeto.imagem) {
+    const { descricao, credito } = objeto.creditoImagem;
+    return `<img src="${objeto.imagem}" alt="${escapar(`${objeto.nome}: ${descricao}`)}" title="${escapar(`Foto: ${credito}`)}" loading="lazy">`;
+  }
   const cor = objeto.espectro ? corDaEstrela(objeto) : objeto.cor || "#cfe0ff";
   return `<span class="orbe" style="--cor:${cor}" aria-hidden="true"></span>`;
 }
@@ -108,13 +113,19 @@ function verbete(objeto, nivel) {
       <div><dt>A luz leva</dt><dd>${astro.formatarDuracao(distancia.km / astro.VELOCIDADE_LUZ_KM_S)}</dd></div>
     </dl>` : "";
 
+  const fontes = fontesDoObjeto(objeto);
   const ficha = objeto.ficha ? `
     <details class="ficha">
       <summary>Ficha técnica e saiba mais</summary>
-      <p>${escapar(objeto.saibaMais)}</p>
+      ${objeto.saibaMais ? `<p>${escapar(objeto.saibaMais)}</p>` : ""}
       <table>${objeto.ficha.map(([campo, valor]) => `<tr><th scope="row">${escapar(campo)}</th><td>${escapar(valor)}</td></tr>`).join("")}</table>
-      <p class="fonte">Fonte: <a href="${objeto.fonte}" target="_blank" rel="noopener noreferrer">NASA</a></p>
+      ${fontes.length ? `<p class="fonte">${fontes.length > 1 ? "Fontes" : "Fonte"}: ${fontes
+        .map(({ rotulo, url }) => `<a href="${url}" ${LINK_EXTERNO}>${escapar(rotulo)}</a>`).join(" · ")}</p>` : ""}
     </details>` : "";
+
+  // O crédito fica no próprio cartão, junto da foto (a licença CC BY pede isso).
+  const credito = objeto.imagem ? `
+    <p class="credito-foto">📷 ${escapar(objeto.creditoImagem.descricao)}. Foto: <a href="${objeto.creditoImagem.link}" ${LINK_EXTERNO}>${escapar(objeto.creditoImagem.credito)}</a> (${escapar(objeto.creditoImagem.licenca)})</p>` : "";
 
   const desafio = !pergunta ? "" : resposta
     ? `<button type="button" class="link-botao ${resposta.correta ? "certo" : "errado"}" data-quiz="${pergunta.id}">${resposta.correta ? "✅ Desafio certo" : "❌ Desafio errado"} · ver explicação</button>`
@@ -135,6 +146,7 @@ function verbete(objeto, nivel) {
           <a href="explorador.html?nivel=${nivel.id}&alvo=${objeto.id}">🚀 Ver no Explorador</a>
           ${linkComparar(objeto)}
         </div>
+        ${credito}
       </div>
     </article>`;
 }
