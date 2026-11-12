@@ -6,7 +6,7 @@
 // visitantes recebam os arquivos novos (o cache antigo é apagado).
 // ---------------------------------------------------------------------------
 
-const VERSAO = "v14";
+const VERSAO = "v15";
 const CACHE = `explorador-do-universo-${VERSAO}`;
 
 // Arquivos baixados já na instalação. As texturas dos outros planetas são
