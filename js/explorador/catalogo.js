@@ -209,7 +209,7 @@ export const PLANETAS = [
     curiosidade: "Cada polo de Urano passa cerca de 42 anos seguidos de dia e depois 42 anos de noite."
   },
   {
-    id: "netuno", nome: "Netuno", tipo: "Gigante gelado", raioKm: 24_622, cor: "#4b6fe0",
+    id: "netuno", nome: "Netuno", tipo: "Gigante gelado", raioKm: 24_622, cor: "#7fb2de",
     periodoAnos: 164.79132,
     resumo: "O planeta mais distante, com os ventos mais rápidos do Sistema Solar.",
     curiosidade: "A luz do Sol leva cerca de 4 horas para chegar a Netuno."
@@ -226,7 +226,8 @@ export const PLANETAS = [
 const FICHAS = {
   sol: {
     fonte: "https://science.nasa.gov/sun/facts/",
-    saibaMais: "Com cerca de 4,6 bilhões de anos, o Sol é formado principalmente por hidrogênio e hélio. No núcleo, a fusão nuclear transforma hidrogênio em hélio e libera a energia que chega até nós. O vento solar forma a heliosfera, uma bolha que envolve todo o Sistema Solar.",
+    fontesDasNovidades: [["NASA (Parker Solar Probe, 2024)", "https://science.nasa.gov/blogs/parker-solar-probe/2025/01/02/nasas-parker-solar-probe-reports-healthy-status-after-solar-encounter/"]],
+    saibaMais: "Com cerca de 4,6 bilhões de anos, o Sol é formado principalmente por hidrogênio e hélio. No núcleo, a fusão nuclear transforma hidrogênio em hélio e libera a energia que chega até nós. O vento solar forma a heliosfera, uma bolha que envolve todo o Sistema Solar. Em 24 de dezembro de 2024, a sonda Parker Solar Probe, da NASA, passou a 6,1 milhões de km da superfície do Sol, a cerca de 690 mil km/h: nenhum objeto feito por humanos chegou tão perto nem foi tão rápido.",
     ficha: [
       ["Tipo", "Estrela anã amarela (G2V)"],
       ["Diâmetro", "1.392.700 km (109 Terras)"],
@@ -240,7 +241,8 @@ const FICHAS = {
   },
   mercurio: {
     fonte: "https://science.nasa.gov/mercury/facts/",
-    saibaMais: "Mercúrio é só um pouco maior que a Lua e não tem luas. A superfície cheia de crateras lembra a lunar, e o núcleo rico em ferro gera um campo magnético fraco. Quase sem atmosfera, a temperatura varia muito entre o dia e a noite.",
+    fontesDasNovidades: [["ESA (BepiColombo, 2026)", "https://www.esa.int/Science_Exploration/Space_Science/BepiColombo/Latest_updates_BepiColombo_s_arrival_at_Mercury"]],
+    saibaMais: "Mercúrio é só um pouco maior que a Lua e não tem luas. A superfície cheia de crateras lembra a lunar, e o núcleo rico em ferro gera um campo magnético fraco. Quase sem atmosfera, a temperatura varia muito entre o dia e a noite. A sonda BepiColombo, da Europa e do Japão, lançada em 2018, chega a Mercúrio em novembro de 2026 (a entrada em órbita está marcada para o dia 21) e deve começar os estudos em 2027.",
     ficha: [
       ["Tipo", "Planeta rochoso"],
       ["Diâmetro", "4.879 km"],
@@ -282,7 +284,8 @@ const FICHAS = {
   },
   marte: {
     fonte: "https://science.nasa.gov/mars/facts/",
-    saibaMais: "Marte tem atmosfera fina, calotas polares, vulcões e o Valles Marineris, um sistema de cânions enorme. A gravidade é cerca de 38% da terrestre e as duas luas são Fobos e Deimos. Robôs investigam se o planeta já teve vida microbiana.",
+    fontesDasNovidades: [["NASA/JPL (Perseverance, 2025)", "https://www.jpl.nasa.gov/news/nasa-says-mars-rover-discovered-potential-biosignature-last-year/"]],
+    saibaMais: "Marte tem atmosfera fina, calotas polares, vulcões e o Valles Marineris, um sistema de cânions enorme. A gravidade é cerca de 38% da terrestre e as duas luas são Fobos e Deimos. Robôs investigam se o planeta já teve vida microbiana: em 2025, a NASA anunciou que uma rocha estudada pelo jipe-robô Perseverance tem uma possível bioassinatura, marcas que podem ter sido deixadas por micróbios antigos ou por reações químicas sem vida. Para ter certeza, é preciso trazer a amostra para a Terra.",
     ficha: [
       ["Tipo", "Planeta rochoso"],
       ["Diâmetro", "6.779 km"],
@@ -296,6 +299,7 @@ const FICHAS = {
   },
   jupiter: {
     fonte: "https://science.nasa.gov/jupiter/jupiter-facts/",
+    fontesDasNovidades: [["NASA Space Place (número de luas, 2026)", "https://spaceplace.nasa.gov/how-many-moons/en/"]],
     saibaMais: "Gigante gasoso de hidrogênio e hélio, Júpiter tem um dia de cerca de 10 horas, faixas de nuvens, tempestades intensas e a magnetosfera mais forte entre os planetas. Entre as suas mais de cem luas estão Ganimedes, a maior do Sistema Solar, e Europa, que pode ter um oceano sob o gelo.",
     ficha: [
       ["Tipo", "Gigante gasoso"],
@@ -310,6 +314,7 @@ const FICHAS = {
   },
   saturno: {
     fonte: "https://science.nasa.gov/saturn/facts/",
+    fontesDasNovidades: [["NASA Space Place (número de luas, 2026)", "https://spaceplace.nasa.gov/how-many-moons/en/"]],
     saibaMais: "Gigante gasoso com núcleo rochoso, Saturno gira tão rápido que é o planeta mais achatado. Titã, sua maior lua, é a única com atmosfera densa e tem lagos de metano e etano. O planeta foi estudado pela sonda Cassini, e a Huygens pousou em Titã.",
     ficha: [
       ["Tipo", "Gigante gasoso"],
@@ -324,7 +329,8 @@ const FICHAS = {
   },
   urano: {
     fonte: "https://science.nasa.gov/uranus/facts/",
-    saibaMais: "Descoberto com telescópio em 1781, Urano tem atmosfera de hidrogênio, hélio e metano. O eixo inclinado cerca de 98° faz o planeta girar quase de lado e produz estações extremas. Tem anéis, luas e ventos fortes.",
+    fontesDasNovidades: [["AURA (lua nova vista pelo Webb, 2025)", "https://www.aura-astronomy.org/blog/2025/08/20/new-moon-discovered-orbiting-uranus-using-nasas-webb-telescope/"]],
+    saibaMais: "Descoberto com telescópio em 1781, Urano tem atmosfera de hidrogênio, hélio e metano. O eixo inclinado cerca de 98° faz o planeta girar quase de lado e produz estações extremas. Tem anéis, ventos fortes e 29 luas conhecidas: a 29ª, com só uns 10 km, foi descoberta em 2025 pelo telescópio James Webb.",
     ficha: [
       ["Tipo", "Gigante gelado"],
       ["Diâmetro", "50.724 km (4 Terras)"],
@@ -338,7 +344,8 @@ const FICHAS = {
   },
   netuno: {
     fonte: "https://science.nasa.gov/neptune/neptune-facts/",
-    saibaMais: "Com massa 17 vezes a da Terra, Netuno tem os ventos mais rápidos do Sistema Solar (até cerca de 2.000 km/h) e é azul por causa do metano. Foi descoberto em 1846 por cálculos matemáticos, tem 16 luas conhecidas (Tritão é a maior) e só foi visitado pela Voyager 2, em 1989.",
+    fontesDasNovidades: [["Universidade de Oxford (a cor de verdade, 2024)", "https://www.ox.ac.uk/news/2024-01-05-new-images-reveal-what-neptune-and-uranus-really-look-0"], ["Irwin et al. (2024)", "https://doi.org/10.1093/mnras/stad3761"]],
+    saibaMais: "Com massa 17 vezes a da Terra, Netuno tem os ventos mais rápidos do Sistema Solar (até cerca de 2.000 km/h) e é azulado por causa do metano. Em 2024, astrônomos refizeram as fotos da Voyager 2 e mostraram que a cor de verdade é um azul-esverdeado claro, parecido com o de Urano: nas fotos famosas, de azul forte, o contraste foi aumentado para destacar as nuvens. Foi descoberto em 1846 por cálculos matemáticos, tem 16 luas conhecidas (Tritão é a maior) e só foi visitado pela Voyager 2, em 1989.",
     ficha: [
       ["Tipo", "Gigante gelado"],
       ["Diâmetro", "49.244 km (4 Terras)"],
@@ -450,7 +457,8 @@ export const LUA = {
   resumo: "O único lugar fora da Terra onde seres humanos já pisaram (missões Apollo, 1969–1972).",
   curiosidade: "Todos os planetas do Sistema Solar, enfileirados, caberiam entre a Terra e a Lua.",
   fonte: "https://science.nasa.gov/moon/facts/",
-  saibaMais: "A Lua provavelmente se formou há cerca de 4,5 bilhões de anos, com os destroços de uma colisão entre a Terra jovem e um corpo do tamanho de Marte. Ela gira em torno de si no mesmo tempo em que dá uma volta na Terra, por isso mostra sempre a mesma face. Sua gravidade é a principal causa das marés.",
+  fontesDasNovidades: [["NASA (Artemis II, 2026)", "https://www.nasa.gov/mission/artemis-ii/"]],
+  saibaMais: "A Lua provavelmente se formou há cerca de 4,5 bilhões de anos, com os destroços de uma colisão entre a Terra jovem e um corpo do tamanho de Marte. Ela gira em torno de si no mesmo tempo em que dá uma volta na Terra, por isso mostra sempre a mesma face. Sua gravidade é a principal causa das marés. Em abril de 2026, a missão Artemis II, da NASA, levou quatro astronautas para dar a volta na Lua, na primeira viagem de pessoas até lá desde 1972. Eles passaram dos 400 mil km da Terra, o mais longe que seres humanos já foram.",
   ficha: [
     ["Tipo", "Satélite natural"],
     ["Diâmetro", "3.475 km (27% da Terra)"],
@@ -520,6 +528,7 @@ export const VOYAGER = {
   fontes: [
     ["NASA (onde estão as Voyager)", "https://science.nasa.gov/mission/voyager/where-are-voyager-1-and-voyager-2-now/"],
     ["NASA (ficha da missão)", "https://science.nasa.gov/mission/voyager/fact-sheet"],
+    ["NASA (1 dia-luz da Terra, 2026)", "https://science.nasa.gov/mission/voyager/voyager-1/voyager-1-what-is-a-light-day/"],
     ["JPL Horizons (posição)", "https://ssd.jpl.nasa.gov/horizons/"]
   ],
   saibaMais: "Lançada em 1977, a Voyager 1 passou por Júpiter em 1979 e por Saturno em 1980. Desde então se afasta a cerca de 17 km/s, subindo 35° para o norte do plano dos planetas. Em agosto de 2012 ela saiu da heliosfera, a bolha de vento solar que envolve os planetas. Em 2026, quase 50 anos depois do lançamento, dois dos seus dez instrumentos científicos continuavam ligados.",
@@ -651,7 +660,8 @@ export const LUAS = [
     resumo: "A maior das duas luas de Marte: uma rocha escura e irregular, com uns 22 km, cheia de crateras.",
     curiosidade: "Está chegando mais perto de Marte, cerca de 1,8 metro a cada século: daqui a uns 50 milhões de anos ela vai cair no planeta ou se desfazer num anel.",
     fonte: "https://science.nasa.gov/mars/moons/phobos/",
-    saibaMais: "Fobos dá a volta em Marte mais rápido do que Marte gira: visto do chão marciano, ele nasce no oeste e se põe no leste, duas vezes por dia. Fobos e Deimos podem ser asteroides capturados ou restos de uma grande colisão com Marte.",
+    fontesDasNovidades: [["JAXA (sonda MMX, 2026)", "https://www.mmx.jaxa.jp/en/"]],
+    saibaMais: "Fobos dá a volta em Marte mais rápido do que Marte gira: visto do chão marciano, ele nasce no oeste e se põe no leste, duas vezes por dia. Fobos e Deimos podem ser asteroides capturados ou restos de uma grande colisão com Marte. Em outubro de 2026 o Japão lançou a sonda MMX, que vai pousar em Fobos, recolher pelo menos 10 gramas do solo e trazer a amostra para a Terra em 2031.",
     ficha: [
       ["Tipo", "Lua de Marte"],
       ["Tamanho", "27 × 22 × 18 km (formato de batata)"],
@@ -702,7 +712,8 @@ export const LUAS = [
     resumo: "Coberta por uma casca de gelo, com um oceano de água salgada embaixo.",
     curiosidade: "O oceano de Europa pode ter o dobro da água de todos os oceanos da Terra — um dos melhores lugares para procurar vida fora daqui.",
     fonte: "https://science.nasa.gov/jupiter/moons/europa/",
-    saibaMais: "As listras avermelhadas são rachaduras no gelo. A sonda Europa Clipper, da NASA, lançada em 2024, vai passar dezenas de vezes por Europa para estudar o gelo e o oceano.",
+    fontesDasNovidades: [["NASA (Europa Clipper)", "https://science.nasa.gov/mission/europa-clipper"]],
+    saibaMais: "As listras avermelhadas são rachaduras no gelo. A sonda Europa Clipper, da NASA, lançada em 2024, chega a Júpiter em abril de 2030 e vai passar 49 vezes por Europa para estudar o gelo e o oceano.",
     ficha: [
       ["Tipo", "Lua de Júpiter (uma das quatro de Galileu)"],
       ["Diâmetro", "3.122 km (um pouco menor que a nossa Lua)"],
@@ -719,7 +730,8 @@ export const LUAS = [
     resumo: "A maior lua do Sistema Solar: é maior até que o planeta Mercúrio.",
     curiosidade: "É a única lua conhecida com campo magnético próprio, que até faz auroras nela.",
     fonte: "https://science.nasa.gov/jupiter/moons/ganymede/",
-    saibaMais: "Ganimedes tem regiões escuras e antigas e faixas mais claras cheias de sulcos. Por baixo do gelo deve haver um oceano. A sonda JUICE, da Agência Espacial Europeia, vai entrar em órbita dela na década de 2030.",
+    fontesDasNovidades: [["ESA (sonda Juice)", "https://www.esa.int/ESA_Multimedia/Images/2022/12/Juice_mission_milestones"]],
+    saibaMais: "Ganimedes tem regiões escuras e antigas e faixas mais claras cheias de sulcos. Por baixo do gelo deve haver um oceano. A sonda Juice, da Agência Espacial Europeia, lançada em 2023, chega a Júpiter em julho de 2031 e deve entrar em órbita de Ganimedes em dezembro de 2034: será a primeira sonda a orbitar a lua de outro planeta.",
     ficha: [
       ["Tipo", "Lua de Júpiter (uma das quatro de Galileu)"],
       ["Diâmetro", "5.262 km (maior que Mercúrio)"],
@@ -753,7 +765,8 @@ export const LUAS = [
     resumo: "A maior lua de Saturno, envolta numa atmosfera alaranjada mais densa que a da Terra.",
     curiosidade: "Tem rios, lagos e mares — mas de metano e etano líquidos, não de água.",
     fonte: "https://science.nasa.gov/saturn/moons/titan/",
-    saibaMais: "A névoa de Titã esconde a superfície; a sonda Cassini viu o chão com radar e a sonda Huygens pousou lá em 2005. A pressão do ar na superfície é cerca de 50% maior que a da Terra.",
+    fontesDasNovidades: [["NASA (missão Dragonfly)", "https://science.nasa.gov/missions/dragonfly/nasas-dragonfly-rotorcraft-mission-to-saturns-moon-titan-confirmed/"]],
+    saibaMais: "A névoa de Titã esconde a superfície; a sonda Cassini viu o chão com radar e a sonda Huygens pousou lá em 2005. A pressão do ar na superfície é cerca de 50% maior que a da Terra. A NASA prepara a Dragonfly, um drone do tamanho de um carro, com lançamento marcado para julho de 2028 e chegada a Titã em 2034.",
     ficha: [
       ["Tipo", "Lua de Saturno"],
       ["Diâmetro", "5.150 km (maior que Mercúrio)"],
@@ -836,7 +849,8 @@ export const CINTURAO = {
   resumo: "Uma faixa entre Marte e Júpiter com milhões de rochas que sobraram da formação dos planetas.",
   curiosidade: "Ao contrário dos filmes, ele é quase vazio: os asteroides maiores que 1 km ficam, em média, a centenas de milhares de km uns dos outros.",
   fonte: "https://science.nasa.gov/solar-system/asteroids/",
-  saibaMais: "A NASA estima que existam de 1,1 a 1,9 milhão de asteroides com mais de 1 km no cinturão principal. Somados, eles têm menos massa que a nossa Lua. Na mesma órbita de Júpiter há ainda dois enxames, os asteroides troianos, que a sonda Lucy, da NASA, vai visitar a partir de 2027.",
+  fontesDasNovidades: [["NASA (sonda Lucy, 2026)", "https://science.nasa.gov/blogs/lucy/2026/10/28/nasas-lucy-reaches-trojan-asteroid-region-5-years-after-launch/"]],
+  saibaMais: "A NASA estima que existam de 1,1 a 1,9 milhão de asteroides com mais de 1 km no cinturão principal. Somados, eles têm menos massa que a nossa Lua. Na mesma órbita de Júpiter há ainda dois enxames, os asteroides troianos. A sonda Lucy, da NASA, chegou a essa região em outubro de 2026 e tem o primeiro encontro com um troiano, Euríbates, marcado para agosto de 2027.",
   ficha: [
     ["Onde fica", "Entre Marte e Júpiter (≈ 2,1 a 3,3 UA do Sol)"],
     ["Asteroides com mais de 1 km", "≈ 1,1 a 1,9 milhão"],
@@ -945,13 +959,17 @@ export const ESTRELAS = [
     id: "alfa-centauri", nome: "Alfa Centauri A e B", ar: "14 39 36.5", dec: "-60 50 02", anosLuz: 4.37,
     espectro: "G2 V + K1 V", mag: -0.27, tipo: "Sistema de duas estrelas parecidas com o Sol",
     resumo: "O sistema estelar mais próximo visível a olho nu. Proxima Centauri gira em volta dele.",
-    curiosidade: "Alfa e Beta Centauri são os 'ponteiros' que ajudam a achar o Cruzeiro do Sul no céu."
+    curiosidade: "Alfa e Beta Centauri são os 'ponteiros' que ajudam a achar o Cruzeiro do Sul no céu.",
+    saibaMais: "Em 2025, o telescópio James Webb registrou sinais de um planeta gigante gasoso, com massa parecida com a de Saturno, em volta de Alfa Centauri A. Por enquanto é só um candidato: ele apareceu numa observação de 2024 e não nas seguintes, e novas observações precisam confirmar.",
+    fontesDasNovidades: [["ESA/Webb (candidato a planeta, 2025)", "https://esawebb.org/news/weic2515/"]]
   },
   {
     id: "barnard", nome: "Estrela de Barnard", ar: "17 57 48.5", dec: "+04 41 36", anosLuz: 5.96,
     espectro: "M4 V", mag: 9.51, tipo: "Anã vermelha",
     resumo: "Uma anã vermelha muito antiga, com cerca de 10 bilhões de anos.",
-    curiosidade: "É a estrela que mais rápido muda de posição no nosso céu."
+    curiosidade: "É a estrela que mais rápido muda de posição no nosso céu.",
+    saibaMais: "É a estrela sozinha mais próxima do Sol. Em 2025, astrônomos confirmaram quatro planetas em volta dela, todos menores que a Terra (de 20% a 30% da massa do nosso planeta). Eles ficam tão perto da estrela que dão uma volta em menos de 7 dias e são quentes demais para ter água líquida.",
+    fontesDasNovidades: [["NASA (quatro planetas, 2025)", "https://science.nasa.gov/universe/exoplanets/discovery-alert-four-little-planets-one-big-step/"]]
   },
   {
     id: "wolf-359", nome: "Wolf 359", ar: "10 56 29.2", dec: "+07 00 53", anosLuz: 7.86,
@@ -1107,7 +1125,9 @@ export const ESTRELAS = [
     id: "betelgeuse", nome: "Betelgeuse", ar: "05 55 10.3", dec: "+07 24 25", anosLuz: 548,
     espectro: "M1-2 Ia", mag: 0.50, tipo: "Supergigante vermelha",
     resumo: "O 'ombro' de Órion: uma supergigante vermelha no fim da vida. Distância incerta (500–650 anos-luz).",
-    curiosidade: "Um dia vai explodir como supernova — talvez daqui a 100 mil anos — e brilhar como a Lua cheia."
+    curiosidade: "Um dia vai explodir como supernova — talvez daqui a 100 mil anos — e brilhar como a Lua cheia.",
+    saibaMais: "Em 2025, um cientista da NASA encontrou a estrela companheira que os astrônomos previam havia anos. Bem menor, ela gira por dentro da atmosfera externa de Betelgeuse e ganhou o nome Siwarha, 'a pulseira dela' em árabe. Ela deve ficar mais fácil de observar de novo em novembro de 2027.",
+    fontesDasNovidades: [["NASA/JPL (estrela companheira, 2025)", "https://jpl.nasa.gov/news/nasa-scientist-finds-predicted-companion-star-to-betelgeuse/"]]
   },
   {
     id: "rigel", nome: "Rigel", ar: "05 14 32.3", dec: "-08 12 06", anosLuz: 860,
@@ -1190,7 +1210,6 @@ export const OBJETOS_GALAXIA = [
   {
     id: "sgr-a", nome: "Sagitário A*", tipo: "Buraco negro supermassivo", centro: true,
     cor: "#ffb36b", categoria: "buraco negro", massaSolar: 4.0e6,   // ESO/EHT (2022): ≈ 4 milhões de Sóis
-    notaEscala: "🎨 O buraco negro aqui é uma ilustração ampliada mais de 1 milhão de vezes. O de verdade tem 24 milhões de km de diâmetro e seria invisível nesta escala.",
     resumo: "O buraco negro no centro da Via Láctea, com cerca de 4 milhões de vezes a massa do Sol.",
     curiosidade: "Em 2022 o Event Horizon Telescope mostrou a primeira imagem da 'sombra' dele.",
     saibaMais: "A imagem, divulgada em 12 de maio de 2022, foi feita com uma rede de radiotelescópios espalhados pelo planeta, que juntos funcionam como um telescópio do tamanho da Terra. Ela mostra um anel de gás brilhante em volta de uma região escura, a 'sombra' do buraco negro. A massa é conhecida pelo movimento das estrelas que giram em volta dele.",
@@ -2039,9 +2058,12 @@ export const TODOS_OS_OBJETOS = [SOL, ...PLANETAS, LUA, ...LUAS, ...PLANETAS_ANO
 
 /** Fontes de um verbete, para mostrar na ficha: [{ rotulo, url }]. */
 export function fontesDoObjeto(objeto) {
-  if (objeto.fontes) return objeto.fontes.map(([rotulo, url]) => ({ rotulo, url }));
-  if (objeto.fonte) return [{ rotulo: rotuloDoSite(objeto.fonte), url: objeto.fonte }];
-  return [];
+  const principais = objeto.fontes
+    ? objeto.fontes.map(([rotulo, url]) => ({ rotulo, url }))
+    : objeto.fonte ? [{ rotulo: rotuloDoSite(objeto.fonte), url: objeto.fonte }] : [];
+  // Missões e descobertas recentes citadas no texto trazem a própria fonte.
+  const novidades = (objeto.fontesDasNovidades || []).map(([rotulo, url]) => ({ rotulo, url }));
+  return [...principais, ...novidades];
 }
 
 function rotuloDoSite(url) {
@@ -2052,6 +2074,79 @@ function rotuloDoSite(url) {
   if (site.endsWith("eso.org")) return "ESO";
   if (site === "arxiv.org") return "arXiv";
   return site;
+}
+
+// ---------------------------------------------------------------------------
+// O que é foto e o que é ilustração
+// ---------------------------------------------------------------------------
+// Todo astro avisa, no painel do Explorador e no Diário, de onde vem o que
+// aparece em 3D:
+//   real        mapa feito com fotos de sondas e telescópios;
+//   parcial     parte vem de fotos, parte foi completada ou ajustada por código;
+//   ilustracao  desenho feito por código a partir de medidas.
+
+export const TIPOS_DE_APARENCIA = {
+  real: { icone: "📷", rotulo: "Imagem de verdade" },
+  parcial: { icone: "🧩", rotulo: "Parte foto, parte ilustração" },
+  ilustracao: { icone: "🎨", rotulo: "Ilustração" }
+};
+
+const SUPERFICIE_DE_VERDADE = "Superfície de verdade: mapa feito com as fotos das sondas que passaram por lá.";
+const NEBULOSA_ILUSTRADA = "Ilustração feita por código, com o tamanho e as cores das fotos dos telescópios. A foto de verdade está no link da fonte.";
+const SONDA_ILUSTRADA = "A posição é a de verdade, calculada com dados do JPL (NASA). A sonda, do tamanho de um carro, seria invisível nesta escala: aqui ela é só uma marca.";
+const NUVEM_DE_MAGALHAES = "Ilustração feita por código com medidas de verdade: tamanho, inclinação, barra e berçários de estrelas no lugar certo. Cada ponto vale por milhares de estrelas.";
+const ESTRELA_ILUSTRADA = "Ilustração: a posição, a cor e o tamanho são os medidos, mas a superfície é desenhada por código. De tão longe, quase toda estrela é só um ponto de luz, até nos maiores telescópios.";
+
+const APARENCIAS = {
+  sol: ["parcial", "Mapa feito com dados da NASA, com as regiões ativas mais brilhantes. A cor alaranjada é costume das imagens de telescópio: visto do espaço, o Sol é branco."],
+  mercurio: ["real", SUPERFICIE_DE_VERDADE],
+  venus: ["parcial", "Aqui aparecem as nuvens, que cobrem Vênus inteiro e escondem o chão. O desenho delas é ilustrativo: muda o tempo todo."],
+  terra: ["real", "Mapa de verdade, feito com fotos de satélites da NASA. As nuvens são o retrato de um dia; as luzes das cidades aparecem no lado da noite."],
+  marte: ["real", SUPERFICIE_DE_VERDADE],
+  jupiter: ["real", "Nuvens de verdade, de um mapa feito com dados da NASA. É o retrato de um instante: as faixas e a Grande Mancha Vermelha mudam com o tempo."],
+  saturno: ["real", "Nuvens e anéis de verdade, de mapas feitos com dados da NASA."],
+  urano: ["real", "Cor de verdade. Quase não há detalhes porque Urano é assim mesmo: uma bola lisa, azul-esverdeada."],
+  netuno: ["parcial", "As faixas e a Grande Mancha Escura são da passagem da Voyager 2, em 1989 (a mancha já sumiu). A cor foi ajustada por código para o azul claro de verdade, medido em 2024."],
+  lua: ["real", SUPERFICIE_DE_VERDADE],
+  fobos: ["real", SUPERFICIE_DE_VERDADE],
+  deimos: ["real", SUPERFICIE_DE_VERDADE],
+  io: ["real", SUPERFICIE_DE_VERDADE],
+  europa: ["parcial", "Mapa de verdade da NASA/JPL, feito com fotos de sondas. Ele é em preto e branco: as cores foram pintadas por código, parecidas com as das fotos."],
+  ganimedes: ["real", SUPERFICIE_DE_VERDADE],
+  calisto: ["parcial", "Mapa de verdade da NASA/JPL, colorido por código. As faixas que nenhuma sonda fotografou de perto foram completadas com ilustração."],
+  tita: ["parcial", "Aqui aparece o chão de Titã, mapeado pela sonda Cassini. A olho nu só se veria a névoa alaranjada que cobre a lua inteira."],
+  encelado: ["parcial", "Mapa de verdade da NASA/JPL onde as sondas fotografaram de perto. O resto, incluindo as 'listras de tigre' do polo sul, é ilustração."],
+  tritao: ["parcial", "Mapa de verdade da Voyager 2 (1989), a única sonda que passou por lá. Ela fotografou menos da metade da lua: a parte lisa ninguém viu ainda."],
+  caronte: ["ilustracao", "Ilustração feita por código, parecida com as fotos da sonda New Horizons (2015): a mancha avermelhada do polo norte e o cinturão de cânions estão no lugar certo."],
+  ceres: ["ilustracao", "Ilustração feita por código, parecida com as fotos da sonda Dawn: as manchas claras da cratera Occator estão no lugar certo; as outras crateras são sorteadas."],
+  plutao: ["parcial", "Mapa de verdade da sonda New Horizons (2015). O hemisfério sul estava no escuro quando ela passou e foi completado por código."],
+  cinturao: ["ilustracao", "Ilustração: os pontos giram em órbitas como as de verdade, mas aparecem enormes. Um asteroide de verdade seria invisível nesta escala."],
+  voyager: ["ilustracao", SONDA_ILUSTRADA],
+  "voyager-2": ["ilustracao", SONDA_ILUSTRADA],
+  "sol-galaxia": ["ilustracao", "Marca da posição do Sol. A Via Láctea em volta é uma ilustração feita com medidas de verdade: ninguém a fotografou de fora, porque estamos dentro dela."],
+  "sgr-a": ["ilustracao", "O buraco negro aqui é uma ilustração ampliada mais de 1 milhão de vezes. O de verdade tem 24 milhões de km de diâmetro e seria invisível nesta escala."],
+  pleiades: ["ilustracao", "Ilustração feita por código: as estrelas mais brilhantes estão nas posições medidas; o véu azul de poeira é desenhado."],
+  "orion-nebula": ["ilustracao", NEBULOSA_ILUSTRADA],
+  crab: ["ilustracao", NEBULOSA_ILUSTRADA],
+  eagle: ["ilustracao", NEBULOSA_ILUSTRADA],
+  carina: ["ilustracao", NEBULOSA_ILUSTRADA],
+  "omega-centauri": ["ilustracao", "Ilustração: uma bola de pontos sorteados por código. Cada ponto vale por milhares das cerca de 10 milhões de estrelas que existem lá."],
+  lmc: ["ilustracao", NUVEM_DE_MAGALHAES],
+  smc: ["ilustracao", NUVEM_DE_MAGALHAES],
+  andromeda: ["ilustracao", "Ilustração feita por código com medidas de verdade: tamanho, inclinação e braços. Cada ponto vale por milhões de estrelas. A foto de verdade, do Hubble, está no Diário."],
+  triangulo: ["ilustracao", "Ilustração feita por código com medidas de verdade: tamanho, inclinação e braços. Cada ponto vale por milhões de estrelas."]
+};
+
+/** A Via Láctea inteira (não é um destino, mas é o cenário do nível 3). */
+export const APARENCIA_DA_VIA_LACTEA = {
+  tipo: "ilustracao", ...TIPOS_DE_APARENCIA.ilustracao,
+  texto: "A Via Láctea aqui é uma ilustração feita com medidas de verdade: ninguém a fotografou de fora, porque estamos dentro dela. O lado de lá do centro é o mais incerto."
+};
+
+/** De onde vem o que aparece em 3D: { tipo, icone, rotulo, texto }. */
+export function aparenciaDoObjeto(objeto) {
+  const [tipo, texto] = APARENCIAS[objeto.id] || (objeto.espectro ? ["ilustracao", ESTRELA_ILUSTRADA] : []);
+  return tipo ? { tipo, ...TIPOS_DE_APARENCIA[tipo], texto } : null;
 }
 
 const PORID = new Map(TODOS_OS_OBJETOS.map((objeto) => [objeto.id, objeto]));

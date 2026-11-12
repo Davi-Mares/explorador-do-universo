@@ -7,7 +7,7 @@
 import * as astro from "./explorador/astronomia.js";
 import {
   NIVEIS, SOL, PLANETAS, LUA, LUAS, PLANETAS_ANOES, CINTURAO, SONDAS, ESTRELAS, OBJETOS_GALAXIA, MISSOES, PERGUNTAS, GALAXIA,
-  TODOS_OS_OBJETOS, COMPARAVEIS, perguntaDoObjeto, corDaEstrela, fontesDoObjeto
+  TODOS_OS_OBJETOS, COMPARAVEIS, perguntaDoObjeto, corDaEstrela, fontesDoObjeto, aparenciaDoObjeto
 } from "./explorador/catalogo.js";
 import * as progresso from "./explorador/progresso.js";
 import { gerarPdfDoDiario, nomeDoArquivo } from "./diario-pdf.js";
@@ -127,6 +127,11 @@ function verbete(objeto, nivel) {
   const credito = objeto.imagem ? `
     <p class="credito-foto">📷 ${escapar(objeto.creditoImagem.descricao)}. Foto: <a href="${objeto.creditoImagem.link}" ${LINK_EXTERNO}>${escapar(objeto.creditoImagem.credito)}</a> (${escapar(objeto.creditoImagem.licenca)})</p>` : "";
 
+  // Foto de verdade ou ilustração? O que aparece em 3D no Explorador.
+  const aparencia = aparenciaDoObjeto(objeto);
+  const noExplorador = aparencia ? `
+    <p class="verbete-aparencia" data-tipo="${aparencia.tipo}"><strong>${aparencia.icone} No Explorador: ${escapar(aparencia.rotulo.toLowerCase())}.</strong> ${escapar(aparencia.texto)}</p>` : "";
+
   const desafio = !pergunta ? "" : resposta
     ? `<button type="button" class="link-botao ${resposta.correta ? "certo" : "errado"}" data-quiz="${pergunta.id}">${resposta.correta ? "✅ Desafio certo" : "❌ Desafio errado"} · ver explicação</button>`
     : `<button type="button" class="botao botao-pequeno botao-principal" data-quiz="${pergunta.id}">🧠 Responder desafio</button>`;
@@ -141,6 +146,7 @@ function verbete(objeto, nivel) {
         <p class="verbete-curiosidade">💡 ${escapar(objeto.curiosidade)}</p>
         ${dados}
         ${ficha}
+        ${noExplorador}
         <div class="verbete-acoes">
           ${desafio}
           <a href="explorador.html?nivel=${nivel.id}&alvo=${objeto.id}">🚀 Ver no Explorador</a>

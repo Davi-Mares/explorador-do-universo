@@ -77,7 +77,7 @@ const APARENCIAS = {
   jupiter: { mapa: "jupiter.webp", mapaHD: "hd/jupiter.webp", atmosfera: { cor: "#f4e2c4", espessura: 0.025, altura: 0.005, forca: 0.025 } },
   saturno: { mapa: "saturno.webp", aneis: "saturno-aneis.png", atmosfera: { cor: "#f6e6c0", espessura: 0.025, altura: 0.005, forca: 0.025 } },
   urano: { mapa: "urano.webp", atmosfera: { cor: "#a6ecff", espessura: 0.03, altura: 0.007, forca: 0.07 } },
-  netuno: { mapa: "netuno.webp", atmosfera: { cor: "#6f95ff", espessura: 0.03, altura: 0.007, forca: 0.07 } },
+  netuno: { mapa: "netuno.webp", atmosfera: { cor: "#a8d2ee", espessura: 0.03, altura: 0.007, forca: 0.07 } },
   // Ceres: textura ilustrativa (gerada por código), com as manchas claras da cratera Occator.
   ceres: { mapa: "ceres.webp", relevo: 1.2 },
   // Plutão: mapa da New Horizons (NASA/JHUAPL/SwRI); névoa azulada como nas fotos de 2015.

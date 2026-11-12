@@ -6,7 +6,7 @@
 
 import * as THREE from "three";
 import * as astro from "./astronomia.js";
-import { NIVEIS, VELOCIDADES, MISSOES, perguntaDoObjeto } from "./catalogo.js";
+import { NIVEIS, VELOCIDADES, MISSOES, perguntaDoObjeto, aparenciaDoObjeto, APARENCIA_DA_VIA_LACTEA } from "./catalogo.js";
 import { criarNivelSolar, criarNivelEstrelas, criarNivelGalaxia } from "./cenas.js";
 import { definirAnisotropia } from "./astros3d.js";
 import * as progresso from "./progresso.js";
@@ -191,6 +191,8 @@ function entrarNoNivel(id, { alvo = null } = {}) {
   atualizarEstadoNave();
   atualizarMissaoAtual();
   progresso.registrarNivel(id);
+  // A galáxia inteira é uma ilustração: o aviso aparece na primeira visita.
+  if (id === "galaxia" && !memoria) avisar(`${APARENCIA_DA_VIA_LACTEA.icone} ${APARENCIA_DA_VIA_LACTEA.texto}`, "longo");
   for (const idDescoberta of nivel.descobrirAoEntrar || []) {
     const corpo = nivel.corpos.find((c) => c.id === idDescoberta);
     if (corpo) descobrir(corpo);
@@ -989,9 +991,11 @@ function selecionar(corpo) {
   painel.hidden = false;
   $("alvo-nome").textContent = corpo.nome;
   $("alvo-tipo").textContent = corpo.objeto.tipo || "";
-  // Quando o astro aparece fora de escala (ilustração), o painel avisa.
-  $("alvo-nota").textContent = corpo.objeto.notaEscala || "";
-  $("alvo-nota").hidden = !corpo.objeto.notaEscala;
+  // O painel avisa se o que aparece é foto de verdade ou ilustração.
+  const aparencia = aparenciaDoObjeto(corpo.objeto);
+  $("alvo-nota").textContent = aparencia ? `${aparencia.icone} ${aparencia.texto}` : "";
+  $("alvo-nota").dataset.tipo = aparencia?.tipo || "";
+  $("alvo-nota").hidden = !aparencia;
   const ficha = fichaRapida(corpo.objeto);
   $("alvo-ficha").hidden = !ficha.length;
   $("alvo-ficha-lista").innerHTML = ficha.map(([campo, valor]) => `<dt>${escapar(campo)}</dt><dd>${escapar(valor)}</dd>`).join("");
@@ -1199,7 +1203,7 @@ function avisar(texto, tipo = "") {
   setTimeout(() => {
     aviso.classList.add("saindo");
     setTimeout(() => aviso.remove(), 400);
-  }, tipo === "missao" ? 6000 : 4200);
+  }, tipo === "missao" ? 6000 : tipo === "longo" ? 10000 : 4200);
 }
 
 // ---------- Ajuda ----------

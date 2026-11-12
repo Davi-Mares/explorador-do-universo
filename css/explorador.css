@@ -431,11 +431,20 @@
   margin: 0;
 }
 
+/* Aviso do painel: foto de verdade, parte ilustração ou ilustração. */
 .alvo-nota {
   margin: -4px 0 10px !important;
   color: var(--cor-ouro);
   font-size: 0.78rem;
   line-height: 1.4;
+}
+
+.alvo-nota[data-tipo="real"] {
+  color: #8fe0a8;
+}
+
+.alvo-nota[data-tipo="parcial"] {
+  color: #9ccbff;
 }
 
 .alvo-acoes {
