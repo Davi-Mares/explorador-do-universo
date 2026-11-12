@@ -4,24 +4,33 @@ Projeção equirretangular, longitude 0° no meio, gravados em img/texturas/:
   - Io, Ganimedes, Titã, Tritão, Fobos e Deimos: mapas do Celestia (CelestiaContent,
     pasta textures/hires), feitos com dados da NASA/JPL/USGS — CC BY 3.0 / CC BY 4.0
     (Deimos: CC0). Aqui só são reduzidos e convertidos para WebP.
-  - Europa, Calisto, Encélado e Caronte: mapas ILUSTRATIVOS gerados por este script
-    (ruído e formas simples), com as cores e as marcas mais conhecidas das fotos.
+  - Europa, Calisto e Encélado: mapas de verdade do Simulador do Sistema Solar do JPL
+    (NASA 3D Resources, pasta "Images and Textures"; sem direitos autorais), feitos
+    com as fotos das sondas Voyager e Galileo. Vêm em tons de cinza: aqui ganham as
+    cores das fotos e, onde as sondas não fotografaram de perto (trechos lisos), são
+    completados com o mapa ilustrativo. Em Encélado, as "listras de tigre" do polo
+    sul (descobertas depois, pela Cassini) também são ilustração.
+  - Caronte: mapa ILUSTRATIVO gerado por este script (ruído e formas simples), com as
+    cores e as marcas mais conhecidas das fotos da New Horizons.
 
-Fonte: https://github.com/CelestiaProject/CelestiaContent (textures/hires)
+Fontes: https://github.com/CelestiaProject/CelestiaContent (textures/hires)
+        https://github.com/nasa/NASA-3D-Resources (Images and Textures)
 
 Uso:
   pip install numpy pillow
-  python ferramentas/preparar_texturas_luas.py --celestia CelestiaContent/textures/hires
+  python ferramentas/preparar_texturas_luas.py --celestia CelestiaContent/textures/hires \
+      --nasa "NASA-3D-Resources/Images and Textures"
 """
 import argparse
 from pathlib import Path
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageFilter
 
 L, A = 1024, 512
 DESTINO = Path(__file__).resolve().parent.parent / "img" / "texturas"
 ORIGEM = None
+NASA = None
 
 
 def salvar(img, nome, largura=L):
@@ -154,12 +163,68 @@ def caronte():
     return cor
 
 
+# ---------- Mapas de verdade da NASA (Europa, Calisto e Encélado) ----------
+
+def mapa_nasa(nome):
+    """Mapa em tons de cinza do Simulador do Sistema Solar do JPL (longitude 0° no meio, leste à direita)."""
+    img = Image.open(Path(NASA) / nome / f"{nome}.jpg").convert("L").resize((L, A), Image.LANCZOS)
+    return np.asarray(img).astype(np.float32) / 255
+
+
+def borrar(m, raio):
+    """Desfoque que dá a volta no mapa (a borda esquerda continua na direita)."""
+    margem = int(raio * 3) + 1
+    largo = np.concatenate([m[:, -margem:], m, m[:, :margem]], axis=1)
+    img = Image.fromarray((np.clip(largo, 0, 1) * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(raio))
+    return np.asarray(img).astype(np.float32)[:, margem:-margem] / 255
+
+
+def onde_ha_fotos(g, minimo, maximo):
+    """1 onde o mapa tem detalhe fino (fotos de perto); 0 onde é liso (nunca fotografado de perto)."""
+    detalhe = borrar(np.clip(np.abs(g - borrar(g, 2.5)) * 10, 0, 1), 7)
+    t = np.clip((detalhe - minimo) / (maximo - minimo), 0, 1)
+    return borrar(t * t * (3 - 2 * t), 5)[..., None]
+
+
+def europa_real():
+    g = mapa_nasa("Jupiter - Europa")[..., None]
+    # Cores das fotos: gelo claro; rachaduras e terrenos manchados em marrom-avermelhado.
+    escuro, medio, claro = hexa("#6b4530"), hexa("#c8b092"), hexa("#f3eee4")
+    return np.where(g < 0.62, escuro + (medio - escuro) * (g / 0.62), medio + (claro - medio) * ((g - 0.62) / 0.38))
+
+
+def calisto_real():
+    g = mapa_nasa("Jupiter - Callisto")
+    fotos = onde_ha_fotos(g, 0.26, 0.42)
+    # Tira o clarão liso das faixas sem fotos, para a emenda não aparecer.
+    plano = np.clip(g - borrar(g, 22) + 0.46, 0, 1)
+    real = hexa("#8a7c68")[None, None] * (0.05 + 1.0 * plano[..., None])
+    # Onde ninguém fotografou de perto: ilustração com o mesmo grão e o mesmo tom do terreno de verdade.
+    _, _, p = coordenadas()
+    grao = ruido(p, 23, 4, 42.0)[..., None]
+    fundo = calisto() * (0.62 + 0.62 * grao)
+    return real * fotos + fundo * (1 - fotos)
+
+
+def encelado_real():
+    g = mapa_nasa("Saturn - Enceladus")
+    fotos = onde_ha_fotos(g, 0.04, 0.12)
+    real = hexa("#f4f7f9")[None, None] * (0.5 + 0.55 * g[..., None])
+    return real * fotos + encelado() * (1 - fotos)
+
+
 if __name__ == "__main__":
     argumentos = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    argumentos.add_argument("--celestia", required=True, help="pasta textures/hires do CelestiaContent")
-    ORIGEM = argumentos.parse_args().celestia
+    argumentos.add_argument("--celestia", help="pasta textures/hires do CelestiaContent (Io, Ganimedes, Titã, Tritão, Fobos e Deimos)")
+    argumentos.add_argument("--nasa", help='pasta "Images and Textures" do NASA 3D Resources (Europa, Calisto e Encélado de verdade)')
+    opcoes = argumentos.parse_args()
+    ORIGEM, NASA = opcoes.celestia, opcoes.nasa
     DESTINO.mkdir(parents=True, exist_ok=True)
-    converter()
-    for nome, funcao in (("europa", europa), ("calisto", calisto), ("encelado", encelado), ("caronte", caronte)):
+    if ORIGEM:
+        converter()
+    # Sem a pasta da NASA, as três luas saem só como ilustração.
+    luas = (("europa", europa_real, europa), ("calisto", calisto_real, calisto), ("encelado", encelado_real, encelado), ("caronte", None, caronte))
+    for nome, real, ilustracao in luas:
+        funcao = real if (real and NASA) else ilustracao
         salvar(Image.fromarray((np.clip(funcao(), 0, 1) * 255).astype(np.uint8)), nome)
     print("mapas das luas ->", DESTINO)
