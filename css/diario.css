@@ -195,6 +195,31 @@
   font-size: 0.8rem;
 }
 
+/* Foto de verdade ou ilustração: o que o Explorador mostra em 3D. */
+.verbete p.verbete-aparencia {
+  margin: 10px 0 0;
+  padding: 8px 10px;
+  border-left: 3px solid var(--cor-ouro);
+  border-radius: 0 8px 8px 0;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--cor-texto-apagado);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.verbete-aparencia strong {
+  color: var(--cor-texto);
+  font-weight: 600;
+}
+
+.verbete-aparencia[data-tipo="real"] {
+  border-left-color: #6fd08c;
+}
+
+.verbete-aparencia[data-tipo="parcial"] {
+  border-left-color: #6fb7ff;
+}
+
 .verbete p.credito-foto {
   margin: 10px 0 0;
   color: var(--cor-texto-apagado);
