@@ -21,9 +21,9 @@
 - **Explorar**, em três níveis de escala:
   - **Sistema Solar** — os planetas onde estão hoje (com o dia e a noite certos), a Lua e mais 10 luas, Plutão, Ceres, o Cinturão de Asteroides e as sondas Voyager 1 e 2, cada uma na sua trajetória de saída (JPL Horizons), com o céu de verdade ao fundo.
   - **Estrelas vizinhas** — 30 estrelas para visitar, as 9 mil visíveis a olho nu nas posições 3D reais e uma régua de distâncias.
-  - **Via Láctea** — os braços espirais medidos, a barra, nebulosas, aglomerados, Sagitário A* e as galáxias vizinhas: as Nuvens de Magalhães, Andrômeda e a do Triângulo, viradas como as vemos daqui.
+  - **Via Láctea** — os braços espirais medidos (e a continuação provável deles do lado de lá do centro), a barra, a faixa de poeira e o halo, nebulosas, aglomerados, Sagitário A* e as galáxias vizinhas: as Nuvens de Magalhães, Andrômeda e a do Triângulo, viradas como as vemos daqui.
 
-  Ao chegar num astro, a nave entra em órbita: arrastar gira em volta e a rodinha (ou W/S, ou dois dedos) aproxima.
+  Ao chegar num astro, a nave entra em órbita: arrastar gira em volta e a rodinha (ou W/S, ou dois dedos) aproxima. Cada astro avisa se o que aparece é 📷 imagem de verdade, 🧩 parte foto e parte ilustração ou 🎨 ilustração feita com medidas (como a Via Láctea, que ninguém fotografou de fora).
 - **Comparar** — dois astros lado a lado, na mesma escala: de luas e planetas até galáxias e buracos negros.
 - **Diário de bordo** — os verbetes do que você descobriu. São 67 astros, cada um com ficha técnica, as fontes com link e um desafio (67 desafios), mais 13 missões. Dá para **baixar em PDF**.
 
@@ -73,7 +73,7 @@ Cada verbete do Diário mostra as suas fontes, com link. Em resumo:
 - **Galáxias vizinhas:** distâncias de Li et al. (2021), Breuval et al. (2023), Pietrzyński et al. (2019) e Graczyk et al. (2020); inclinação, giro e estrutura de cada uma a partir de artigos e da NASA, ESA e ESO.
 - **Fotos do Diário:** NASA, JPL e ESA/Hubble (estas sob CC BY 4.0), cada uma com o crédito oficial no cartão do astro e na página [Sobre](https://davi-mares.github.io/explorador-do-universo/sobre.html).
 - **Céu:** foto panorâmica da ESO/S. Brunier (CC BY 4.0).
-- **Mapas:** [Solar System Scope](https://www.solarsystemscope.com/textures/) (CC BY 4.0), NASA (Blue Marble, New Horizons) e [Celestia](https://github.com/CelestiaProject/CelestiaContent) (CC BY) para as luas. Nebulosas, galáxias, buracos negros e os mapas de Europa, Calisto, Encélado e Caronte são ilustrações feitas por código.
+- **Mapas:** [Solar System Scope](https://www.solarsystemscope.com/textures/) (CC BY 4.0), NASA (Blue Marble, New Horizons) e [Celestia](https://github.com/CelestiaProject/CelestiaContent) (CC BY) para as luas; Europa, Calisto e Encélado vêm dos mapas da NASA/JPL ([NASA 3D Resources](https://github.com/nasa/NASA-3D-Resources)), coloridos e completados por código. Nebulosas, galáxias, buracos negros e os mapas de Ceres e de Caronte são ilustrações feitas por código. A lista com todas as fontes das fichas está na página Sobre.
 - **Three.js** (MIT) para o 3D. As referências completas estão no documento do TCC.
 
 ---

@@ -43,11 +43,12 @@
         <li>Posições dos planetas, de Plutão e de Ceres calculadas com os elementos orbitais do JPL/NASA; eixos e rotação pelo modelo da IAU; luas com as órbitas médias do JPL.</li>
         <li>Sondas Voyager 1 e 2 nas trajetórias de saída calculadas a partir da posição e da velocidade do JPL Horizons, conferidas com marcos da NASA (a marca de 1 dia-luz da Voyager 1, em novembro de 2026, e a saída da heliosfera de cada uma) e com os elementos orbitais que o JPL publicou em 1989.</li>
         <li>O céu ao fundo é o de verdade: as 9 mil estrelas visíveis a olho nu do catálogo Hipparcos, com cor e brilho reais, e a foto panorâmica da Via Láctea da ESO.</li>
-        <li>Via Láctea com os braços espirais medidos por paralaxe (Reid et al., 2019) e a barra central (Wegg et al., 2015).</li>
+        <li>Via Láctea com os braços espirais medidos por paralaxe (Reid et al., 2019) e a barra central (Wegg et al., 2015). É uma ilustração: ninguém fotografou a galáxia de fora, porque estamos dentro dela. O lado de lá do centro, que as medidas ainda não alcançam, mostra a continuação provável dos braços. Vista de lado, aparecem o bojo, o disco fino com a faixa escura de poeira e o halo com aglomerados globulares.</li>
         <li>Cinturão de Asteroides com milhares de pontos, cada um na sua órbita de Kepler (as lacunas de Kirkwood e os troianos de Júpiter aparecem). Os pontos são bem maiores que os asteroides de verdade, que seriam invisíveis.</li>
         <li>Nebulosas, aglomerados e galáxias montados por código com milhares de pontos de gás, poeira e estrelas, no tamanho real.</li>
         <li>Galáxias vizinhas viradas como as vemos daqui, com a inclinação, o lado mais próximo e o sentido do giro medidos: Andrômeda (com M32, M110 e a nuvem de estrelas NGC 206), a Galáxia do Triângulo (com NGC 604) e as Nuvens de Magalhães (com a barra fora do centro, a Nebulosa da Tarântula e a Ponte de Magalhães). Os lugares com nome ficam nas posições de verdade.</li>
         <li>Buracos negros desenhados raio de luz por raio de luz, com a relatividade geral: o disco de gás aparece por cima e por baixo da sombra, como no Gargântua do filme Interstellar. No explorador, Sagitário A* aparece ampliado mais de 1 milhão de vezes (é uma ilustração: de verdade ele seria invisível naquela escala).</li>
+        <li>Cada astro avisa, no Explorador e no Diário, de onde vem o que aparece em 3D: 📷 imagem de verdade (mapa feito com fotos de sondas e telescópios), 🧩 parte foto e parte ilustração, ou 🎨 ilustração feita por código a partir de medidas.</li>
         <li>Cada astro tem ficha técnica, um desafio e as fontes com link: páginas da NASA, da ESA e do ESO, o banco de dados SIMBAD (para as estrelas) e artigos científicos.</li>
         <li>No celular, a tela se arruma em pé ou deitada, e a qualidade da imagem se ajusta sozinha para o voo ficar fluido em aparelhos mais simples.</li>
         <li>Sem cadastro: o progresso fica só neste navegador.</li>
@@ -74,14 +75,146 @@
       <p>As fotos da ESA/Hubble (Marte, Júpiter, Saturno, Urano, Netuno e Andrômeda) têm licença <a href="https://creativecommons.org/licenses/by/4.0/deed.pt_BR">CC BY 4.0</a>; as da NASA e do JPL são de uso livre, com crédito. Todas foram só recortadas e reduzidas.</p>
       <p><strong>Mapas, céu e estrelas do 3D:</strong></p>
       <ul>
-        <li>Mapas do Sol, dos planetas, da Lua e dos anéis de Saturno: <a href="https://www.solarsystemscope.com/textures/">Solar System Scope</a>, licença <a href="https://creativecommons.org/licenses/by/4.0/deed.pt_BR">CC BY 4.0</a>, feitos com dados da NASA.</li>
+        <li>Mapas do Sol, dos planetas, da Lua e dos anéis de Saturno: <a href="https://www.solarsystemscope.com/textures/">Solar System Scope</a>, licença <a href="https://creativecommons.org/licenses/by/4.0/deed.pt_BR">CC BY 4.0</a>, feitos com dados da NASA. O mapa de Netuno foi modificado: a cor passou do azul forte das fotos de 1989 para o azul-esverdeado claro medido em 2024 (<a href="https://doi.org/10.1093/mnras/stad3761">Irwin et al.</a>); as faixas e a Grande Mancha Escura continuam as mesmas.</li>
         <li>Terra de dia e luzes das cidades à noite: NASA Blue Marble e Earth at Night (domínio público). Nuvens da Terra e mapas de 4096 px: Solar System Scope (CC BY 4.0).</li>
         <li>Faixa da Via Láctea no céu: foto panorâmica da <a href="https://www.eso.org/public/images/eso0932a/">ESO/S. Brunier</a>, licença CC BY 4.0 (as estrelas mais brilhantes foram tiradas da foto e são desenhadas pelo programa).</li>
         <li>Estrelas: catálogo <a href="https://codeberg.org/astronexus/hyg">HYG v4.0</a> (Hipparcos, Yale Bright Star e Gliese), licença CC BY-SA 4.0.</li>
-        <li>Io, Ganimedes, Titã, Tritão e Fobos: mapas do <a href="https://github.com/CelestiaProject/CelestiaContent">Celestia</a> (A. Anpilogov e outros, com dados da NASA/JPL/USGS), CC BY 3.0 e 4.0; Deimos: P. Stooke (NASA PDS), CC0. Europa, Calisto, Encélado e Caronte: mapas ilustrativos feitos por código.</li>
+        <li>Io, Ganimedes, Titã, Tritão e Fobos: mapas do <a href="https://github.com/CelestiaProject/CelestiaContent">Celestia</a> (A. Anpilogov e outros, com dados da NASA/JPL/USGS), CC BY 3.0 e 4.0; Deimos: P. Stooke (NASA PDS), CC0.</li>
+        <li>Europa, Calisto e Encélado: mapas em preto e branco do Simulador do Sistema Solar do JPL (NASA/JPL-Caltech, em <a href="https://github.com/nasa/NASA-3D-Resources">NASA 3D Resources</a>, de uso livre). As cores foram pintadas por código, e os trechos que nenhuma sonda fotografou de perto foram completados com ilustração (em Encélado, também as “listras de tigre” do polo sul). Caronte: mapa ilustrativo feito por código.</li>
         <li>Plutão: mosaico global da sonda New Horizons (NASA/JHUAPL/SwRI). A parte sul, que a sonda não conseguiu fotografar, foi completada por código.</li>
         <li>Ceres, buracos negros, nebulosas e galáxias: ilustrações geradas por código (em Ceres, as manchas claras da cratera Occator estão na posição real).</li>
       </ul>
+    </section>
+
+    <section class="bloco">
+      <h2>Fontes dos dados</h2>
+      <p>Todas as fontes citadas nas fichas dos astros, para quem quiser conferir. A preferência é por páginas oficiais (NASA, ESA, ESO, JAXA), pelo banco de dados SIMBAD e por artigos científicos.</p>
+      <!-- fontes:inicio -->
+      <details class="lista-de-fontes">
+        <summary>Sistema Solar (42 fontes)</summary>
+        <ul>
+          <li>Sol: <a href="https://science.nasa.gov/sun/facts/" target="_blank" rel="noopener">NASA</a></li>
+          <li>Sol: <a href="https://science.nasa.gov/blogs/parker-solar-probe/2025/01/02/nasas-parker-solar-probe-reports-healthy-status-after-solar-encounter/" target="_blank" rel="noopener">NASA (Parker Solar Probe, 2024)</a></li>
+          <li>Mercúrio: <a href="https://science.nasa.gov/mercury/facts/" target="_blank" rel="noopener">NASA</a></li>
+          <li>Mercúrio: <a href="https://www.esa.int/Science_Exploration/Space_Science/BepiColombo/Latest_updates_BepiColombo_s_arrival_at_Mercury" target="_blank" rel="noopener">ESA (BepiColombo, 2026)</a></li>
+          <li>Vênus: <a href="https://science.nasa.gov/venus/venus-facts/" target="_blank" rel="noopener">NASA</a></li>
+          <li>Terra: <a href="https://spaceplace.nasa.gov/all-about-earth/en/" target="_blank" rel="noopener">NASA</a></li>
+          <li>Marte: <a href="https://science.nasa.gov/mars/facts/" target="_blank" rel="noopener">NASA</a></li>
+          <li>Marte: <a href="https://www.jpl.nasa.gov/news/nasa-says-mars-rover-discovered-potential-biosignature-last-year/" target="_blank" rel="noopener">NASA/JPL (Perseverance, 2025)</a></li>
+          <li>Júpiter: <a href="https://science.nasa.gov/jupiter/jupiter-facts/" target="_blank" rel="noopener">NASA</a></li>
+          <li>Júpiter, Saturno: <a href="https://spaceplace.nasa.gov/how-many-moons/en/" target="_blank" rel="noopener">NASA Space Place (número de luas, 2026)</a></li>
+          <li>Saturno: <a href="https://science.nasa.gov/saturn/facts/" target="_blank" rel="noopener">NASA</a></li>
+          <li>Urano: <a href="https://science.nasa.gov/uranus/facts/" target="_blank" rel="noopener">NASA</a></li>
+          <li>Urano: <a href="https://www.aura-astronomy.org/blog/2025/08/20/new-moon-discovered-orbiting-uranus-using-nasas-webb-telescope/" target="_blank" rel="noopener">AURA (lua nova vista pelo Webb, 2025)</a></li>
+          <li>Netuno: <a href="https://science.nasa.gov/neptune/neptune-facts/" target="_blank" rel="noopener">NASA</a></li>
+          <li>Netuno: <a href="https://www.ox.ac.uk/news/2024-01-05-new-images-reveal-what-neptune-and-uranus-really-look-0" target="_blank" rel="noopener">Universidade de Oxford (a cor de verdade, 2024)</a></li>
+          <li>Netuno: <a href="https://doi.org/10.1093/mnras/stad3761" target="_blank" rel="noopener">Irwin et al. (2024)</a></li>
+          <li>Lua: <a href="https://science.nasa.gov/moon/facts/" target="_blank" rel="noopener">NASA</a></li>
+          <li>Lua: <a href="https://www.nasa.gov/mission/artemis-ii/" target="_blank" rel="noopener">NASA (Artemis II, 2026)</a></li>
+          <li>Fobos: <a href="https://science.nasa.gov/mars/moons/phobos/" target="_blank" rel="noopener">NASA</a></li>
+          <li>Fobos: <a href="https://www.mmx.jaxa.jp/en/" target="_blank" rel="noopener">JAXA (sonda MMX, 2026)</a></li>
+          <li>Deimos: <a href="https://science.nasa.gov/mars/moons/deimos/" target="_blank" rel="noopener">NASA</a></li>
+          <li>Io: <a href="https://science.nasa.gov/jupiter/moons/io/" target="_blank" rel="noopener">NASA</a></li>
+          <li>Europa: <a href="https://science.nasa.gov/jupiter/moons/europa/" target="_blank" rel="noopener">NASA</a></li>
+          <li>Europa: <a href="https://science.nasa.gov/mission/europa-clipper" target="_blank" rel="noopener">NASA (Europa Clipper)</a></li>
+          <li>Ganimedes: <a href="https://science.nasa.gov/jupiter/moons/ganymede/" target="_blank" rel="noopener">NASA</a></li>
+          <li>Ganimedes: <a href="https://www.esa.int/ESA_Multimedia/Images/2022/12/Juice_mission_milestones" target="_blank" rel="noopener">ESA (sonda Juice)</a></li>
+          <li>Calisto: <a href="https://science.nasa.gov/jupiter/moons/callisto/" target="_blank" rel="noopener">NASA</a></li>
+          <li>Titã: <a href="https://science.nasa.gov/saturn/moons/titan/" target="_blank" rel="noopener">NASA</a></li>
+          <li>Titã: <a href="https://science.nasa.gov/missions/dragonfly/nasas-dragonfly-rotorcraft-mission-to-saturns-moon-titan-confirmed/" target="_blank" rel="noopener">NASA (missão Dragonfly)</a></li>
+          <li>Encélado: <a href="https://science.nasa.gov/saturn/moons/enceladus/" target="_blank" rel="noopener">NASA</a></li>
+          <li>Tritão: <a href="https://science.nasa.gov/neptune/moons/triton/" target="_blank" rel="noopener">NASA</a></li>
+          <li>Caronte: <a href="https://science.nasa.gov/dwarf-planets/pluto/moons/charon/" target="_blank" rel="noopener">NASA</a></li>
+          <li>Ceres: <a href="https://nssdc.gsfc.nasa.gov/planetary/factsheet/asteroidfact.html" target="_blank" rel="noopener">NASA</a></li>
+          <li>Plutão: <a href="https://nssdc.gsfc.nasa.gov/planetary/factsheet/plutofact.html" target="_blank" rel="noopener">NASA</a></li>
+          <li>Cinturão de Asteroides: <a href="https://science.nasa.gov/solar-system/asteroids/" target="_blank" rel="noopener">NASA</a></li>
+          <li>Cinturão de Asteroides: <a href="https://science.nasa.gov/blogs/lucy/2026/10/28/nasas-lucy-reaches-trojan-asteroid-region-5-years-after-launch/" target="_blank" rel="noopener">NASA (sonda Lucy, 2026)</a></li>
+          <li>Voyager 1: <a href="https://science.nasa.gov/mission/voyager/where-are-voyager-1-and-voyager-2-now/" target="_blank" rel="noopener">NASA (onde estão as Voyager)</a></li>
+          <li>Voyager 1, Voyager 2: <a href="https://science.nasa.gov/mission/voyager/fact-sheet" target="_blank" rel="noopener">NASA (ficha da missão)</a></li>
+          <li>Voyager 1: <a href="https://science.nasa.gov/mission/voyager/voyager-1/voyager-1-what-is-a-light-day/" target="_blank" rel="noopener">NASA (1 dia-luz da Terra, 2026)</a></li>
+          <li>Voyager 1, Voyager 2: <a href="https://ssd.jpl.nasa.gov/horizons/" target="_blank" rel="noopener">JPL Horizons (posição)</a></li>
+          <li>Voyager 2: <a href="https://science.nasa.gov/mission/voyager/voyager-2/" target="_blank" rel="noopener">NASA (Voyager 2)</a></li>
+          <li>Voyager 2: <a href="https://science.nasa.gov/missions/voyager/nasas-voyager-2-probe-enters-interstellar-space/" target="_blank" rel="noopener">NASA (2018)</a></li>
+        </ul>
+      </details>
+      <details class="lista-de-fontes">
+        <summary>Estrelas (33 fontes)</summary>
+        <ul>
+          <li>Proxima Centauri: <a href="https://simbad.cds.unistra.fr/simbad/sim-id?Ident=GJ%20551" target="_blank" rel="noopener">SIMBAD (CDS)</a></li>
+          <li>Alfa Centauri A e B: <a href="https://simbad.cds.unistra.fr/simbad/sim-id?Ident=alf%20Cen" target="_blank" rel="noopener">SIMBAD (CDS)</a></li>
+          <li>Alfa Centauri A e B: <a href="https://esawebb.org/news/weic2515/" target="_blank" rel="noopener">ESA/Webb (candidato a planeta, 2025)</a></li>
+          <li>Estrela de Barnard: <a href="https://simbad.cds.unistra.fr/simbad/sim-id?Ident=GJ%20699" target="_blank" rel="noopener">SIMBAD (CDS)</a></li>
+          <li>Estrela de Barnard: <a href="https://science.nasa.gov/universe/exoplanets/discovery-alert-four-little-planets-one-big-step/" target="_blank" rel="noopener">NASA (quatro planetas, 2025)</a></li>
+          <li>Wolf 359: <a href="https://simbad.cds.unistra.fr/simbad/sim-id?Ident=Wolf%20359" target="_blank" rel="noopener">SIMBAD (CDS)</a></li>
+          <li>Lalande 21185: <a href="https://simbad.cds.unistra.fr/simbad/sim-id?Ident=HD%2095735" target="_blank" rel="noopener">SIMBAD (CDS)</a></li>
+          <li>Sírius: <a href="https://simbad.cds.unistra.fr/simbad/sim-id?Ident=alf%20CMa" target="_blank" rel="noopener">SIMBAD (CDS)</a></li>
+          <li>Luyten 726-8 (UV Ceti): <a href="https://simbad.cds.unistra.fr/simbad/sim-id?Ident=GJ%2065" target="_blank" rel="noopener">SIMBAD (CDS)</a></li>
+          <li>Ross 154: <a href="https://simbad.cds.unistra.fr/simbad/sim-id?Ident=Ross%20154" target="_blank" rel="noopener">SIMBAD (CDS)</a></li>
+          <li>Ross 248: <a href="https://simbad.cds.unistra.fr/simbad/sim-id?Ident=Ross%20248" target="_blank" rel="noopener">SIMBAD (CDS)</a></li>
+          <li>Epsilon Eridani: <a href="https://simbad.cds.unistra.fr/simbad/sim-id?Ident=eps%20Eri" target="_blank" rel="noopener">SIMBAD (CDS)</a></li>
+          <li>Lacaille 9352: <a href="https://simbad.cds.unistra.fr/simbad/sim-id?Ident=HD%20217987" target="_blank" rel="noopener">SIMBAD (CDS)</a></li>
+          <li>Ross 128: <a href="https://simbad.cds.unistra.fr/simbad/sim-id?Ident=Ross%20128" target="_blank" rel="noopener">SIMBAD (CDS)</a></li>
+          <li>61 Cygni: <a href="https://simbad.cds.unistra.fr/simbad/sim-id?Ident=61%20Cyg" target="_blank" rel="noopener">SIMBAD (CDS)</a></li>
+          <li>Prócion: <a href="https://simbad.cds.unistra.fr/simbad/sim-id?Ident=alf%20CMi" target="_blank" rel="noopener">SIMBAD (CDS)</a></li>
+          <li>Tau Ceti: <a href="https://simbad.cds.unistra.fr/simbad/sim-id?Ident=tau%20Cet" target="_blank" rel="noopener">SIMBAD (CDS)</a></li>
+          <li>Altair: <a href="https://simbad.cds.unistra.fr/simbad/sim-id?Ident=alf%20Aql" target="_blank" rel="noopener">SIMBAD (CDS)</a></li>
+          <li>Vega: <a href="https://simbad.cds.unistra.fr/simbad/sim-id?Ident=alf%20Lyr" target="_blank" rel="noopener">SIMBAD (CDS)</a></li>
+          <li>Fomalhaut: <a href="https://simbad.cds.unistra.fr/simbad/sim-id?Ident=alf%20PsA" target="_blank" rel="noopener">SIMBAD (CDS)</a></li>
+          <li>Pólux: <a href="https://simbad.cds.unistra.fr/simbad/sim-id?Ident=bet%20Gem" target="_blank" rel="noopener">SIMBAD (CDS)</a></li>
+          <li>Arcturo: <a href="https://simbad.cds.unistra.fr/simbad/sim-id?Ident=alf%20Boo" target="_blank" rel="noopener">SIMBAD (CDS)</a></li>
+          <li>Capela: <a href="https://simbad.cds.unistra.fr/simbad/sim-id?Ident=alf%20Aur" target="_blank" rel="noopener">SIMBAD (CDS)</a></li>
+          <li>Aldebarã: <a href="https://simbad.cds.unistra.fr/simbad/sim-id?Ident=alf%20Tau" target="_blank" rel="noopener">SIMBAD (CDS)</a></li>
+          <li>Régulo: <a href="https://simbad.cds.unistra.fr/simbad/sim-id?Ident=alf%20Leo" target="_blank" rel="noopener">SIMBAD (CDS)</a></li>
+          <li>Espiga: <a href="https://simbad.cds.unistra.fr/simbad/sim-id?Ident=alf%20Vir" target="_blank" rel="noopener">SIMBAD (CDS)</a></li>
+          <li>Canopus: <a href="https://simbad.cds.unistra.fr/simbad/sim-id?Ident=alf%20Car" target="_blank" rel="noopener">SIMBAD (CDS)</a></li>
+          <li>Ácrux (Estrela de Magalhães): <a href="https://simbad.cds.unistra.fr/simbad/sim-id?Ident=alf%20Cru" target="_blank" rel="noopener">SIMBAD (CDS)</a></li>
+          <li>Estrela Polar: <a href="https://simbad.cds.unistra.fr/simbad/sim-id?Ident=alf%20UMi" target="_blank" rel="noopener">SIMBAD (CDS)</a></li>
+          <li>Antares: <a href="https://simbad.cds.unistra.fr/simbad/sim-id?Ident=alf%20Sco" target="_blank" rel="noopener">SIMBAD (CDS)</a></li>
+          <li>Betelgeuse: <a href="https://simbad.cds.unistra.fr/simbad/sim-id?Ident=alf%20Ori" target="_blank" rel="noopener">SIMBAD (CDS)</a></li>
+          <li>Betelgeuse: <a href="https://jpl.nasa.gov/news/nasa-scientist-finds-predicted-companion-star-to-betelgeuse/" target="_blank" rel="noopener">NASA/JPL (estrela companheira, 2025)</a></li>
+          <li>Rigel: <a href="https://simbad.cds.unistra.fr/simbad/sim-id?Ident=bet%20Ori" target="_blank" rel="noopener">SIMBAD (CDS)</a></li>
+        </ul>
+      </details>
+      <details class="lista-de-fontes">
+        <summary>Via Láctea e galáxias vizinhas (26 fontes)</summary>
+        <ul>
+          <li>Sol (você está aqui): <a href="https://starchild.gsfc.nasa.gov/docs/StarChild/questions/question18.html" target="_blank" rel="noopener">NASA (StarChild)</a></li>
+          <li>Sol (você está aqui), Sagitário A*: <a href="https://doi.org/10.1051/0004-6361/201935656" target="_blank" rel="noopener">GRAVITY Collaboration (2019)</a></li>
+          <li>Sagitário A*: <a href="https://www.eso.org/public/news/eso2208-eht-mw/" target="_blank" rel="noopener">ESO (2022)</a></li>
+          <li>Plêiades (Sete Estrelo): <a href="https://science.nasa.gov/mission/hubble/science/explore-the-night-sky/hubble-messier-catalog/messier-45/" target="_blank" rel="noopener">NASA (Hubble, catálogo Messier)</a></li>
+          <li>Nebulosa de Órion: <a href="https://science.nasa.gov/mission/hubble/science/explore-the-night-sky/hubble-messier-catalog/messier-42/" target="_blank" rel="noopener">NASA (Hubble, catálogo Messier)</a></li>
+          <li>Nebulosa de Órion: <a href="https://doi.org/10.1051/0004-6361:20078247" target="_blank" rel="noopener">Menten et al. (2007)</a></li>
+          <li>Nebulosa do Caranguejo: <a href="https://science.nasa.gov/mission/hubble/science/explore-the-night-sky/hubble-messier-catalog/messier-1/" target="_blank" rel="noopener">NASA (Hubble, catálogo Messier)</a></li>
+          <li>Nebulosa da Águia: <a href="https://science.nasa.gov/mission/hubble/science/explore-the-night-sky/hubble-messier-catalog/messier-16/" target="_blank" rel="noopener">NASA (Hubble, catálogo Messier)</a></li>
+          <li>Nebulosa de Carina: <a href="https://science.nasa.gov/mission/hubble/science/explore-the-night-sky/hubble-caldwell-catalog/caldwell-92/" target="_blank" rel="noopener">NASA (Hubble, catálogo Caldwell)</a></li>
+          <li>Ômega Centauri: <a href="https://science.nasa.gov/mission/hubble/science/explore-the-night-sky/hubble-caldwell-catalog/caldwell-80/" target="_blank" rel="noopener">NASA (Hubble, catálogo Caldwell)</a></li>
+          <li>Grande Nuvem de Magalhães, Pequena Nuvem de Magalhães: <a href="https://www.nasa.gov/universe/nasas-swift-produces-best-ultraviolet-maps-of-the-nearest-galaxies" target="_blank" rel="noopener">NASA (Swift, 2013)</a></li>
+          <li>Grande Nuvem de Magalhães: <a href="https://science.nasa.gov/missions/hubble/nasas-hubble-telescope-celebrates-sn-1987as-20th-anniversary/" target="_blank" rel="noopener">NASA (Hubble, 2007)</a></li>
+          <li>Grande Nuvem de Magalhães: <a href="https://www.eso.org/public/news/eso1816/" target="_blank" rel="noopener">ESO (2018)</a></li>
+          <li>Grande Nuvem de Magalhães: <a href="https://doi.org/10.1038/s41586-019-0999-4" target="_blank" rel="noopener">Pietrzyński et al. (2019)</a></li>
+          <li>Grande Nuvem de Magalhães: <a href="https://doi.org/10.1088/0004-637X/781/2/121" target="_blank" rel="noopener">van der Marel e Kallivayalil (2014)</a></li>
+          <li>Pequena Nuvem de Magalhães: <a href="https://doi.org/10.3847/1538-4357/abbb2b" target="_blank" rel="noopener">Graczyk et al. (2020)</a></li>
+          <li>Pequena Nuvem de Magalhães: <a href="https://doi.org/10.1093/mnras/stx2096" target="_blank" rel="noopener">Ripepi et al. (2017)</a></li>
+          <li>Pequena Nuvem de Magalhães: <a href="https://doi.org/10.1093/mnras/stw3357" target="_blank" rel="noopener">Belokurov et al. (2017)</a></li>
+          <li>Galáxia de Andrômeda: <a href="https://science.nasa.gov/missions/hubble/nasas-hubble-traces-hidden-history-of-andromeda-galaxy/" target="_blank" rel="noopener">NASA (Hubble, 2025)</a></li>
+          <li>Galáxia de Andrômeda: <a href="https://science.nasa.gov/missions/hubble/nasas-hubble-shows-milky-way-is-destined-for-head-on-collision-with-andromeda-galaxy" target="_blank" rel="noopener">NASA (Hubble, 2012)</a></li>
+          <li>Galáxia de Andrômeda: <a href="https://doi.org/10.3847/1538-4357/ac1597" target="_blank" rel="noopener">Li et al. (2021)</a></li>
+          <li>Galáxia de Andrômeda: <a href="https://doi.org/10.1038/s41550-025-02563-1" target="_blank" rel="noopener">Sawala et al. (2025)</a></li>
+          <li>Galáxia do Triângulo: <a href="https://esahubble.org/news/heic1901/" target="_blank" rel="noopener">ESA/Hubble (2019)</a></li>
+          <li>Galáxia do Triângulo: <a href="https://science.nasa.gov/missions/webb/peering-into-the-tendrils-of-ngc-604-with-nasas-webb/" target="_blank" rel="noopener">NASA (Webb, 2024)</a></li>
+          <li>Galáxia do Triângulo: <a href="https://doi.org/10.3847/1538-4357/acd3f4" target="_blank" rel="noopener">Breuval et al. (2023)</a></li>
+          <li>Galáxia do Triângulo: <a href="https://doi.org/10.3847/1538-3881/aa79f3" target="_blank" rel="noopener">Kam et al. (2017)</a></li>
+        </ul>
+      </details>
+      <details class="lista-de-fontes">
+        <summary>Comparador de tamanhos (3 fontes)</summary>
+        <ul>
+          <li>Via Láctea: <a href="https://imagine.gsfc.nasa.gov/science/featured_science/milkyway" target="_blank" rel="noopener">NASA</a></li>
+          <li>TON 618: <a href="https://arxiv.org/abs/astro-ph/0406559" target="_blank" rel="noopener">arXiv</a></li>
+          <li>Sistema Solar: <a href="https://nssdc.gsfc.nasa.gov/planetary/factsheet/" target="_blank" rel="noopener">NASA</a></li>
+        </ul>
+      </details>
+      <!-- fontes:fim -->
     </section>
 
     <section class="bloco">

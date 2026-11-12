@@ -17,6 +17,7 @@ import { dirname, join } from "node:path";
 
 import * as astro from "../js/explorador/astronomia.js";
 import * as cat from "../js/explorador/catalogo.js";
+import { blocoDeFontes, fontesDoGrupo, GRUPOS_DE_FONTES } from "../ferramentas/atualizar_fontes_do_sobre.mjs";
 
 const raiz = join(dirname(fileURLToPath(import.meta.url)), "..");
 const resultados = [];
@@ -535,6 +536,12 @@ for (const p of cat.PLANETAS_ANOES) {
   verdadeiro(G, "Estrelas: cada uma com o endereço da sua página no SIMBAD",
     new Set(cat.ESTRELAS.map((e) => cat.fontesDoObjeto(e)[0].url)).size === cat.ESTRELAS.length &&
     cat.ESTRELAS.every((e) => cat.fontesDoObjeto(e)[0].url.startsWith("https://simbad.cds.unistra.fr/simbad/sim-id?Ident=")));
+  // A página Sobre lista todas as fontes das fichas (refazer: node ferramentas/atualizar_fontes_do_sobre.mjs).
+  const enderecos = GRUPOS_DE_FONTES.flatMap(([, objetos]) => fontesDoGrupo(objetos).map((f) => f.url));
+  const sobreSemEscape = readFileSync(join(raiz, "sobre.html"), "utf8");
+  verdadeiro(G, `Página Sobre: lista com as ${enderecos.length} fontes das fichas, em dia com o catálogo`,
+    enderecos.length >= 80 && sobreSemEscape.includes(blocoDeFontes()));
+  verdadeiro(G, "Fontes: nenhuma ficha cita a Wikipédia", enderecos.every((url) => !/wikipedia\.org/i.test(url)));
   // Não sobra foto sem dono (e portanto sem crédito) nas pastas do Diário.
   const usadas = new Set(comFoto.map((o) => o.imagem));
   for (const pasta of ["img/planetas", "img/universo"]) {
@@ -542,6 +549,28 @@ for (const p of cat.PLANETAS_ANOES) {
       verdadeiro(G, `${pasta}/${arquivo} tem crédito (é foto de um astro)`, usadas.has(`${pasta}/${arquivo}`));
     }
   }
+}
+// ---------- Foto de verdade ou ilustração ----------
+{
+  const G = "Foto ou ilustração";
+  const tipos = Object.keys(cat.TIPOS_DE_APARENCIA);
+  const avisos = cat.TODOS_OS_OBJETOS.map((o) => [o, cat.aparenciaDoObjeto(o)]);
+  const semAviso = avisos.filter(([, a]) => !a || !tipos.includes(a.tipo) || !a.icone || a.texto.length < 40).map(([o]) => o.nome);
+  verdadeiro(G, `Os ${avisos.length} astros avisam se o que aparece em 3D é foto de verdade ou ilustração`, !semAviso.length, semAviso.join(", "));
+  const conta = (tipo) => avisos.filter(([, a]) => a?.tipo === tipo).length;
+  verdadeiro(G, `${conta("real")} com imagem de verdade, ${conta("parcial")} com parte ilustrada e ${conta("ilustracao")} ilustrações`,
+    conta("real") >= 10 && conta("parcial") >= 8 && conta("real") + conta("parcial") + conta("ilustracao") === avisos.length);
+  // Estrelas, nebulosas, galáxias, sondas e o cinturão são sempre ilustrações.
+  const desenhados = cat.TODOS_OS_OBJETOS.filter((o) => o.espectro || o.nivel === "galaxia" || o.trajetoria || o.id === "cinturao");
+  verdadeiro(G, `Estrelas, nebulosas, galáxias, sondas e cinturão (${desenhados.length}) aparecem como ilustração`,
+    desenhados.every((o) => cat.aparenciaDoObjeto(o).tipo === "ilustracao"));
+  // Todo mapa do Sistema Solar que o programa carrega tem aviso de imagem de verdade ou de parte ilustrada.
+  const comMapa = cat.TODOS_OS_OBJETOS.filter((o) => o.nivel === "solar" && o.raioKm && !o.trajetoria);
+  const mapas = readdirSync(join(raiz, "img/texturas"));
+  verdadeiro(G, `Os ${comMapa.length} astros com mapa têm o arquivo em img/texturas`, comMapa.every((o) => mapas.includes(`${o.id}.webp`)), comMapa.filter((o) => !mapas.includes(`${o.id}.webp`)).map((o) => o.id).join(", "));
+  verdadeiro(G, "A Via Láctea avisa que é uma ilustração", cat.APARENCIA_DA_VIA_LACTEA.tipo === "ilustracao" && /fotografou de fora/.test(cat.APARENCIA_DA_VIA_LACTEA.texto));
+  const sobre = readFileSync(join(raiz, "sobre.html"), "utf8");
+  verdadeiro(G, "Página Sobre explica os três avisos (📷, 🧩 e 🎨)", ["📷", "🧩", "🎨"].every((icone) => sobre.includes(icone)));
 }
 // ---------- Site offline (PWA) e página do repositório ----------
 {
