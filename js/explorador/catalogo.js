@@ -227,13 +227,13 @@ const FICHAS = {
   sol: {
     fonte: "https://science.nasa.gov/sun/facts/",
     fontesDasNovidades: [["NASA (Parker Solar Probe, 2024)", "https://science.nasa.gov/blogs/parker-solar-probe/2025/01/02/nasas-parker-solar-probe-reports-healthy-status-after-solar-encounter/"]],
-    saibaMais: "Com cerca de 4,6 bilhões de anos, o Sol é formado principalmente por hidrogênio e hélio. No núcleo, a fusão nuclear transforma hidrogênio em hélio e libera a energia que chega até nós. O vento solar forma a heliosfera, uma bolha que envolve todo o Sistema Solar. Em 24 de dezembro de 2024, a sonda Parker Solar Probe, da NASA, passou a 6,1 milhões de km da superfície do Sol, a cerca de 690 mil km/h: nenhum objeto feito por humanos chegou tão perto nem foi tão rápido.",
+    saibaMais: "Com cerca de 4,5 bilhões de anos, o Sol é formado principalmente por hidrogênio e hélio. No núcleo, a fusão nuclear transforma hidrogênio em hélio e libera a energia que chega até nós. O vento solar forma a heliosfera, uma bolha que envolve todo o Sistema Solar. Em 24 de dezembro de 2024, a sonda Parker Solar Probe, da NASA, passou a 6,1 milhões de km da superfície do Sol, a cerca de 690 mil km/h: nenhum objeto feito por humanos chegou tão perto nem foi tão rápido.",
     ficha: [
       ["Tipo", "Estrela anã amarela (G2V)"],
       ["Diâmetro", "1.392.700 km (109 Terras)"],
       ["Distância da Terra", "149,6 milhões de km (1 UA)"],
       ["Rotação", "≈ 25 dias no equador"],
-      ["Idade", "≈ 4,6 bilhões de anos"],
+      ["Idade", "≈ 4,5 bilhões de anos"],
       ["Temperatura", "≈ 5.500 °C na superfície"],
       ["Núcleo", "≈ 15 milhões de °C"],
       ["Gravidade", "274 m/s² (28× a da Terra)"]
@@ -694,7 +694,7 @@ export const LUAS = [
     orbitaDaLua: { aKm: 421_800, e: 0.004, i: 0.04, no: 0, peri: 49.1, M0: 330.9 },
     resumo: "O lugar com mais vulcões ativos de todo o Sistema Solar.",
     curiosidade: "Tem cerca de 400 vulcões ativos; alguns jogam lava a dezenas de quilômetros de altura.",
-    fonte: "https://science.nasa.gov/jupiter/moons/io/",
+    fonte: "https://science.nasa.gov/jupiter/jupiter-moons/io/facts/",
     saibaMais: "Os vulcões de Io são aquecidos pelo 'aperta e solta' da gravidade de Júpiter e das outras luas, que deforma Io o tempo todo. O enxofre dos vulcões deixa a superfície amarela, laranja e vermelha.",
     ficha: [
       ["Tipo", "Lua de Júpiter (uma das quatro de Galileu)"],
@@ -711,7 +711,7 @@ export const LUAS = [
     orbitaDaLua: { aKm: 671_100, e: 0.009, i: 0.47, no: 184.0, peri: 45.0, M0: 345.4 },
     resumo: "Coberta por uma casca de gelo, com um oceano de água salgada embaixo.",
     curiosidade: "O oceano de Europa pode ter o dobro da água de todos os oceanos da Terra — um dos melhores lugares para procurar vida fora daqui.",
-    fonte: "https://science.nasa.gov/jupiter/moons/europa/",
+    fonte: "https://science.nasa.gov/jupiter/jupiter-moons/europa/europa-facts/",
     fontesDasNovidades: [["NASA (Europa Clipper)", "https://science.nasa.gov/mission/europa-clipper"]],
     saibaMais: "As listras avermelhadas são rachaduras no gelo. A sonda Europa Clipper, da NASA, lançada em 2024, chega a Júpiter em abril de 2030 e vai passar 49 vezes por Europa para estudar o gelo e o oceano.",
     ficha: [
@@ -729,7 +729,7 @@ export const LUAS = [
     orbitaDaLua: { aKm: 1_070_400, e: 0.001, i: 0.2, no: 58.5, peri: 198.3, M0: 324.8 },
     resumo: "A maior lua do Sistema Solar: é maior até que o planeta Mercúrio.",
     curiosidade: "É a única lua conhecida com campo magnético próprio, que até faz auroras nela.",
-    fonte: "https://science.nasa.gov/jupiter/moons/ganymede/",
+    fonte: "https://science.nasa.gov/jupiter/jupiter-moons/ganymede/facts/",
     fontesDasNovidades: [["ESA (sonda Juice)", "https://www.esa.int/ESA_Multimedia/Images/2022/12/Juice_mission_milestones"]],
     saibaMais: "Ganimedes tem regiões escuras e antigas e faixas mais claras cheias de sulcos. Por baixo do gelo deve haver um oceano. A sonda Juice, da Agência Espacial Europeia, lançada em 2023, chega a Júpiter em julho de 2031 e deve entrar em órbita de Ganimedes em dezembro de 2034: será a primeira sonda a orbitar a lua de outro planeta.",
     ficha: [
@@ -747,7 +747,7 @@ export const LUAS = [
     orbitaDaLua: { aKm: 1_882_700, e: 0.007, i: 0.3, no: 309.1, peri: 43.8, M0: 87.4 },
     resumo: "Uma das superfícies com mais crateras de todo o Sistema Solar.",
     curiosidade: "Sua superfície tem cerca de 4 bilhões de anos e quase não mudou desde então.",
-    fonte: "https://science.nasa.gov/jupiter/moons/callisto/",
+    fonte: "https://science.nasa.gov/jupiter/jupiter-moons/callisto/facts/",
     saibaMais: "Calisto é escura, coberta de crateras de todos os tamanhos. A maior marca é Valhalla, uma cratera rodeada de anéis que se estendem por quase 4 mil km.",
     ficha: [
       ["Tipo", "Lua de Júpiter (uma das quatro de Galileu)"],
@@ -764,9 +764,9 @@ export const LUAS = [
     orbitaDaLua: { aKm: 1_221_870, e: 0.029, i: 0.3, no: 78.6, peri: 78.3, M0: 11.7 },
     resumo: "A maior lua de Saturno, envolta numa atmosfera alaranjada mais densa que a da Terra.",
     curiosidade: "Tem rios, lagos e mares — mas de metano e etano líquidos, não de água.",
-    fonte: "https://science.nasa.gov/saturn/moons/titan/",
+    fonte: "https://science.nasa.gov/saturn/moons/titan/facts/",
     fontesDasNovidades: [["NASA (missão Dragonfly)", "https://science.nasa.gov/missions/dragonfly/nasas-dragonfly-rotorcraft-mission-to-saturns-moon-titan-confirmed/"]],
-    saibaMais: "A névoa de Titã esconde a superfície; a sonda Cassini viu o chão com radar e a sonda Huygens pousou lá em 2005. A pressão do ar na superfície é cerca de 50% maior que a da Terra. A NASA prepara a Dragonfly, um drone do tamanho de um carro, com lançamento marcado para julho de 2028 e chegada a Titã em 2034.",
+    saibaMais: "A névoa de Titã esconde a superfície; a sonda Cassini viu o chão com radar e a sonda Huygens pousou lá em 2005. A pressão do ar na superfície é cerca de 60% maior que a da Terra. A NASA prepara a Dragonfly, um drone do tamanho de um carro, com lançamento marcado para julho de 2028 e chegada a Titã em 2034.",
     ficha: [
       ["Tipo", "Lua de Saturno"],
       ["Diâmetro", "5.150 km (maior que Mercúrio)"],
@@ -815,7 +815,7 @@ export const LUAS = [
   },
   {
     id: "caronte", nome: "Caronte", pai: "plutao", nomePai: "Plutão", tipo: "Lua de Plutão", cor: "#a29c94",
-    raioKm: 606, gravidade: 0.29, periodoDias: 6.3872, distanciaMediaKm: 19_596,
+    raioKm: 607, gravidade: 0.29, periodoDias: 6.3872, distanciaMediaKm: 19_640,
     // Sempre em cima do mesmo ponto de Plutão (o meridiano zero dele aponta para Caronte).
     orbitaDaLua: { aKm: 19_596, e: 0, i: 0, no: 0, peri: 0, M0: 0, acompanhaRotacao: true },
     resumo: "A maior lua de Plutão: tem metade do tamanho dele.",
@@ -824,11 +824,11 @@ export const LUAS = [
     saibaMais: "Caronte tem uma grande mancha avermelhada no polo norte e um cinturão de cânions maiores que o Grand Canyon. Ela e Plutão foram fotografados de perto pela New Horizons em 2015.",
     ficha: [
       ["Tipo", "Lua de Plutão"],
-      ["Diâmetro", "1.212 km (metade de Plutão)"],
-      ["Distância de Plutão", "19.596 km"],
+      ["Diâmetro", "1.214 km (metade de Plutão)"],
+      ["Distância de Plutão", "19.640 km"],
       ["Volta em Plutão", "6 dias e 9 h (o mesmo tempo que Plutão leva para girar)"],
       ["Gravidade", "0,29 m/s² (3% da Terra)"],
-      ["Descoberta", "1978, por James Christy"]
+      ["Descoberta", "1978, por James Christy e Robert Harrington"]
     ]
   }
 ].map((objeto) => ({ ...objeto, nivel: "solar", categoria: "lua" }));
@@ -848,7 +848,7 @@ export const CINTURAO = {
   raioExternoUA: 3.3,
   resumo: "Uma faixa entre Marte e Júpiter com milhões de rochas que sobraram da formação dos planetas.",
   curiosidade: "Ao contrário dos filmes, ele é quase vazio: os asteroides maiores que 1 km ficam, em média, a centenas de milhares de km uns dos outros.",
-  fonte: "https://science.nasa.gov/solar-system/asteroids/",
+  fonte: "https://science.nasa.gov/solar-system/asteroids/facts/",
   fontesDasNovidades: [["NASA (sonda Lucy, 2026)", "https://science.nasa.gov/blogs/lucy/2026/10/28/nasas-lucy-reaches-trojan-asteroid-region-5-years-after-launch/"]],
   saibaMais: "A NASA estima que existam de 1,1 a 1,9 milhão de asteroides com mais de 1 km no cinturão principal. Somados, eles têm menos massa que a nossa Lua. Na mesma órbita de Júpiter há ainda dois enxames, os asteroides troianos. A sonda Lucy, da NASA, chegou a essa região em outubro de 2026 e tem o primeiro encontro com um troiano, Euríbates, marcado para agosto de 2027.",
   ficha: [
@@ -1312,14 +1312,14 @@ export const OBJETOS_GALAXIA = [
     cor: "#ffe6a8",
     resumo: "Uma bola com cerca de 10 milhões de estrelas velhas, fora do disco da galáxia.",
     curiosidade: "Pode ser o núcleo de uma pequena galáxia que a Via Láctea 'engoliu' há muito tempo.",
-    saibaMais: "É o maior aglomerado globular da Via Láctea. A olho nu parece uma estrela meio borrada, e foi assim que Ptolomeu o registrou há quase 2 mil anos. Em 1677, Edmond Halley percebeu que não era uma estrela. Fica na constelação do Centauro, no céu do sul.",
+    saibaMais: "É o maior aglomerado globular da Via Láctea. A olho nu parece uma estrela meio borrada, e foi assim que Ptolomeu o registrou há quase 2 mil anos. Em 1677, Edmond Halley percebeu que não era uma estrela e o anotou como nebulosa; na década de 1830, John Herschel reconheceu que era um aglomerado de estrelas. Fica na constelação do Centauro, no céu do sul.",
     fontes: [["NASA (Hubble, catálogo Caldwell)", "https://science.nasa.gov/mission/hubble/science/explore-the-night-sky/hubble-caldwell-catalog/caldwell-80/"]],
     ficha: [
       ["Tipo", "Aglomerado globular (Caldwell 80)"],
       ["Distância do Sol", "cerca de 17.000 anos-luz"],
       ["Estrelas", "cerca de 10 milhões"],
       ["Constelação", "Centauro"],
-      ["Reconhecido como aglomerado", "1677, por Edmond Halley"]
+      ["Reconhecido como aglomerado", "década de 1830, por John Herschel"]
     ]
   },
   // -------------------------------------------------------------------------
@@ -1708,7 +1708,7 @@ export const PERGUNTAS = [
     pergunta: "Qual é o tamanho de Caronte comparado com Plutão?",
     opcoes: ["É cem vezes menor", "Tem cerca de metade do diâmetro", "É duas vezes maior"],
     certa: 1,
-    explicacao: "Caronte tem 1.212 km, metade do diâmetro de Plutão. Segundo a NASA, nenhuma outra lua conhecida é tão grande em comparação com o astro em volta do qual gira."
+    explicacao: "Caronte tem 1.214 km, metade do diâmetro de Plutão. Segundo a NASA, nenhuma outra lua conhecida é tão grande em comparação com o astro em volta do qual gira."
   },
   {
     id: "q-ceres", objeto: "ceres",
