@@ -386,7 +386,7 @@ const FOTOS = {
     licenca: NASA_LIVRE
   },
   venus: {
-    descricao: "Sonda Mariner 10, fevereiro de 1974 (cores aproximadas, imagem reprocessada em 2020)",
+    descricao: "Sonda Mariner 10, 7 e 8 de fevereiro de 1974 (cores falsas, imagem reprocessada em 2020)",
     credito: "NASA/JPL-Caltech",
     link: "https://www.jpl.nasa.gov/images/pia23791-venus-from-mariner-10/",
     licenca: NASA_LIVRE
