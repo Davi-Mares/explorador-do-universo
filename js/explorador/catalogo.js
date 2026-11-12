@@ -293,7 +293,7 @@ const FICHAS = {
       ["Rotação", "24 h 37 min"],
       ["Ano", "687 dias terrestres"],
       ["Luas", "2 (Fobos e Deimos)"],
-      ["Temperatura", "≈ −60 °C (média)"],
+      ["Temperatura", "≈ −65 °C (média)"],
       ["Gravidade", "3,7 m/s² (38% da Terra)"]
     ]
   },
