@@ -661,7 +661,7 @@ export const LUAS = [
     curiosidade: "Está chegando mais perto de Marte, cerca de 1,8 metro a cada século: daqui a uns 50 milhões de anos ela vai cair no planeta ou se desfazer num anel.",
     fonte: "https://science.nasa.gov/mars/moons/phobos/",
     fontesDasNovidades: [["JAXA (sonda MMX, 2026)", "https://www.mmx.jaxa.jp/en/"]],
-    saibaMais: "Fobos dá a volta em Marte mais rápido do que Marte gira: visto do chão marciano, ele nasce no oeste e se põe no leste, duas vezes por dia. Fobos e Deimos podem ser asteroides capturados ou restos de uma grande colisão com Marte. Em outubro de 2026 o Japão lançou a sonda MMX, que vai pousar em Fobos, recolher pelo menos 10 gramas do solo e trazer a amostra para a Terra em 2031.",
+    saibaMais: "Fobos dá a volta em Marte mais rápido do que Marte gira: visto do chão marciano, ele nasce no oeste e se põe no leste, duas vezes por dia. Fobos e Deimos podem ser asteroides capturados ou restos de uma grande colisão com Marte. Em outubro de 2026 o Japão lançou a sonda MMX, que vai pousar em Fobos, recolher cerca de 10 gramas do solo e trazer a amostra para a Terra em 2031.",
     ficha: [
       ["Tipo", "Lua de Marte"],
       ["Tamanho", "27 × 22 × 18 km (formato de batata)"],

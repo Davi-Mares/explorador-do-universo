@@ -12,7 +12,7 @@
 
 <p align="center">
   <img src="img/site/tela-explorador.jpg" width="32%" alt="Explorador: a nave em órbita de Saturno, com o painel do astro e o painel da nave">
-  <img src="img/site/tela-via-lactea.jpg" width="32%" alt="Explorador: a Via Láctea vista de cima, com o Sol marcado e o cartão de uma descoberta">
+  <img src="img/site/tela-via-lactea.jpg" width="32%" alt="Explorador: a Via Láctea vista de cima, com os braços espirais, a barra e o Sol marcado">
   <img src="img/site/tela-comparar.jpg" width="32%" alt="Comparador: a Terra e Júpiter lado a lado, na mesma escala">
 </p>
 
