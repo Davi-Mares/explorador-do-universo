@@ -249,11 +249,17 @@ export function raioPlummer(aleatorio, escala, maximo) {
 // ===========================================================================
 // Via Láctea (unidade: mil anos-luz; "escala" muda o tamanho todo)
 // Braços espirais medidos (Reid et al., 2019), barra longa (Wegg et al., 2015)
-// e disco exponencial (Bland-Hawthorn e Gerhard, 2016). Três camadas:
+// e disco exponencial (Bland-Hawthorn e Gerhard, 2016). Ninguém fotografou a
+// galáxia de fora: é uma ilustração montada com essas medidas. Do outro lado
+// do centro quase não há medidas, e ali os braços seguem a continuação
+// provável (mais fraca). As camadas:
 //   1. o brilho do disco visto de frente: uma imagem calculada aqui mesmo,
 //      a partir do mesmo modelo (some quando o disco é visto de lado);
 //   2. estrelas, aglomerados jovens e nebulosas cor-de-rosa (pontos);
-//   3. faixas de poeira escura do lado de dentro dos braços.
+//   3. faixas de poeira escura do lado de dentro dos braços;
+//   4. luz em volume (disco grosso, barra e bojo) e a faixa de poeira do meio
+//      do disco, que aparecem quando a galáxia é vista de lado;
+//   5. o halo: aglomerados globulares e estrelas velhas em volta do disco.
 // ===========================================================================
 
 const KLY_POR_KPC = 3.26156;
@@ -276,64 +282,136 @@ function noPlano(raio, beta) {
   return [raio * Math.cos(fi), raio * Math.sin(fi)];
 }
 
-/** Suaviza as pontas do trecho desenhado de cada braço (15°). */
-function pontas(braco, beta) {
-  const [a, b] = braco.desenho;
-  return degrau(a, a + 15, beta) * (1 - degrau(b - 15, b, beta));
+/** Trecho desenhado de um braço: o medido ("desenho") e, quando há, a continuação provável. */
+const trechoDoBraco = (braco) => braco.provavel ?? braco.desenho;
+
+/** Força da continuação provável (onde não há medidas), em relação ao trecho medido. */
+const FORCA_PROVAVEL = 0.5;
+
+/**
+ * Peso do braço no azimute β: 1 no trecho medido e menor na continuação
+ * provável; as pontas somem aos poucos (15°).
+ */
+function pesoDoBraco(braco, beta) {
+  const [a, b] = trechoDoBraco(braco);
+  const [ma, mb] = braco.desenho;
+  const pontas = degrau(a, a + 15, beta) * (1 - degrau(b - 15, b, beta));
+  const medido = degrau(ma - 20, ma, beta) * (1 - degrau(mb, mb + 20, beta));
+  return pontas * (FORCA_PROVAVEL + (1 - FORCA_PROVAVEL) * medido);
+}
+
+/** Comprimento do braço em graus, contando a continuação provável pelo peso dela. */
+function comprimentoEfetivo(braco) {
+  const [a, b] = trechoDoBraco(braco);
+  let soma = 0;
+  for (let beta = a; beta <= b; beta += 1) soma += pesoDoBraco(braco, beta);
+  return soma;
+}
+
+/** Ruído 2D rápido (tabela de 256 × 256, interpolação suave), em oitavas; resultado entre 0 e 1. */
+function criarRuido2D(semente) {
+  const aleatorio = aleatorioComSemente(semente);
+  const tabela = Float32Array.from({ length: 65536 }, () => aleatorio());
+  const s = (t) => t * t * (3 - 2 * t);
+  function base(x, y) {
+    const xi = Math.floor(x), yi = Math.floor(y);
+    const fx = s(x - xi), fy = s(y - yi);
+    const x0 = xi & 255, x1 = (xi + 1) & 255, y0 = (yi & 255) << 8, y1 = ((yi + 1) & 255) << 8;
+    const a = tabela[y0 | x0], b = tabela[y0 | x1], c = tabela[y1 | x0], d = tabela[y1 | x1];
+    return a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy;
+  }
+  return (x, y, oitavas = 3) => {
+    let total = 0, amplitude = 1, f = 1, soma = 0;
+    for (let i = 0; i < oitavas; i++) {
+      total += base(x * f + i * 31.7, y * f + i * 11.3) * amplitude;
+      soma += amplitude;
+      amplitude *= 0.5;
+      f *= 2.03;
+    }
+    return total / soma;
+  };
 }
 
 /**
  * Imagem do disco visto de frente (RGB), calculada pelo modelo: disco velho
- * amarelado, barra e bojo dourados, braços azulados (estrelas jovens) e a
- * poeira escurecendo o lado de dentro dos braços.
+ * amarelado (também entre os braços), barra e bojo dourados, braços azulados
+ * com aglomerados jovens e nebulosas cor-de-rosa, e a poeira: a faixa do lado
+ * de dentro de cada braço, as duas faixas da barra e fiapos entre os braços.
  */
 function imagemDoDisco(lado, extensao) {
   const { bracos, barra, disco } = GALAXIA;
-  const ruido = criarRuido(77);
+  const ruido = criarRuido2D(77);
+  // Tabela de cada braço a cada meio grau: raio, largura e peso.
+  const PASSO = 0.5;
+  const tabelas = bracos.map((braco) => {
+    const [a, b] = trechoDoBraco(braco);
+    const n = Math.floor((b - a) / PASSO) + 1;
+    const raio = new Float32Array(n), largura = new Float32Array(n), peso = new Float32Array(n);
+    for (let k = 0; k < n; k++) {
+      const beta = a + k * PASSO;
+      raio[k] = raioDoBraco(braco, beta);
+      largura[k] = larguraDoBraco(braco, raio[k]);
+      peso[k] = pesoDoBraco(braco, beta) * braco.forca;
+    }
+    return { a, b, n, raio, largura, peso };
+  });
   const anguloBarra = Math.PI - barra.anguloGraus * RAD; // a ponta mais próxima do Sol, no 1º quadrante
   const cb = Math.cos(anguloBarra), sb = Math.sin(anguloBarra);
   const dados = new Uint8Array(lado * lado * 4);
   const passo = (2 * extensao) / lado;
-  const tom = (v) => Math.round(255 * (1 - Math.exp(-v * 1.2)));
+  const tom = (v) => Math.round(255 * (1 - Math.exp(-v * 1.35)));
   for (let j = 0; j < lado; j++) {
     const y = -extensao + (j + 0.5) * passo;
     for (let i = 0; i < lado; i++) {
       const x = -extensao + (i + 0.5) * passo;
+      const k4 = (j * lado + i) * 4;
+      dados[k4 + 3] = 255;
       const r = Math.hypot(x, y);
+      if (r > extensao) continue;
       let beta0 = 180 - Math.atan2(y, x) / RAD;          // φ = π − β
       beta0 = ((beta0 + 180) % 360 + 360) % 360 - 180;
       let somaBracos = 0, somaPoeira = 0;
-      for (const braco of bracos) {
+      for (const t of tabelas) {
         for (let volta = -1; volta <= 1; volta++) {
           const beta = beta0 + 360 * volta;
-          if (beta < braco.desenho[0] || beta > braco.desenho[1]) continue;
-          const rb = raioDoBraco(braco, beta);
-          const w = larguraDoBraco(braco, rb);
-          const peso = pontas(braco, beta) * braco.forca;
-          const dr = r - rb;
-          somaBracos += peso * Math.exp(-(dr * dr) / (2 * w * w));
-          const dp = r - (rb - 0.95 * w);
-          somaPoeira += peso * Math.exp(-(dp * dp) / (2 * 0.2 * w * w));
+          if (beta < t.a || beta > t.b) continue;
+          const k = Math.min(t.n - 1, Math.round((beta - t.a) / PASSO));
+          const w = t.largura[k], dr = r - t.raio[k];
+          if (dr > 4 * w || dr < -3.5 * w) continue;
+          // Do lado de dentro o braço acaba de repente (é onde fica a poeira); para fora, some aos poucos.
+          const sigma = dr < 0 ? 0.8 * w : 1.25 * w;
+          somaBracos += t.peso[k] * Math.exp(-(dr * dr) / (2 * sigma * sigma));
+          const dp = dr + 0.95 * w;
+          somaPoeira += t.peso[k] * Math.exp(-(dp * dp) / (2 * 0.2 * w * w));
         }
       }
-      const borda = r < 50 ? 1 : Math.exp(-(r - 50) / 3);
-      const velho = Math.exp(-r / disco.escalaKly) * borda;
+      const borda = r < 44 ? 1 : Math.exp(-(r - 44) / 4.5);
+      // Estrelas velhas: o disco exponencial e uma parte mais estendida, que dá o brilho entre os braços.
+      const velho = (Math.exp(-r / disco.escalaKly) + 0.16 * Math.exp(-r / 22)) * borda;
       const xb = x * cb + y * sb, yb = -x * sb + y * cb;
       const naBarra = Math.exp(-Math.pow(Math.abs(xb) / 13.8, 3) - (yb / 2.4) ** 2);
       const bojo = Math.exp(-((xb / 3.4) ** 2 + (yb / 2.2) ** 2));
-      const textura = 0.2 + 1.25 * degrau(0.3, 0.8, ruido(x * 0.22 + 3, y * 0.22, 0.5, 4));
-      const jovens = somaBracos * textura * borda;
-      const poeira = 1 - 0.55 * Math.min(1, somaPoeira * (0.6 + 0.6 * textura));
-      // Luz das estrelas velhas (entre os braços também), da barra e do bojo,
-      // mais a das estrelas jovens dos braços.
-      const vr = velho * 1.05 + naBarra * 0.85 + bojo * 2.1 + jovens * 0.4;
-      const vg = velho * 0.9 + naBarra * 0.7 + bojo * 1.62 + jovens * 0.5;
-      const vb = velho * 0.72 + naBarra * 0.5 + bojo * 1.05 + jovens * 0.72;
-      const k = (j * lado + i) * 4;
-      dados[k] = tom(vr * poeira);
-      dados[k + 1] = tom(vg * poeira);
-      dados[k + 2] = tom(vb * poeira);
-      dados[k + 3] = 255;
+      const manchas = ruido(x * 0.2 + 3, y * 0.2, 3);            // nuvens de milhares de anos-luz
+      const detalhe = ruido(x * 0.85 + 40, y * 0.85 + 9, 3);     // ≈ mil anos-luz
+      const textura = 0.25 + 1.2 * degrau(0.32, 0.68, manchas);
+      let jovens = 0, aglomerados = 0, nebulosas = 0;
+      if (somaBracos > 0.01) {
+        jovens = somaBracos * textura * (0.65 + 0.7 * detalhe) * borda;
+        aglomerados = somaBracos * degrau(0.58, 0.76, ruido(x * 2.7 + 7, y * 2.7 + 90, 2)) * degrau(0.42, 0.62, detalhe) * borda;
+        nebulosas = somaBracos * degrau(0.6, 0.76, ruido(x * 2.3 + 300, y * 2.3 + 50, 2)) * degrau(0.4, 0.6, manchas) * borda;
+      }
+      // Poeira: nas barras de outras galáxias ela forma duas faixas retas, uma de cada lado do centro.
+      const desvio = yb + 0.75 * Math.sign(xb) * (1 - Math.exp(-Math.abs(xb) / 2.5));
+      const faixaDaBarra = Math.exp(-(desvio * desvio) / 0.18) * Math.exp(-Math.pow(Math.abs(xb) / 12.5, 4)) * degrau(1.2, 3.5, Math.abs(xb));
+      const fiapos = r > 6 ? degrau(0.5, 0.72, ruido(x * 0.55 + 9, y * 0.55 + 77, 3)) * Math.exp(-r / 30) * degrau(6, 14, r) : 0;
+      const tau = 1.5 * Math.min(1.2, somaPoeira * (0.4 + 1.1 * detalhe)) + 0.7 * faixaDaBarra + 0.3 * fiapos;
+      const vr = velho * 1.08 + naBarra * 0.9 + bojo * 2.2 + jovens * 0.42 + aglomerados * 0.5 + nebulosas * 0.85;
+      const vg = velho * 0.92 + naBarra * 0.74 + bojo * 1.68 + jovens * 0.52 + aglomerados * 0.56 + nebulosas * 0.26;
+      const vb = velho * 0.74 + naBarra * 0.52 + bojo * 1.08 + jovens * 0.78 + aglomerados * 0.7 + nebulosas * 0.42;
+      // A poeira apaga mais o azul que o vermelho.
+      dados[k4] = tom(vr * Math.exp(-0.75 * tau));
+      dados[k4 + 1] = tom(vg * Math.exp(-tau));
+      dados[k4 + 2] = tom(vb * Math.exp(-1.25 * tau));
     }
   }
   return dados;
@@ -341,7 +419,7 @@ function imagemDoDisco(lado, extensao) {
 
 /** Plano com a imagem do disco; some quando visto de lado ou de dentro do disco. */
 function brilhoDoDisco(escala) {
-  const lado = 640, extensao = 58;
+  const lado = 1024, extensao = 58;
   const textura = new THREE.DataTexture(imagemDoDisco(lado, extensao), lado, lado, THREE.RGBAFormat);
   textura.magFilter = THREE.LinearFilter;
   textura.minFilter = THREE.LinearMipmapLinearFilter;
@@ -397,9 +475,9 @@ export function criarViaLactea({ escala = 1, materiais } = {}) {
   const aleatorio = aleatorioComSemente(2026);
   const ruido = criarRuido(2027);
   const { bracos, barra, disco } = GALAXIA;
-  const estrelas = new Lote(), gas = new Lote(), poeira = new Lote();
+  const estrelas = new Lote(), gas = new Lote(), poeira = new Lote(), volume = new Lote(), faixa = new Lote();
   const azul = corRgb("#cfdcff"), branca = corRgb("#f2f0ff"), rosa = corRgb("#ff7aa6"), dourada = corRgb("#ffd9a3");
-  const velha = corRgb("#ffe6c7"), escura = corRgb("#140b06");
+  const velha = corRgb("#ffe6c7"), escura = corRgb("#140b06"), globular = corRgb("#ffe9c9");
   const adicionar = (lote, x, y, z, cor, tamanho, brilho) => {
     const p = astro.paraCena({ x, y, z });
     lote.add(p.x * escala, p.y * escala, p.z * escala, cor, tamanho * escala, brilho);
@@ -409,14 +487,14 @@ export function criarViaLactea({ escala = 1, materiais } = {}) {
   // associações de estrelas recém-nascidas, com nebulosas cor-de-rosa no
   // meio e poeira do lado de dentro); a outra metade, espalhada pelo braço.
   bracos.forEach((braco, indice) => {
-    const [inicio, fim] = braco.desenho;
-    const fator = braco.forca * (fim - inicio) / 200;
+    const [inicio, fim] = trechoDoBraco(braco);
+    const fator = braco.forca * comprimentoEfetivo(braco) / 200;
     const sortearNoBraco = () => {
       for (;;) {
         const beta = inicio + aleatorio() * (fim - inicio);
         const rb = raioDoBraco(braco, beta);
         if (rb < 7 || rb > 56) continue;
-        const peso = pontas(braco, beta) * Math.min(1, rb / 30 + 0.3);
+        const peso = pesoDoBraco(braco, beta) * Math.min(1, rb / 30 + 0.3);
         if (aleatorio() < peso) return { beta, rb, w: larguraDoBraco(braco, rb) };
       }
     };
@@ -483,28 +561,94 @@ export function criarViaLactea({ escala = 1, materiais } = {}) {
     adicionar(estrelas, ao * ux - lado * uy, ao * uy + lado * ux, r * dy * 0.7, dourada, 0.48, 0.13);
   }
 
+  // Luz em volume: manchas grandes e suaves com o disco grosso de estrelas
+  // velhas, a barra e o bojo. Vista de lado, é ela que dá corpo à galáxia (o
+  // plano com a imagem some); de frente, entra bem fraca.
+  for (let i = 0; i < 2400; i++) {
+    const r = -disco.escalaKly * 1.2 * Math.log(1 - aleatorio() * 0.995);
+    if (r > 50) continue;
+    const t = aleatorio() * DOIS_PI;
+    adicionar(volume, r * Math.cos(t), r * Math.sin(t), gaussiana(aleatorio) * 1.3, velha, 3 + aleatorio() * 3, 0.03 + 0.02 * aleatorio());
+  }
+  // Disco fino: de lado, uma faixa de luz quente dos dois lados da poeira.
+  for (let i = 0; i < 2200; i++) {
+    const r = 6 + 44 * Math.pow(aleatorio(), 1.5);
+    const t = aleatorio() * DOIS_PI;
+    adicionar(volume, r * Math.cos(t), r * Math.sin(t), gaussiana(aleatorio) * 0.5, velha, 1.6 + aleatorio() * 1.6, (0.08 + 0.04 * aleatorio()) * Math.exp(-r / 34));
+  }
+  for (let i = 0; i < 500; i++) {
+    const s = (aleatorio() * 2 - 1) * barra.meioComprimentoKly * Math.sqrt(aleatorio());
+    const lateral = gaussiana(aleatorio) * 1.6;
+    const altura = gaussiana(aleatorio) * 1.1 * (1 - 0.45 * Math.abs(s) / barra.meioComprimentoKly);
+    adicionar(volume, s * ux - lateral * uy, s * uy + lateral * ux, altura, dourada, 2.5 + aleatorio() * 2.5, 0.02 + 0.012 * aleatorio());
+  }
+  for (let i = 0; i < 450; i++) {
+    // Bojo: de lado ele sobressai do disco, mais alto no meio.
+    const ao = gaussiana(aleatorio) * 3.6, lateral = gaussiana(aleatorio) * 2.6;
+    adicionar(volume, ao * ux - lateral * uy, ao * uy + lateral * ux, gaussiana(aleatorio) * 1.9, dourada, 3.5 + aleatorio() * 2.5, 0.028 + 0.014 * aleatorio());
+  }
+  // Faixa de poeira no meio do disco: de lado, ela corta a galáxia com uma
+  // linha escura, como nas espirais que vemos de perfil.
+  // (Muitas manchas pequenas e fracas: somadas, viram uma faixa contínua.)
+  for (let i = 0; i < 4200; i++) {
+    const r = 9 + 38 * Math.pow(aleatorio(), 0.7);
+    const t = aleatorio() * DOIS_PI;
+    adicionar(faixa, r * Math.cos(t), r * Math.sin(t), gaussiana(aleatorio) * 0.07, escura, 0.55 + aleatorio() * 0.5, 0.3 * Math.exp(-r / 45));
+  }
+  // Halo: aglomerados globulares (a galáxia tem mais de 150 conhecidos; aqui
+  // as posições são sorteadas, mais juntas perto do centro, e o tamanho é
+  // aumentado para aparecerem) e estrelas velhas soltas.
+  for (let i = 0; i < 150; i++) {
+    const r = 1.5 + 90 * Math.pow(aleatorio(), 3);
+    const [dx, dy, dz] = direcao(aleatorio);
+    adicionar(estrelas, r * dx, r * dz, r * dy * 0.85, globular, 0.6, 0.45);
+  }
+  for (let i = 0; i < 2600; i++) {
+    const r = 1 + Math.abs(gaussiana(aleatorio)) * 20;
+    const [dx, dy, dz] = direcao(aleatorio);
+    adicionar(estrelas, r * dx, r * dz, r * dy * 0.8, velha, 0.3, 0.025);
+  }
+
   const grupo = new THREE.Group();
   const brilho = brilhoDoDisco(escala);
   grupo.add(brilho);
   const pontosEstrelas = estrelas.criar(materialDePontos({ atenuar: true }), materiais);
   const pontosPoeira = poeira.criar(materialDeGas({ escuro: true }), materiais);
   const pontosGas = gas.criar(materialDeGas(), materiais);
+  const pontosVolume = volume.criar(materialDeGas(), materiais);
+  const pontosFaixa = faixa.criar(materialDeGas({ escuro: true }), materiais);
+  pontosVolume.renderOrder = -5;
+  pontosFaixa.renderOrder = 1;
   pontosPoeira.renderOrder = 1;
   pontosGas.renderOrder = 2;
-  grupo.add(pontosEstrelas, pontosPoeira, pontosGas);
+  grupo.add(pontosVolume, pontosEstrelas, pontosFaixa, pontosPoeira, pontosGas);
+  const todos = [pontosEstrelas, pontosGas, pontosPoeira, pontosVolume, pontosFaixa];
+  let intensidade = 1, deLado = 0;
+  const aplicar = () => {
+    for (const pontos of todos) {
+      // De lado, a poeira do disco esconde quase todas as nebulosas cor-de-rosa.
+      const propria = pontos === pontosVolume ? 0.12 + 0.88 * deLado : pontos === pontosFaixa ? deLado : pontos === pontosGas ? 1 - 0.8 * deLado : 1;
+      pontos.material.uniforms.intensidade.value = intensidade * propria;
+      pontos.visible = intensidade * propria > 0.002;
+    }
+  };
+  aplicar();
   grupo.userData = {
     estrelas: pontosEstrelas,
     brilho,
     /** Dentro do disco a poeira apaga a luz de longe (extinção, por unidade de distância). */
     definirExtincao(valor) {
-      for (const pontos of [pontosEstrelas, pontosGas, pontosPoeira]) pontos.material.uniforms.extincao.value = valor;
+      for (const pontos of todos) pontos.material.uniforms.extincao.value = valor;
     },
     /** 0 a 1: o modelo todo some aos poucos (perto do Sol, o céu de verdade aparece no lugar). */
     definirIntensidade(valor) {
-      for (const pontos of [pontosEstrelas, pontosGas, pontosPoeira]) {
-        pontos.material.uniforms.intensidade.value = valor;
-        pontos.visible = valor > 0.002;
-      }
+      intensidade = valor;
+      aplicar();
+    },
+    /** 0 a 1: o quanto a galáxia é vista de lado (acende a luz em volume e a faixa de poeira do meio). */
+    definirVistaDeLado(valor) {
+      deLado = valor;
+      aplicar();
     },
     /** 0 a 1: o brilho de frente some quando a nave está dentro do disco. */
     definirOpacidadeDoBrilho(valor) {

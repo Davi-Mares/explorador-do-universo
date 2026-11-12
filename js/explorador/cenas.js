@@ -734,9 +734,12 @@ export function criarNivelGalaxia() {
       // anos-luz aqui; de verdade é ainda mais): a faixa da galáxia não estoura
       // de brilho e as nebulosas aparecem. De fora do disco, sem poeira.
       const { x, y, z } = camera.position;
-      const noDisco = (1 - suave(1.5, 7, Math.abs(y))) * (1 - suave(55, 70, Math.hypot(x, z)));
+      const noDisco = (1 - suave(1.5, 7, Math.abs(y))) * (1 - suave(48, 58, Math.hypot(x, z)));
       viaLactea.userData.definirExtincao(noDisco / 7);
       viaLactea.userData.definirOpacidadeDoBrilho(1 - noDisco);
+      // Vista de lado, a imagem do disco some e entram a luz em volume e a faixa de poeira do meio.
+      const elevacao = Math.abs(y) / Math.max(Math.hypot(x, y, z), 1e-6);
+      viaLactea.userData.definirVistaDeLado((1 - suave(0.04, 0.15, elevacao)) * (1 - noDisco));
       // Perto do Sol, e dentro do disco na vizinhança dele, o céu é a foto de
       // verdade da Via Láctea (vista daqui, girando com o disco); de longe e
       // perto do centro da galáxia, o modelo.

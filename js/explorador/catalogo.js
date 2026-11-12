@@ -1149,17 +1149,20 @@ export const GALAXIA = {
    *   ln(R / R_kink) = −(β − β_kink) · tan ψ
    * β = azimute visto do centro da galáxia (0° = direção do Sol, crescendo no
    * sentido da rotação); ψ = inclinação do braço antes/depois da "dobra"
-   * (kink). "desenho" é o trecho desenhado: onde não há medidas (o outro lado
-   * da galáxia), o braço continua com a mesma inclinação.
+   * (kink). "desenho" é o trecho perto das medidas. "provavel" é o trecho todo
+   * que aparece no mapa: do outro lado do centro quase não há medidas, e ali
+   * o braço continua com a mesma inclinação, desenhado mais fraco. É a
+   * continuação provável: o Braço Externo liga-se ao de Norma por trás do
+   * centro, e os de Sagitário e de Perseu chegam à ponta de lá da barra.
    */
   bracos: [
     { nome: "Braço de 3 kpc", betaKink: 15, rKinkKpc: 3.52, psiAntes: -4.2, psiDepois: -4.2, larguraKpc: 0.18, desenho: [-25, 60], forca: 0.35 },
     { nome: "Braço de Norma", betaKink: 18, rKinkKpc: 4.46, psiAntes: -1.0, psiDepois: 19.5, larguraKpc: 0.14, desenho: [-45, 70], forca: 0.7 },
-    { nome: "Braço Escudo–Centauro", betaKink: 23, rKinkKpc: 4.91, psiAntes: 14.1, psiDepois: 12.1, larguraKpc: 0.23, desenho: [-195, 108], forca: 1 },
-    { nome: "Braço Sagitário–Carina", betaKink: 24, rKinkKpc: 6.04, psiAntes: 17.1, psiDepois: 1.0, larguraKpc: 0.27, desenho: [-118, 96], forca: 0.9 },
+    { nome: "Braço Escudo–Centauro", betaKink: 23, rKinkKpc: 4.91, psiAntes: 14.1, psiDepois: 12.1, larguraKpc: 0.23, desenho: [-195, 108], provavel: [-247, 108], forca: 1 },
+    { nome: "Braço Sagitário–Carina", betaKink: 24, rKinkKpc: 6.04, psiAntes: 17.1, psiDepois: 1.0, larguraKpc: 0.27, desenho: [-118, 96], provavel: [-158, 215], forca: 0.9 },
     { nome: "Braço Local (de Órion)", betaKink: 9, rKinkKpc: 8.26, psiAntes: 11.4, psiDepois: 11.4, larguraKpc: 0.31, desenho: [-28, 58], forca: 0.6 },
-    { nome: "Braço de Perseu", betaKink: 40, rKinkKpc: 8.87, psiAntes: 10.3, psiDepois: 8.7, larguraKpc: 0.35, desenho: [-115, 235], forca: 1 },
-    { nome: "Braço Externo", betaKink: 18, rKinkKpc: 12.24, psiAntes: 3.0, psiDepois: 9.4, larguraKpc: 0.65, desenho: [-60, 120], forca: 0.6 }
+    { nome: "Braço de Perseu", betaKink: 40, rKinkKpc: 8.87, psiAntes: 10.3, psiDepois: 8.7, larguraKpc: 0.35, desenho: [-115, 235], provavel: [-146, 235], forca: 1 },
+    { nome: "Braço Externo", betaKink: 18, rKinkKpc: 12.24, psiAntes: 3.0, psiDepois: 9.4, larguraKpc: 0.65, desenho: [-60, 120], provavel: [-170, 300], forca: 0.6 }
   ],
   /** Barra longa: meio comprimento de 5,0 kpc, a 28° da linha Sol–centro (Wegg, Gerhard e Portail, 2015). */
   barra: { meioComprimentoKly: 16.3, anguloGraus: 28 },
