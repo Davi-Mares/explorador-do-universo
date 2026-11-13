@@ -22,9 +22,18 @@
 
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/site.css">
+  <link rel="preload" href="img/texturas/terra.webp" as="image" type="image/webp" crossorigin="anonymous">
+  <script type="importmap">
+    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+  </script>
 </head>
-<body class="site">
+<body class="site inicio">
   <a class="pular-para-conteudo" href="#conteudo">Pular para o conteúdo</a>
+
+  <!-- Fundo: a Terra vista da órbita, com o Sol nascendo (js/inicio-terra.js) -->
+  <canvas class="fundo-terra" id="fundo-terra" aria-hidden="true"></canvas>
+  <div class="fundo-sombra" aria-hidden="true"></div>
+
   <header class="topo">
     <a class="marca" href="index.html">🔭 Explorador do Universo</a>
     <nav aria-label="Navegação principal">
@@ -36,39 +45,53 @@
     </nav>
   </header>
 
-  <main id="conteudo" class="pagina">
+  <main id="conteudo">
     <section class="heroi">
-      <h1>Explore o universo <span>em escala real</span></h1>
-      <p>Pilote uma nave do Sistema Solar até a Via Láctea. As distâncias e as posições são as de verdade, e cada astro que você descobre vai para o seu Diário de bordo.</p>
-      <div class="heroi-acoes">
-        <a class="botao botao-principal" href="explorador.html">🚀 Começar a explorar</a>
-        <a class="botao" href="diario.html">📔 Diário de bordo</a>
+      <div class="heroi-conteudo">
+        <p class="heroi-selo entra" style="--atraso: 0.15s">🛰️ Do Sistema Solar à Via Láctea</p>
+        <h1 class="entra" style="--atraso: 0.3s">Explore o universo <span>em escala real</span></h1>
+        <p class="heroi-texto entra" style="--atraso: 0.55s">Pilote uma nave do Sistema Solar até a Via Láctea. As distâncias e as posições são as de verdade, e cada astro que você descobre vai para o seu Diário de bordo.</p>
+        <div class="heroi-acoes entra" style="--atraso: 0.75s">
+          <a class="botao botao-principal botao-grande" href="explorador.html">🚀 Começar a explorar</a>
+          <a class="botao botao-vidro botao-grande" href="diario.html">📔 Diário de bordo</a>
+        </div>
+        <p class="heroi-progresso entra" style="--atraso: 0.95s" id="progresso" aria-live="polite"></p>
       </div>
-      <p class="heroi-progresso" id="progresso" aria-live="polite"></p>
+      <a class="heroi-rolar" href="#escalas" aria-label="Ver os níveis do Explorador"><span aria-hidden="true"></span></a>
+      <p class="heroi-nota">🧩 Ao fundo, a Terra com mapas de verdade da NASA, vista a 1.600 km de altura sobre Mato Grosso. O nascer do Sol e o brilho do ar são calculados.</p>
     </section>
 
-    <section class="escalas" aria-label="Níveis de escala">
-      <a class="escala" href="explorador.html?nivel=solar">
-        <span class="escala-icone" aria-hidden="true">☀️</span>
-        <h2>Sistema Solar</h2>
-        <p>O Sol, os planetas e as luas onde estão hoje.</p>
-      </a>
-      <a class="escala" href="explorador.html?nivel=estrelas">
-        <span class="escala-icone" aria-hidden="true">✨</span>
-        <h2>Estrelas vizinhas</h2>
-        <p>As estrelas perto do Sol, a anos-luz de distância.</p>
-      </a>
-      <a class="escala" href="explorador.html?nivel=galaxia">
-        <span class="escala-icone" aria-hidden="true">🌌</span>
-        <h2>Via Láctea</h2>
-        <p>Onde o Sol fica na nossa galáxia — e o que há além.</p>
-      </a>
-      <a class="escala" href="comparar.html">
-        <span class="escala-icone" aria-hidden="true">⚖️</span>
-        <h2>Comparar</h2>
-        <p>Planetas, a Lua, o Sol e estrelas lado a lado, na mesma escala.</p>
-      </a>
-    </section>
+    <div class="pagina pagina-inicio">
+      <section class="numeros revelar" aria-label="O que há para explorar">
+        <p><strong id="numero-astros">67</strong> astros com ficha e fontes</p>
+        <p><strong id="numero-estrelas">30</strong> estrelas para visitar</p>
+        <p><strong id="numero-missoes">13</strong> missões</p>
+        <p><strong>3</strong> escalas: do Sol à galáxia</p>
+      </section>
+
+      <section class="escalas" id="escalas" aria-label="Níveis de escala">
+        <a class="escala revelar" href="explorador.html?nivel=solar" style="--atraso: 0s">
+          <span class="escala-icone" aria-hidden="true">☀️</span>
+          <h2>Sistema Solar</h2>
+          <p>O Sol, os planetas e as luas onde estão hoje.</p>
+        </a>
+        <a class="escala revelar" href="explorador.html?nivel=estrelas" style="--atraso: 0.08s">
+          <span class="escala-icone" aria-hidden="true">✨</span>
+          <h2>Estrelas vizinhas</h2>
+          <p>As estrelas perto do Sol, a anos-luz de distância.</p>
+        </a>
+        <a class="escala revelar" href="explorador.html?nivel=galaxia" style="--atraso: 0.16s">
+          <span class="escala-icone" aria-hidden="true">🌌</span>
+          <h2>Via Láctea</h2>
+          <p>Onde o Sol fica na nossa galáxia, e o que há além.</p>
+        </a>
+        <a class="escala revelar" href="comparar.html" style="--atraso: 0.24s">
+          <span class="escala-icone" aria-hidden="true">⚖️</span>
+          <h2>Comparar</h2>
+          <p>Planetas, a Lua, o Sol e estrelas lado a lado, na mesma escala.</p>
+        </a>
+      </section>
+    </div>
   </main>
 
   <footer class="rodape">
@@ -76,12 +99,6 @@
   </footer>
 
   <script src="js/site.js" defer></script>
-  <script type="module">
-    import { resumo } from "./js/explorador/progresso.js";
-    const r = resumo();
-    document.getElementById("progresso").textContent = r.descobertos
-      ? `Você já descobriu ${r.descobertos} de ${r.totalObjetos} astros.`
-      : `${r.totalObjetos} astros esperando para serem descobertos.`;
-  </script>
+  <script type="module" src="js/inicio.js"></script>
 </body>
 </html>

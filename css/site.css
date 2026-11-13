@@ -254,3 +254,348 @@ body.site {
   font-size: 0.9rem;
   overflow-wrap: anywhere;
 }
+
+/* ==========================================================================
+   Página inicial: a Terra vista da órbita ao fundo, com o Sol nascendo
+   ========================================================================== */
+
+body.inicio {
+  background: #000;
+}
+
+/* Antes do 3D carregar (ou sem WebGL): um horizonte feito só com CSS. */
+body.inicio::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 62% 64%, rgba(255, 214, 160, 0.9) 0, rgba(255, 150, 70, 0.35) 3%, rgba(255, 110, 40, 0.08) 16%, transparent 32%),
+    radial-gradient(ellipse 130% 62% at 50% 128%, #04070f 0 60%, rgba(255, 140, 60, 0.55) 60.6%, rgba(90, 160, 255, 0.45) 61.6%, rgba(40, 90, 200, 0.12) 63.5%, transparent 68%),
+    #000;
+}
+
+.fundo-terra {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 1.8s ease;
+}
+
+body.terra-pronta .fundo-terra {
+  opacity: 1;
+}
+
+/* Escurece o topo (para o menu) e, ao rolar, o resto (para os cartões). */
+.fundo-sombra {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.55), transparent 22%),
+    rgba(1, 3, 9, calc(var(--rolagem, 0) * 0.62));
+}
+
+body.inicio > main,
+body.inicio > .rodape {
+  position: relative;
+  z-index: 1;
+}
+
+body.inicio .rodape {
+  border-top-color: rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.55);
+}
+
+/* Topo transparente sobre a Terra; fica sólido ao rolar. */
+body.inicio .topo {
+  position: fixed;
+  left: 0;
+  right: 0;
+  border-bottom-color: transparent;
+  background: transparent;
+  backdrop-filter: none;
+  transition: background 0.35s ease, border-color 0.35s ease;
+}
+
+body.inicio.rolou .topo {
+  border-bottom-color: rgba(73, 214, 255, 0.12);
+  background: rgba(2, 4, 11, 0.78);
+  backdrop-filter: blur(12px);
+}
+
+body.inicio .topo nav a[aria-current="page"] {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* ---------- Herói ---------- */
+body.inicio .heroi {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  min-height: 100svh;
+  padding: calc(76px + 8vh) 20px 0;
+  text-align: center;
+}
+
+.heroi-conteudo {
+  max-width: 860px;
+}
+
+.heroi-selo {
+  display: inline-block;
+  margin: 0 0 18px !important;
+  padding: 6px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(8px);
+  color: rgba(235, 242, 255, 0.86) !important;
+  font-size: 0.82rem !important;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+body.inicio .heroi h1 {
+  max-width: none;
+  margin: 0 auto 18px;
+  font-size: clamp(2.6rem, 7.2vw, 5.4rem);
+  line-height: 1.04;
+  letter-spacing: -0.01em;
+  text-shadow: 0 6px 40px rgba(0, 0, 0, 0.65);
+}
+
+body.inicio .heroi h1 span {
+  display: inline-block;
+  background: linear-gradient(90deg, #ffd9a0 0%, #ffb27a 22%, #7fe3ff 58%, #b49bff 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: brilho-do-titulo 9s ease-in-out infinite alternate;
+}
+
+@keyframes brilho-do-titulo {
+  from { background-position: 0% 50%; }
+  to { background-position: 100% 50%; }
+}
+
+.heroi-texto {
+  max-width: 640px;
+  margin: 0 auto !important;
+  color: rgba(236, 243, 255, 0.88) !important;
+  font-size: clamp(1rem, 2.4vw, 1.18rem) !important;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.8);
+}
+
+.botao-grande {
+  padding: 13px 24px;
+  font-size: 1.04rem;
+}
+
+body.inicio .botao-principal {
+  box-shadow: 0 10px 34px rgba(73, 160, 255, 0.35);
+}
+
+.botao-vidro {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+}
+
+.botao-vidro:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.14);
+}
+
+body.inicio .heroi-progresso {
+  color: rgba(225, 235, 250, 0.7) !important;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.9);
+}
+
+/* Seta "role para ver mais". */
+.heroi-rolar {
+  position: absolute;
+  left: 50%;
+  bottom: 64px;
+  width: 28px;
+  height: 44px;
+  margin-left: -14px;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  border-radius: 16px;
+  opacity: 0;
+  animation: entrar 1s 1.6s forwards;
+}
+
+.heroi-rolar span {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  width: 4px;
+  height: 8px;
+  margin-left: -2px;
+  border-radius: 2px;
+  background: #fff;
+  animation: rolar 1.8s ease-in-out infinite;
+}
+
+@keyframes rolar {
+  0% { opacity: 0; transform: translateY(0); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(16px); }
+}
+
+.heroi-nota {
+  position: absolute;
+  left: 22px;
+  bottom: 16px;
+  max-width: 380px;
+  margin: 0 !important;
+  color: rgba(220, 230, 245, 0.62) !important;
+  font-size: 0.76rem !important;
+  line-height: 1.45;
+  text-align: left;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
+}
+
+/* Entrada do texto do herói. */
+.entra {
+  opacity: 0;
+  animation: entrar 1.1s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+  animation-delay: var(--atraso, 0s);
+}
+
+@keyframes entrar {
+  from { opacity: 0; transform: translateY(22px); filter: blur(6px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+
+/* ---------- Números e cartões ---------- */
+.pagina-inicio {
+  padding-top: 24px;
+}
+
+.numeros {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--raio);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(14px);
+}
+
+.numeros p {
+  margin: 0;
+  padding: 18px 12px;
+  background: rgba(4, 9, 22, 0.66);
+  color: var(--cor-texto-apagado) !important;
+  font-size: 0.88rem;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.numeros strong {
+  display: block;
+  color: var(--cor-texto);
+  font-family: var(--fonte-titulo);
+  font-size: 2rem;
+  line-height: 1.1;
+}
+
+body.inicio .escalas {
+  margin-top: 28px;
+}
+
+body.inicio .escala {
+  position: relative;
+  overflow: hidden;
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(6, 12, 28, 0.58);
+  backdrop-filter: blur(14px) saturate(1.2);
+  transition: transform 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+}
+
+body.inicio .escala::after {
+  content: "";
+  position: absolute;
+  inset: -40% -40% auto auto;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 180, 110, 0.18), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+body.inicio .escala:hover,
+body.inicio .escala:focus-visible {
+  border-color: rgba(255, 200, 140, 0.45);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+  transform: translateY(-5px);
+}
+
+body.inicio .escala:hover::after,
+body.inicio .escala:focus-visible::after {
+  opacity: 1;
+}
+
+/* Aparecem ao rolar (só com JavaScript; sem ele ficam visíveis). */
+.com-revelar .revelar {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.9s ease var(--atraso, 0s), transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) var(--atraso, 0s);
+}
+
+.com-revelar .revelar.visivel {
+  opacity: 1;
+  transform: none;
+}
+
+@media (max-width: 700px) {
+  body.inicio .heroi {
+    padding-top: calc(110px + 5vh);
+  }
+
+  .heroi-acoes .botao-grande {
+    width: min(100%, 320px);
+    justify-content: center;
+  }
+
+  .heroi-nota {
+    left: 50%;
+    width: calc(100% - 32px);
+    max-width: none;
+    transform: translateX(-50%);
+    text-align: center;
+  }
+
+  .heroi-rolar {
+    bottom: 78px;
+  }
+
+  .numeros {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .entra,
+  .heroi-rolar {
+    opacity: 1;
+    animation: none;
+  }
+
+  .heroi-rolar span,
+  body.inicio .heroi h1 span {
+    animation: none;
+  }
+}
