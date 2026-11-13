@@ -18,6 +18,7 @@
 
 ## O que tem
 
+- **Página inicial** — a Terra vista da órbita ao fundo, com o Sol nascendo atrás do horizonte (mapas de verdade da NASA; o brilho do ar é calculado).
 - **Decolar** — o Explorador abre saindo de cima de Sinop (MT): a câmera sobe até aparecer a América do Sul e termina em órbita da Terra, com o dia e a noite de verdade. Dá para pular e para rever.
 - **Explorar**, em três níveis de escala:
   - **Sistema Solar** — os planetas onde estão hoje (com o dia e a noite certos), a Lua e mais 10 luas, Plutão, Ceres, o Cinturão de Asteroides e as sondas Voyager 1 e 2, cada uma na sua trajetória de saída (JPL Horizons), com o céu de verdade ao fundo.

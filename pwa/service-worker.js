@@ -6,7 +6,7 @@
 // visitantes recebam os arquivos novos (o cache antigo é apagado).
 // ---------------------------------------------------------------------------
 
-const VERSAO = "v18";
+const VERSAO = "v19";
 const CACHE = `explorador-do-universo-${VERSAO}`;
 
 // Arquivos baixados já na instalação. As texturas dos outros planetas são
@@ -25,6 +25,8 @@ const ARQUIVOS_ESSENCIAIS = [
   "./css/diario.css",
   "./css/comparar.css",
   "./js/site.js",
+  "./js/inicio.js",
+  "./js/inicio-terra.js",
   "./js/diario.js",
   "./js/diario-pdf.js",
   "./js/pdf.js",
