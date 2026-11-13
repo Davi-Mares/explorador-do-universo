@@ -62,6 +62,7 @@
         <button type="button" data-tamanho="ampliado" aria-pressed="false">Ampliados</button>
       </div>
       <p class="nota-tamanho" id="nota-tamanho"></p>
+      <button type="button" class="botao botao-decolagem" id="botao-decolagem">🚀 Rever a decolagem</button>
     </div>
     <div id="opcoes-galaxia" hidden>
       <p class="opcao-titulo">🌀 Rotação da galáxia</p>
@@ -129,6 +130,17 @@
   </div>
 
   <div class="avisos" id="avisos" aria-live="polite"></div>
+
+  <!-- Decolagem: a abertura, que sai de cima de Sinop (MT) e sobe até a órbita da Terra -->
+  <div class="decolagem" id="decolagem" hidden>
+    <div class="decolagem-pino" id="decolagem-pino" aria-hidden="true"><span class="decolagem-ponto"></span><span class="decolagem-nome" id="decolagem-nome"></span></div>
+    <div class="decolagem-legenda">
+      <p class="decolagem-titulo" id="decolagem-titulo" aria-live="polite"></p>
+      <p class="decolagem-texto" id="decolagem-texto"></p>
+      <p class="decolagem-altura" id="decolagem-altura" aria-hidden="true"></p>
+    </div>
+    <button type="button" class="botao decolagem-pular" id="decolagem-pular">Pular ⏭</button>
+  </div>
 
   <!-- Descoberta -->
   <section class="cartao-descoberta" id="cartao-descoberta" aria-live="assertive" hidden>

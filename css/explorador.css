@@ -1053,3 +1053,116 @@ kbd {
     max-height: calc(100dvh - var(--altura-topo) - 64px);
   }
 }
+
+/* ---------- Decolagem (abertura) ---------- */
+/* Enquanto a câmera sobe de Sinop até a órbita, a interface some: fica só a
+   legenda, a altura e o botão de pular. */
+body.decolando > *:not(.tela):not(.decolagem):not(dialog):not(script) {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+body > *:not(.tela):not(.decolagem):not(dialog) {
+  transition: opacity 0.6s ease;
+}
+
+.decolagem {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.decolagem[hidden] {
+  display: none;
+}
+
+.decolagem-legenda {
+  position: absolute;
+  left: 50%;
+  bottom: max(86px, 13vh);
+  width: min(92vw, 560px);
+  transform: translateX(-50%);
+  text-align: center;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.95), 0 0 3px rgba(0, 0, 0, 0.9);
+  pointer-events: none;
+}
+
+.decolagem-legenda p {
+  margin: 0;
+}
+
+.decolagem-titulo {
+  font-size: clamp(1.35rem, 5vw, 2rem);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.decolagem-texto {
+  margin-top: 4px !important;
+  color: var(--cor-texto-suave, #c9d4f0);
+  font-size: clamp(0.9rem, 3.4vw, 1.05rem);
+}
+
+.decolagem-altura {
+  margin-top: 10px !important;
+  color: var(--cor-ouro);
+  font-size: 0.92rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.decolagem-pular {
+  position: absolute;
+  right: max(14px, env(safe-area-inset-right));
+  bottom: max(18px, env(safe-area-inset-bottom));
+  background: rgba(8, 12, 28, 0.72);
+  backdrop-filter: blur(6px);
+}
+
+/* O alfinete que marca a cidade de partida. */
+.decolagem-pino {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+  will-change: transform;
+}
+
+.decolagem-ponto {
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #ff5a4d;
+  box-shadow: 0 0 0 0 rgba(255, 90, 77, 0.7);
+  animation: decolagem-pulso 1.6s ease-out infinite;
+}
+
+.decolagem-nome {
+  margin-top: -6px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: rgba(8, 12, 28, 0.66);
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+@keyframes decolagem-pulso {
+  to { box-shadow: 0 0 0 16px rgba(255, 90, 77, 0); }
+}
+
+.botao-decolagem {
+  width: 100%;
+  margin-top: 10px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .botao-decolagem { display: none; }
+}

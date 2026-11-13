@@ -1298,6 +1298,156 @@ function medirQualidade(segundos, agora) {
 
 // ---------- Laço principal ----------
 
+// ---------- Decolagem (abertura) ----------
+// A viagem começa em casa. Na primeira visita de cada sessão, a câmera parte
+// de cima de Sinop (MT), sobe até aparecer a América do Sul e depois a Terra
+// inteira, e termina em órbita, de onde a pessoa escolhe o destino. A Terra
+// está na posição e na rotação de verdade para a data: se for noite em Sinop,
+// aparecem as luzes das cidades. Dá para pular (botão, Esc, Enter ou espaço).
+
+const PARTIDA = { nome: "Sinop", titulo: "Sinop, Mato Grosso", latitude: -11.86, longitude: -55.51 };
+const CHAVE_DECOLAGEM = "exploradorDoUniverso:decolagemVista";
+const DURACAO_DA_DECOLAGEM = 16;      // segundos
+const ALTURA_DE_PARTIDA = 0.4;        // em raios da Terra (≈ 2.500 km)
+const ETAPAS_DA_DECOLAGEM = [
+  // [até esta altura, em raios da Terra; título; texto]
+  [0.95, `📍 ${PARTIDA.titulo}`, null],
+  [2.6, "🌎 América do Sul", "O Brasil visto de onde voam os satélites."],
+  [Infinity, "🌍 Terra", "Nosso planeta, visto do espaço. Daqui começa a viagem."]
+];
+let decolagem = null;                 // { inicio, terra } enquanto a abertura roda
+const direcaoDaPartida = new THREE.Vector3();
+const direcaoDoSol = new THREE.Vector3();
+const pontoDaPartida = new THREE.Vector3();
+
+const suavizar = (t) => t * t * (3 - 2 * t);
+const entre = (a, b, t) => suavizar(Math.max(0, Math.min(1, (t - a) / (b - a))));
+
+/** A direção (do centro da Terra) do ponto de partida, na posição de agora. */
+function calcularDirecaoDaPartida(terra) {
+  // Mesma conta do mapa enrolado na esfera: longitude −180° na emenda.
+  const lat = THREE.MathUtils.degToRad(PARTIDA.latitude);
+  const phi = THREE.MathUtils.degToRad(PARTIDA.longitude + 180);
+  direcaoDaPartida.set(-Math.cos(phi) * Math.cos(lat), Math.sin(lat), Math.sin(phi) * Math.cos(lat));
+  terra.malha.updateMatrixWorld(true);
+  return direcaoDaPartida.transformDirection(terra.astro.superficie.matrixWorld);
+}
+
+function podeDecolar(parametros) {
+  if (movimentoReduzido) return false;
+  if (parametros.has("decolagem")) return true;
+  if (parametros.has("depurar") || parametros.has("alvo")) return false;
+  try { return sessionStorage.getItem(CHAVE_DECOLAGEM) !== "1"; } catch { return true; }
+}
+
+function iniciarDecolagem() {
+  if (nivel.id !== "solar") entrarNoNivel("solar");
+  const terra = nivel.corpos.find((c) => c.id === "terra");
+  if (!terra?.astro?.superficie || terra.oculto) return false;
+  if (modoTamanho !== "real") mudarTamanho("real");
+  piloto = null;
+  orbita = null;
+  fecharAlvo();
+  fecharOpcoes();
+  fecharVelocidades();
+  fecharDestinos();
+  decolagem = { inicio: null, terra, etapa: -1 };
+  $("decolagem-nome").textContent = PARTIDA.nome;
+  $("decolagem").hidden = false;
+  document.body.classList.add("decolando");
+  $("decolagem-pular").focus({ preventScroll: true });
+  return true;
+}
+
+function atualizarDecolagem(agora) {
+  const { terra } = decolagem;
+  if (decolagem.inicio === null) decolagem.inicio = agora;
+  const u = Math.min(1, (agora - decolagem.inicio) / 1000 / DURACAO_DA_DECOLAGEM);
+  const raio = terra.raioExibido;
+
+  // Altura: um instante parada sobre a cidade, depois sobe cada vez mais rápido
+  // (em escala logarítmica, como o zoom de um mapa) e freia ao chegar à órbita.
+  // (Em tela em pé cabe menos chão: a partida é mais alta, para o contorno do continente aparecer.)
+  const alturaInicial = ALTURA_DE_PARTIDA * (camera.aspect < 1 ? 1.9 : 1);
+  const alturaFinal = terra.distanciaChegada / raio - 1;
+  const subida = entre(0.12, 1, u);
+  const altura = alturaInicial * Math.pow(alturaFinal / alturaInicial, subida) * (1 + 0.06 * Math.min(1, u / 0.12));
+
+  // Direção: começa bem em cima da cidade e, na subida, vira um pouco para o
+  // lado do Sol, para a Terra não terminar no escuro.
+  calcularDirecaoDaPartida(terra);
+  direcaoDoSol.copy(nivel.sol.posicao).sub(terra.posicao).normalize();
+  const dia = direcaoDaPartida.dot(direcaoDoSol) > 0.05;
+  pontoDaPartida.copy(terra.posicao).addScaledVector(direcaoDaPartida, raio);
+  direcaoAuxiliar.copy(direcaoDaPartida).addScaledVector(direcaoDoSol, 0.75 * entre(0.3, 1, u)).normalize();
+  camera.position.copy(terra.posicao).addScaledVector(direcaoAuxiliar, raio * (1 + altura));
+  olharPara(terra.posicao);
+
+  // Legenda da etapa (só muda quando a etapa muda) e altura em quilômetros.
+  const etapa = ETAPAS_DA_DECOLAGEM.findIndex(([limite]) => altura < limite);
+  if (etapa !== decolagem.etapa) {
+    decolagem.etapa = etapa;
+    const [, titulo, texto] = ETAPAS_DA_DECOLAGEM[etapa];
+    $("decolagem-titulo").textContent = titulo;
+    $("decolagem-texto").textContent = texto || (dia
+      ? "A viagem começa em casa. Agora é dia aí."
+      : "A viagem começa em casa. Agora é noite aí: dá para ver as luzes das cidades.");
+  }
+  $("decolagem-altura").textContent = `Altura: ${Math.round(km(raio * altura) / 100) * 100 >= 1000
+    ? (Math.round(km(raio * altura) / 100) * 100).toLocaleString("pt-BR") : Math.round(km(raio * altura))} km`;
+
+  // O alfinete acompanha a cidade na tela e some quando ela fica pequena demais.
+  camera.updateMatrixWorld();
+  pontoDaPartida.project(camera);
+  const pino = $("decolagem-pino");
+  const x = (pontoDaPartida.x * 0.5 + 0.5) * canvas.clientWidth;
+  const y = (-pontoDaPartida.y * 0.5 + 0.5) * canvas.clientHeight;
+  pino.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+  pino.style.opacity = altura < 2.2 ? "1" : "0";
+
+  if (u >= 1) terminarDecolagem();
+}
+
+function terminarDecolagem({ pulou = false } = {}) {
+  if (!decolagem) return;
+  const { terra } = decolagem;
+  if (pulou) {
+    // Vai direto para o fim: em órbita, do lado iluminado.
+    calcularDirecaoDaPartida(terra);
+    direcaoDoSol.copy(nivel.sol.posicao).sub(terra.posicao).normalize();
+    direcaoAuxiliar.copy(direcaoDaPartida).addScaledVector(direcaoDoSol, 0.75).normalize();
+    camera.position.copy(terra.posicao).addScaledVector(direcaoAuxiliar, terra.distanciaChegada);
+    olharPara(terra.posicao);
+  }
+  decolagem = null;
+  try { sessionStorage.setItem(CHAVE_DECOLAGEM, "1"); } catch { /* sem armazenamento */ }
+  $("decolagem").hidden = true;
+  document.body.classList.remove("decolando");
+  entrarEmOrbita(terra);
+  afastarParaCaberNaTela();
+  atualizarEstadoNave();
+  avisar("🚀 Você está em órbita da Terra. Toque em 🧭 Destinos para escolher aonde ir.", "missao");
+  abrirAjudaNaPrimeiraVez();
+}
+
+$("decolagem-pular").addEventListener("click", () => terminarDecolagem({ pulou: true }));
+$("botao-decolagem").addEventListener("click", iniciarDecolagem);
+// Durante a abertura o teclado só serve para pular.
+window.addEventListener("keydown", (evento) => {
+  if (!decolagem) return;
+  evento.stopImmediatePropagation();
+  if (["Escape", "Enter", " "].includes(evento.key)) {
+    evento.preventDefault();
+    terminarDecolagem({ pulou: true });
+  }
+}, true);
+
+function abrirAjudaNaPrimeiraVez() {
+  let ajudaVista = false;
+  try { ajudaVista = localStorage.getItem(CHAVE_AJUDA) === "1"; } catch { /* sem armazenamento */ }
+  if (!ajudaVista) abrirAjuda();
+}
+
 let anterior = performance.now();
 let acumuladoInterface = 0;
 
@@ -1310,8 +1460,12 @@ function quadro(agora) {
     dataSimulada = new Date(dataSimulada.getTime() + dt * 1000 * escalaTempo);
   }
   nivel.atualizar(dataSimulada, camera, dt);
-  mover(dt);
-  verificarDescobertas();
+  if (decolagem) {
+    atualizarDecolagem(agora);
+  } else {
+    mover(dt);
+    verificarDescobertas();
+  }
 
   camera.updateMatrixWorld();
   posicionarMarcadores();
@@ -1343,9 +1497,9 @@ function iniciar() {
   entrarNoNivel(idNivel, { alvo });
   atualizarContadores();
 
-  let ajudaVista = false;
-  try { ajudaVista = localStorage.getItem(CHAVE_AJUDA) === "1"; } catch { /* sem armazenamento */ }
-  if (!ajudaVista) abrirAjuda();
+  // Primeira visita da sessão no Sistema Solar: a viagem começa pela decolagem
+  // (a ajuda de "como jogar" abre quando ela termina).
+  if (!(idNivel === "solar" && podeDecolar(parametros) && iniciarDecolagem())) abrirAjudaNaPrimeiraVez();
 
   document.body.classList.add("pronto");
   if ("serviceWorker" in navigator && window.location.protocol.startsWith("http")) {
@@ -1355,7 +1509,7 @@ function iniciar() {
   // qualidade não muda sozinha (as capturas saem sempre iguais).
   if (parametros.has("depurar")) {
     qualidade.fixa = !parametros.has("qualidade");
-    window.__explorador = { camera, niveis, qualidade, get nivel() { return nivel; }, get orbita() { return orbita; }, progresso };
+    window.__explorador = { camera, niveis, qualidade, get nivel() { return nivel; }, get orbita() { return orbita; }, get decolagem() { return decolagem; }, progresso };
   }
   requestAnimationFrame((agora) => {
     anterior = agora;
