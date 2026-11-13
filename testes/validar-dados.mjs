@@ -572,6 +572,17 @@ for (const p of cat.PLANETAS_ANOES) {
   const sobre = readFileSync(join(raiz, "sobre.html"), "utf8");
   verdadeiro(G, "Página Sobre explica os três avisos (📷, 🧩 e 🎨)", ["📷", "🧩", "🎨"].every((icone) => sobre.includes(icone)));
 }
+// ---------- Decolagem (abertura do Explorador) ----------
+{
+  const G = "Decolagem";
+  const pagina = readFileSync(join(raiz, "explorador.html"), "utf8");
+  const principal = readFileSync(join(raiz, "js/explorador/main.js"), "utf8");
+  verdadeiro(G, "A página tem a legenda, o alfinete e o botão de pular",
+    ["decolagem-titulo", "decolagem-texto", "decolagem-altura", "decolagem-pino", "decolagem-pular", "botao-decolagem"].every((id) => pagina.includes(`id="${id}"`)));
+  const partida = principal.match(/PARTIDA = \{[^}]*latitude: (-?[\d.]+), longitude: (-?[\d.]+)/);
+  verdadeiro(G, "A partida é em Sinop (11,86° S, 55,51° O)", Boolean(partida) && Math.abs(Number(partida[1]) + 11.86) < 0.05 && Math.abs(Number(partida[2]) + 55.51) < 0.05);
+  verdadeiro(G, "Dá para pular e quem pediu menos movimento não vê a animação", /terminarDecolagem\(\{ pulou: true \}\)/.test(principal) && /if \(movimentoReduzido\) return false;/.test(principal));
+}
 // ---------- Site offline (PWA) e página do repositório ----------
 {
   const G = "Site";

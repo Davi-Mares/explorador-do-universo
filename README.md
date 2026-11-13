@@ -18,6 +18,7 @@
 
 ## O que tem
 
+- **Decolar** — o Explorador abre saindo de cima de Sinop (MT): a câmera sobe até aparecer a América do Sul e termina em órbita da Terra, com o dia e a noite de verdade. Dá para pular e para rever.
 - **Explorar**, em três níveis de escala:
   - **Sistema Solar** — os planetas onde estão hoje (com o dia e a noite certos), a Lua e mais 10 luas, Plutão, Ceres, o Cinturão de Asteroides e as sondas Voyager 1 e 2, cada uma na sua trajetória de saída (JPL Horizons), com o céu de verdade ao fundo.
   - **Estrelas vizinhas** — 30 estrelas para visitar, as 9 mil visíveis a olho nu nas posições 3D reais e uma régua de distâncias.
